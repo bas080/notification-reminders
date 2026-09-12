@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Notification Reminders</string>
+    <string name="add_reminder">Add Reminder</string>
+    <string name="edit_reminder">Edit Reminder</string>
+    <string name="delete_reminder">Delete</string>
+    <string name="mark_done">Mark Done</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="reminders">Reminders</string>
+    <string name="no_reminders">No reminders yet. Create one!</string>
+    <string name="enter_reminder_text">Enter reminder text</string>
+</resources>
