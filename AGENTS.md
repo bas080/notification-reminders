@@ -39,6 +39,11 @@
 │           └── kotlin/com/bas080/notificationreminders/
 │               └── utils/
 │                   └── ReminderMatcherTest.kt
+├── gradle/
+│   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradlew                       # Gradle wrapper script
 ├── build.gradle.kts              # Root build script
 ├── gradle.properties             # Gradle build properties
 ├── settings.gradle.kts           # Included modules setup
@@ -60,22 +65,22 @@
 ### Build & Test Commands
 - **Run all unit tests**:
   ```bash
-  gradle test
+  ./gradlew test
   ```
 - **Compile Kotlin source files**:
   ```bash
-  gradle compileDebugUnitTestKotlin
+  ./gradlew compileDebugUnitTestKotlin
   ```
 - **Clean build directory**:
   ```bash
-  gradle clean
+  ./gradlew clean
   ```
 
 ---
 
 ## CI/CD Pipeline
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) runs test, build, and release steps on:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs test, build, and release steps using the Gradle wrapper (`./gradlew`) on:
 1. **Pull Request Pushes**: Names release/build using PR title and PR number (`<PR Title> (#<PR Number>)`).
 2. **Push to `master`**: Names release/build using commit message title and short hash (`<Commit Title> (<Short Hash>)`).
 3. **Version Tag Push (`v*`)**: Names release/build using the tag name (e.g. `v1.0.0`).
