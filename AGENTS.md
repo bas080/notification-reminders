@@ -25,13 +25,17 @@
 ├── app/
 │   ├── build.gradle.kts          # App module dependencies & configuration
 │   └── src/
-│       └── main/
-│           ├── AndroidManifest.xml
-│           ├── kotlin/com/bas080/notificationreminders/
-│           │   ├── MainActivity.kt
-│           │   └── utils/
-│           │       └── ReminderMatcher.kt
-│           └── res/               # Layouts, values, and themes
+│       ├── main/
+│       │   ├── AndroidManifest.xml
+│       │   ├── kotlin/com/bas080/notificationreminders/
+│       │   │   ├── MainActivity.kt
+│       │   │   └── utils/
+│       │   │       └── ReminderMatcher.kt
+│       │   └── res/               # Layouts, values, and themes
+│       └── test/
+│           └── kotlin/com/bas080/notificationreminders/
+│               └── utils/
+│                   └── ReminderMatcherTest.kt
 ├── build.gradle.kts              # Root build script
 ├── gradle.properties             # Gradle build properties
 ├── settings.gradle.kts           # Included modules setup
@@ -72,6 +76,7 @@
 - Performs case-insensitive word matching between reminder text and incoming notification content.
 - Filters out common stop words (e.g., "the", "a", "is", "in", "to", etc.).
 - Matches based on word presence regardless of word order, supporting partial substring matches.
+- Tested by `ReminderMatcherTest.kt`.
 
 ---
 
