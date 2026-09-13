@@ -22,6 +22,9 @@
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # CI/CD GitHub Actions workflow
 ├── app/
 │   ├── build.gradle.kts          # App module dependencies & configuration
 │   └── src/
@@ -67,6 +70,15 @@
   ```bash
   gradle clean
   ```
+
+---
+
+## CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs test, build, and release steps on:
+1. **Pull Request Pushes**: Names release/build using PR title and PR number (`<PR Title> (#<PR Number>)`).
+2. **Push to `master`**: Names release/build using commit message title and short hash (`<Commit Title> (<Short Hash>)`).
+3. **Version Tag Push (`v*`)**: Names release/build using the tag name (e.g. `v1.0.0`).
 
 ---
 
