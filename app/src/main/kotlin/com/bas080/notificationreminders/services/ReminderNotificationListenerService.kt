@@ -100,7 +100,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_popup_reminder)
-                .setContentTitle("Reminder: $matchedReminder")
+                .setContentTitle(matchedReminder)
                 .setContentText(content)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
