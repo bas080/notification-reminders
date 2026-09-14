@@ -31,6 +31,7 @@
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── kotlin/com/bas080/notificationreminders/
+│       │   │   ├── NotificationRemindersApplication.kt
 │       │   │   ├── MainActivity.kt
 │       │   │   └── services/
 │       │   │       └── ReminderNotificationListenerService.kt
@@ -90,7 +91,7 @@
 - **POST_NOTIFICATIONS Permission**: Prompted on first app launch for Android 13+ (API 33+).
 - **Notification Listener Service (`NotificationListenerService`)**: Check and prompt user to grant permission via `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS`.
 - **Ongoing Status Notification**: Opened automatically via `ReminderNotificationListenerService` as soon as permissions are granted or when service connects.
-- **Crash Reporting**: If the application crashes, stack traces are saved to `SharedPreferences`. Upon app restart, an `AlertDialog` prompts the user to send a crash report email to `bas080@hotmail.com` via `ACTION_SENDTO`.
+- **Process-Level Crash Handling**: `NotificationRemindersApplication` registers a global `Thread.setDefaultUncaughtExceptionHandler` at process initialization. Uncaught exceptions from any thread or component are logged to `SharedPreferences`. On next app startup, `MainActivity` prompts the user to send a crash report email to `bas080@hotmail.com`.
 
 ---
 
