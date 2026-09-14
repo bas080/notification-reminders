@@ -27,6 +27,14 @@
             android:exported="true">
         </activity>
 
+        <receiver
+            android:name=".receivers.CreateReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.bas080.notificationreminders.ACTION_CREATE_REMINDER" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".services.ReminderNotificationListenerService"
             android:exported="true"
