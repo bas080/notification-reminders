@@ -93,8 +93,11 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
         val now = System.currentTimeMillis()
 
+        val commonWordsStr = getString(R.string.common_words)
+        val commonWordsSet = ReminderMatcher.parseCommonWords(commonWordsStr)
+
         for (reminder in savedReminders) {
-            if (ReminderMatcher.matches(reminder, fullContent)) {
+            if (ReminderMatcher.matches(reminder, fullContent, commonWordsSet)) {
                 val trimmed = reminder.trim()
                 val trackingKey = "${sbnKey}_${trimmed.lowercase()}"
                 val lastTime = lastTriggeredMap[trackingKey] ?: 0L
