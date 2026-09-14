@@ -46,6 +46,7 @@
 ├── gradlew                       # Gradle wrapper script
 ├── build.gradle.kts              # Root build script
 ├── gradle.properties             # Gradle build properties
+├── release.keystore              # Temporary keystore for signed release builds
 ├── settings.gradle.kts           # Included modules setup
 └── README.md
 ```
@@ -67,6 +68,10 @@
   ```bash
   ./gradlew test
   ```
+- **Build signed release APK**:
+  ```bash
+  ./gradlew assembleRelease
+  ```
 - **Compile Kotlin source files**:
   ```bash
   ./gradlew compileDebugUnitTestKotlin
@@ -78,12 +83,22 @@
 
 ---
 
+## Signing & Release Configuration
+
+- **Release Keystore**: `release.keystore` in root directory.
+- **Signing Credentials**:
+  - Store Password: `android`
+  - Key Alias: `releaseKey`
+  - Key Password: `android`
+
+---
+
 ## CI/CD Pipeline & GitHub Releases
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs tests (`./gradlew test`), builds APK artifacts (`./gradlew assemble`), uploads build artifacts via `actions/upload-artifact@v4`, and creates an actual GitHub Release via `softprops/action-gh-release@v2`:
-1. **Pull Request Pushes**: Creates a pre-release tagged `pr-<PR_NUMBER>-<SHA>` named `<PR Title> (#<PR Number>)` with APK binaries attached.
-2. **Push to `master`**: Creates a pre-release tagged `master-<SHA>` named `<Commit Title> (<Short Hash>)` with APK binaries attached.
-3. **Version Tag Push (`v*`)**: Creates a full release named `<Tag Name>` with APK binaries attached.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs tests (`./gradlew test`), builds signed release and debug APK artifacts (`./gradlew assemble`), uploads build artifacts via `actions/upload-artifact@v4`, and creates a GitHub Release via `softprops/action-gh-release@v2`:
+1. **Pull Request Pushes**: Creates a pre-release tagged `pr-<PR_NUMBER>-<SHA>` named `<PR Title> (#<PR Number>)` with signed APK binaries attached.
+2. **Push to `master`**: Creates a pre-release tagged `master-<SHA>` named `<Commit Title> (<Short Hash>)` with signed APK binaries attached.
+3. **Version Tag Push (`v*`)**: Creates a full release named `<Tag Name>` with signed APK binaries attached.
 
 ---
 
