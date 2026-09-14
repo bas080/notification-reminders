@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
+import com.bas080.notificationreminders.utils.AppLogger
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,11 +48,43 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupNavigation()
         setupRecyclerView()
         loadReminders()
 
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
+    }
+
+    private fun setupNavigation() {
+        binding.btnNavReminders.setOnClickListener {
+            showRemindersView()
+        }
+
+        binding.btnNavLogs.setOnClickListener {
+            showLogsView()
+        }
+
+        binding.btnClearLogs.setOnClickListener {
+            AppLogger.clearLogs(this)
+            loadLogs()
+        }
+    }
+
+    private fun showRemindersView() {
+        binding.remindersContainer.visibility = View.VISIBLE
+        binding.logsContainer.visibility = View.GONE
+    }
+
+    private fun showLogsView() {
+        binding.remindersContainer.visibility = View.GONE
+        binding.logsContainer.visibility = View.VISIBLE
+        loadLogs()
+    }
+
+    private fun loadLogs() {
+        val logs = AppLogger.getLogs(this)
+        binding.txtLogs.text = if (logs.isNotBlank()) logs else "No logs available."
     }
 
     private fun setupRecyclerView() {
@@ -110,6 +143,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadReminders()
+        if (binding.logsContainer.visibility == View.VISIBLE) {
+            loadLogs()
+        }
         if (isNotificationListenerEnabled()) {
             startReminderService()
         }
