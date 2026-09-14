@@ -18,9 +18,12 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     companion object {
         const val CHANNEL_ID = "notification_reminders_status_channel"
+        const val MATCH_CHANNEL_ID = "notification_reminders_match_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
         const val KEY_TEXT_REPLY = "key_text_reply"
+        private const val PREFS_REMINDERS = "reminders_prefs"
+        private const val KEY_REMINDERS = "key_reminders_list"
 
         fun startService(context: Context) {
             try {
@@ -60,20 +63,70 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
         val fullContent = "$title $text"
 
-        // Processing logic for matching notification content against reminders
+        checkAndTriggerReminderMatch(fullContent)
+    }
+
+    private fun checkAndTriggerReminderMatch(fullContent: String) {
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+
+        for (reminder in savedReminders) {
+            val trimmed = reminder.trim()
+            if (trimmed.isNotEmpty() && fullContent.contains(trimmed, ignoreCase = true)) {
+                postMatchNotification(trimmed, fullContent)
+                break
+            }
+        }
+    }
+
+    private fun postMatchNotification(matchedReminder: String, content: String) {
+        try {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                this,
+                (System.currentTimeMillis() % 10000).toInt(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentTitle("Reminder: $matchedReminder")
+                .setContentText(content)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationId = (System.currentTimeMillis() and 0xfffffff).toInt()
+            notificationManager.notify(notificationId, matchNotification)
+        } catch (_: Exception) {
+        }
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = getString(R.string.app_name)
             val descriptionText = "Status notification for Notification Reminders"
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+            val statusChannel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW).apply {
                 description = descriptionText
             }
+
+            val matchChannel = NotificationChannel(
+                MATCH_CHANNEL_ID,
+                "Reminder Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications for matched reminders"
+            }
+
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(statusChannel)
+            notificationManager.createNotificationChannel(matchChannel)
         }
     }
 
