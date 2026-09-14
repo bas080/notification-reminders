@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.bas080.notificationreminders.utils.AppLogger
 
 class CrashReportActivity : AppCompatActivity() {
 
@@ -27,19 +29,30 @@ class CrashReportActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.crash_stack_trace).text = crashTrace
 
+        val cbIncludeLogs = findViewById<CheckBox>(R.id.cb_include_logs)
+
         findViewById<Button>(R.id.btn_send_report).setOnClickListener {
-            sendEmail(crashTrace)
+            val includeLogs = cbIncludeLogs.isChecked
+            sendEmail(crashTrace, includeLogs)
         }
     }
 
-    private fun sendEmail(crashTrace: String) {
+    private fun sendEmail(crashTrace: String, includeLogs: Boolean) {
+        val emailBody = StringBuilder().apply {
+            append("App Version: 1.0.0\n")
+            append("Device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})\n\n")
+            append("Stack Trace:\n")
+            append(crashTrace)
+            if (includeLogs) {
+                append("\n\n--- Application Logs ---\n")
+                append(AppLogger.getLogs(this@CrashReportActivity))
+            }
+        }.toString()
+
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:$REPORT_EMAIL")
             putExtra(Intent.EXTRA_SUBJECT, "Notification Reminders Crash Report")
-            putExtra(
-                Intent.EXTRA_TEXT,
-                "App Version: 1.0.0\nDevice: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})\n\nStack Trace:\n$crashTrace"
-            )
+            putExtra(Intent.EXTRA_TEXT, emailBody)
         }
         try {
             startActivity(Intent.createChooser(intent, "Send Crash Report"))

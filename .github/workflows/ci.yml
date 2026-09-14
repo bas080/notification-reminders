@@ -29,10 +29,6 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Make gradlew executable (if present)
-        run: |
-          if [ -f "./gradlew" ]; then chmod +x ./gradlew; fi
-
       - name: Run Tests
         run: |
           if [ -f "./gradlew" ]; then
