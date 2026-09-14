@@ -17,6 +17,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
     companion object {
         const val CHANNEL_ID = "notification_reminders_status_channel"
         const val NOTIFICATION_ID = 1001
+        const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
 
         fun startService(context: Context) {
             val intent = Intent(context, ReminderNotificationListenerService::class.java)
@@ -81,12 +82,28 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val addReminderIntent = Intent(this, MainActivity::class.java).apply {
+            action = ACTION_CREATE_REMINDER
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val addReminderPendingIntent: PendingIntent = PendingIntent.getActivity(
+            this,
+            1,
+            addReminderIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(getString(R.string.app_name))
             .setContentText("Monitoring notifications for active reminders")
             .setOngoing(true)
             .setContentIntent(pendingIntent)
+            .addAction(
+                android.R.drawable.ic_input_add,
+                getString(R.string.add_reminder),
+                addReminderPendingIntent
+            )
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
