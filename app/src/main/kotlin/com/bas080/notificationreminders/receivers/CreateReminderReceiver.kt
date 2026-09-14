@@ -1,5 +1,6 @@
 package com.bas080.notificationreminders.receivers
 
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,16 +15,33 @@ class CreateReminderReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val results = RemoteInput.getResultsFromIntent(intent)
-        if (results != null) {
-            val reminderText = results.getCharSequence(ReminderNotificationListenerService.KEY_TEXT_REPLY)?.toString()?.trim()
-            if (!reminderText.isNullOrEmpty()) {
-                val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-                val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
-                savedSet.add(reminderText)
-                prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
+        when (intent.action) {
+            ReminderNotificationListenerService.ACTION_CREATE_REMINDER -> {
+                val results = RemoteInput.getResultsFromIntent(intent)
+                if (results != null) {
+                    val reminderText = results.getCharSequence(ReminderNotificationListenerService.KEY_TEXT_REPLY)?.toString()?.trim()
+                    if (!reminderText.isNullOrEmpty()) {
+                        val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                        val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
+                        savedSet.add(reminderText)
+                        prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
-                ReminderNotificationListenerService.startService(context)
+                        ReminderNotificationListenerService.startService(context)
+                    }
+                }
+            }
+            ReminderNotificationListenerService.ACTION_DONE_REMINDER -> {
+                val reminderText = intent.getStringExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT)
+                if (!reminderText.isNullOrEmpty()) {
+                    val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                    val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
+                    savedSet.remove(reminderText)
+                    prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
+
+                    val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.cancel(notificationId)
+                }
             }
         }
     }
