@@ -9,8 +9,10 @@ import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
+import androidx.core.app.RemoteInput
 import com.bas080.notificationreminders.MainActivity
 import com.bas080.notificationreminders.R
+import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 
 class ReminderNotificationListenerService : NotificationListenerService() {
 
@@ -18,6 +20,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val CHANNEL_ID = "notification_reminders_status_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
+        const val KEY_TEXT_REPLY = "key_text_reply"
 
         fun startService(context: Context) {
             try {
@@ -86,16 +89,32 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val addReminderIntent = Intent(this, MainActivity::class.java).apply {
+            val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
+                .setLabel(getString(R.string.add_reminder))
+                .build()
+
+            val addReminderIntent = Intent(this, CreateReminderReceiver::class.java).apply {
                 action = ACTION_CREATE_REMINDER
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
-            val addReminderPendingIntent: PendingIntent = PendingIntent.getActivity(
+            val broadcastFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val addReminderPendingIntent: PendingIntent = PendingIntent.getBroadcast(
                 this,
                 1,
                 addReminderIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                broadcastFlags
             )
+
+            val addAction = NotificationCompat.Action.Builder(
+                android.R.drawable.ic_input_add,
+                getString(R.string.add_reminder),
+                addReminderPendingIntent
+            )
+                .addRemoteInput(remoteInput)
+                .build()
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -103,11 +122,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentText("Monitoring notifications for active reminders")
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
-                .addAction(
-                    android.R.drawable.ic_input_add,
-                    getString(R.string.add_reminder),
-                    addReminderPendingIntent
-                )
+                .addAction(addAction)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
