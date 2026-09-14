@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -13,7 +12,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,14 +28,12 @@ import com.bas080.notificationreminders.services.ReminderNotificationListenerSer
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val REPORT_EMAIL = "bas080@hotmail.com"
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
     }
 
     private lateinit var binding: ActivityMainBinding
     private val activeReminders = mutableListOf<String>()
-    private val displayItems = mutableListOf<String>()
     private lateinit var adapter: RemindersAdapter
 
     private val requestNotificationPermissionLauncher =
@@ -59,18 +56,42 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         adapter = RemindersAdapter(
-            displayItems,
-            onItemTextChanged = { pos, newText -> onTextChanged(pos, newText) },
-            onItemFocusLost = { pos -> onItemFocusLost(pos) },
-            onClearClicked = { editText ->
-                editText.setText("")
-                editText.requestFocus()
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-                imm?.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+            activeReminders,
+            onAddReminder = { newReminder ->
+                activeReminders.add(newReminder)
+                saveRemindersToPrefs()
+                adapter.notifyDataSetChanged()
+            },
+            onUpdateReminder = { index, updatedText ->
+                if (index in activeReminders.indices) {
+                    activeReminders[index] = updatedText
+                    saveRemindersToPrefs()
+                }
+            },
+            onDeleteReminderRequested = { index ->
+                if (index in activeReminders.indices) {
+                    showDeleteConfirmationDialog(index)
+                }
             }
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
         binding.remindersList.adapter = adapter
+    }
+
+    private fun showDeleteConfirmationDialog(index: Int) {
+        val reminderText = activeReminders.getOrNull(index) ?: return
+        AlertDialog.Builder(this)
+            .setTitle("Delete Reminder")
+            .setMessage("Are you sure you want to delete \"$reminderText\"?")
+            .setPositiveButton("Delete") { _, _ ->
+                if (index in activeReminders.indices) {
+                    activeReminders.removeAt(index)
+                    saveRemindersToPrefs()
+                    adapter.notifyDataSetChanged()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun loadReminders() {
@@ -78,56 +99,12 @@ class MainActivity : AppCompatActivity() {
         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
         activeReminders.clear()
         activeReminders.addAll(savedSet)
-        rebuildDisplayItems()
-    }
-
-    private fun rebuildDisplayItems() {
-        displayItems.clear()
-        displayItems.add("") // Empty placeholder at top
-        displayItems.addAll(activeReminders)
-        displayItems.add("") // Empty placeholder at bottom
         adapter.notifyDataSetChanged()
     }
 
     private fun saveRemindersToPrefs() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
-    }
-
-    private fun onTextChanged(position: Int, newText: String) {
-        if (position !in displayItems.indices) return
-        displayItems[position] = newText
-
-        // Recompute activeReminders from displayItems excluding empty placeholders
-        val newActive = displayItems.filter { it.trim().isNotEmpty() }
-        if (newActive != activeReminders) {
-            activeReminders.clear()
-            activeReminders.addAll(newActive)
-            saveRemindersToPrefs()
-
-            // If top or bottom empty placeholder received text, re-ensure top and bottom placeholders exist
-            if ((position == 0 && newText.trim().isNotEmpty()) ||
-                (position == displayItems.size - 1 && newText.trim().isNotEmpty())
-            ) {
-                binding.remindersList.post {
-                    rebuildDisplayItems()
-                }
-            }
-        }
-    }
-
-    private fun onItemFocusLost(position: Int) {
-        if (position !in displayItems.indices) return
-        val text = displayItems[position].trim()
-        if (text.isEmpty()) {
-            val newActive = displayItems.filter { it.trim().isNotEmpty() }
-            if (newActive != activeReminders) {
-                activeReminders.clear()
-                activeReminders.addAll(newActive)
-                saveRemindersToPrefs()
-                rebuildDisplayItems()
-            }
-        }
     }
 
     override fun onResume() {
@@ -203,16 +180,29 @@ class MainActivity : AppCompatActivity() {
 }
 
 class RemindersAdapter(
-    private val items: List<String>,
-    private val onItemTextChanged: (Int, String) -> Unit,
-    private val onItemFocusLost: (Int) -> Unit,
-    private val onClearClicked: (EditText) -> Unit
+    private val activeReminders: List<String>,
+    private val onAddReminder: (String) -> Unit,
+    private val onUpdateReminder: (Int, String) -> Unit,
+    private val onDeleteReminderRequested: (Int) -> Unit
 ) : RecyclerView.Adapter<RemindersAdapter.ViewHolder>() {
+
+    companion object {
+        const val TYPE_CREATE_INPUT = 0
+        const val TYPE_ACTIVE_REMINDER = 1
+    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
-        val btnClear: Button = view.findViewById(R.id.btn_clear)
+        val btnAction: Button = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (position == 0 || position == activeReminders.size + 1) {
+            TYPE_CREATE_INPUT
+        } else {
+            TYPE_ACTIVE_REMINDER
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -224,35 +214,67 @@ class RemindersAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.textWatcher?.let { holder.reminderInput.removeTextChangedListener(it) }
 
-        holder.reminderInput.setText(items[position])
+        val viewType = getItemViewType(position)
 
-        val watcher = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val currentPos = holder.bindingAdapterPosition
-                if (currentPos != RecyclerView.NO_POSITION) {
-                    onItemTextChanged(currentPos, s?.toString() ?: "")
+        if (viewType == TYPE_CREATE_INPUT) {
+            holder.reminderInput.setText("")
+            holder.reminderInput.hint = "Add a new reminder..."
+            holder.btnAction.text = "+"
+
+            val submitAction = {
+                val text = holder.reminderInput.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    holder.reminderInput.setText("")
+                    onAddReminder(text)
                 }
             }
-            override fun afterTextChanged(s: Editable?) {}
-        }
 
-        holder.reminderInput.addTextChangedListener(watcher)
-        holder.textWatcher = watcher
+            holder.btnAction.setOnClickListener {
+                submitAction()
+            }
 
-        holder.reminderInput.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                val currentPos = holder.bindingAdapterPosition
-                if (currentPos != RecyclerView.NO_POSITION) {
-                    onItemFocusLost(currentPos)
+            holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                    submitAction()
+                    true
+                } else {
+                    false
                 }
             }
-        }
+        } else {
+            val reminderIndex = position - 1
+            holder.reminderInput.hint = "Reminder"
+            holder.reminderInput.setText(activeReminders[reminderIndex])
+            holder.btnAction.text = "✕"
 
-        holder.btnClear.setOnClickListener {
-            onClearClicked(holder.reminderInput)
+            val watcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        val idx = currentPos - 1
+                        if (idx in activeReminders.indices) {
+                            onUpdateReminder(idx, s?.toString() ?: "")
+                        }
+                    }
+                }
+                override fun afterTextChanged(s: Editable?) {}
+            }
+
+            holder.reminderInput.addTextChangedListener(watcher)
+            holder.textWatcher = watcher
+
+            holder.btnAction.setOnClickListener {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION) {
+                    val idx = currentPos - 1
+                    if (idx in activeReminders.indices) {
+                        onDeleteReminderRequested(idx)
+                    }
+                }
+            }
         }
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = activeReminders.size + 2
 }
