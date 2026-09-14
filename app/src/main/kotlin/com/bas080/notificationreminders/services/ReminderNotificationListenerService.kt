@@ -193,6 +193,16 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     private fun showStatusNotification() {
         try {
+            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+            val activeCount = savedReminders.filter { it.trim().isNotEmpty() }.size
+
+            val statusText = if (activeCount == 1) {
+                "Monitoring 1 active reminder"
+            } else {
+                "Monitoring $activeCount active reminders"
+            }
+
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
@@ -233,10 +243,11 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText("Monitoring notifications for active reminders")
+                .setContentText(statusText)
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
                 .addAction(addAction)
+                .setGroup(GROUP_KEY_REMINDERS)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
