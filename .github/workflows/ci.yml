@@ -9,6 +9,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-test-release:
     runs-on: ubuntu-latest
@@ -46,26 +49,47 @@ jobs:
             gradle assemble
           fi
 
-      - name: Determine Release / Build Name
-        id: build_name
+      - name: Determine Release Details
+        id: build_info
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             PR_TITLE="${{ github.event.pull_request.title }}"
             PR_NUMBER="${{ github.event.pull_request.number }}"
-            NAME="${PR_TITLE} (#${PR_NUMBER})"
+            RELEASE_NAME="${PR_TITLE} (#${PR_NUMBER})"
+            TAG_NAME="pr-${PR_NUMBER}-${GITHUB_SHA::7}"
+            PRERELEASE="true"
           elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            NAME="${GITHUB_REF#refs/tags/}"
+            RELEASE_NAME="${GITHUB_REF#refs/tags/}"
+            TAG_NAME="${RELEASE_NAME}"
+            PRERELEASE="false"
           elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/master" ]; then
             COMMIT_TITLE=$(git log -1 --pretty=format:"%s")
             SHORT_HASH=$(git rev-parse --short HEAD)
-            NAME="${COMMIT_TITLE} (${SHORT_HASH})"
+            RELEASE_NAME="${COMMIT_TITLE} (${SHORT_HASH})"
+            TAG_NAME="master-${SHORT_HASH}"
+            PRERELEASE="true"
           else
-            NAME="Build-${GITHUB_SHA::7}"
+            RELEASE_NAME="Build-${GITHUB_SHA::7}"
+            TAG_NAME="build-${GITHUB_SHA::7}"
+            PRERELEASE="true"
           fi
-          echo "RELEASE_NAME=${NAME}" >> $GITHUB_ENV
-          echo "Release/Build Name: ${NAME}"
+          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          echo "PRERELEASE=${PRERELEASE}" >> $GITHUB_ENV
 
-      - name: Create Release / Artifact Summary
-        run: |
-          echo "Build & Test Completed Successfully"
-          echo "Release Name: ${{ env.RELEASE_NAME }}"
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TAG_NAME }}
+          path: app/build/outputs/apk/**/*.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          prerelease: ${{ env.PRERELEASE == 'true' }}
+          files: app/build/outputs/apk/**/*.apk
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

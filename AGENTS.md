@@ -78,12 +78,12 @@
 
 ---
 
-## CI/CD Pipeline
+## CI/CD Pipeline & GitHub Releases
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) runs test, build, and release steps using the Gradle wrapper (`./gradlew`) on:
-1. **Pull Request Pushes**: Names release/build using PR title and PR number (`<PR Title> (#<PR Number>)`).
-2. **Push to `master`**: Names release/build using commit message title and short hash (`<Commit Title> (<Short Hash>)`).
-3. **Version Tag Push (`v*`)**: Names release/build using the tag name (e.g. `v1.0.0`).
+The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs tests (`./gradlew test`), builds APK artifacts (`./gradlew assemble`), uploads build artifacts via `actions/upload-artifact@v4`, and creates an actual GitHub Release via `softprops/action-gh-release@v2`:
+1. **Pull Request Pushes**: Creates a pre-release tagged `pr-<PR_NUMBER>-<SHA>` named `<PR Title> (#<PR Number>)` with APK binaries attached.
+2. **Push to `master`**: Creates a pre-release tagged `master-<SHA>` named `<Commit Title> (<Short Hash>)` with APK binaries attached.
+3. **Version Tag Push (`v*`)**: Creates a full release named `<Tag Name>` with APK binaries attached.
 
 ---
 
