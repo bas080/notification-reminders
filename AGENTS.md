@@ -32,6 +32,8 @@
 │       │   ├── AndroidManifest.xml
 │       │   ├── kotlin/com/bas080/notificationreminders/
 │       │   │   ├── MainActivity.kt
+│       │   │   └── services/
+│       │   │       └── ReminderNotificationListenerService.kt
 │       │   │   └── utils/
 │       │   │       └── ReminderMatcher.kt
 │       │   └── res/               # Layouts, values, and themes
@@ -80,6 +82,14 @@
   ```bash
   ./gradlew clean
   ```
+
+---
+
+## Permissions & Services
+
+- **POST_NOTIFICATIONS Permission**: Prompted on first app launch for Android 13+ (API 33+).
+- **Notification Listener Service (`NotificationListenerService`)**: Check and prompt user to grant permission via `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS`.
+- **Ongoing Status Notification**: Opened automatically via `ReminderNotificationListenerService` as soon as permissions are granted or when service connects.
 
 ---
 
