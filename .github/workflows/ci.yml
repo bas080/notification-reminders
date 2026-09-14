@@ -41,7 +41,7 @@ jobs:
             gradle test
           fi
 
-      - name: Build Application
+      - name: Build Application (Signed Release & Debug)
         run: |
           if [ -f "./gradlew" ]; then
             ./gradlew assemble
