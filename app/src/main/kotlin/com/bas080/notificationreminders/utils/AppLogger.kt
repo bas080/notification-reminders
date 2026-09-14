@@ -29,18 +29,13 @@ object AppLogger {
             if (file.exists()) {
                 val lines = file.readLines()
                 val recentLines = lines.takeLast(maxLines)
-                recentLines.joinToString("\n") { sanitizeLog(it) }
+                recentLines.joinToString("\n")
             } else {
                 "No logs recorded."
             }
         } catch (_: Exception) {
             "Unable to read logs."
         }
-    }
-
-    private fun sanitizeLog(line: String): String {
-        // Redact email addresses to prevent exposing sensitive user info
-        return line.replace(Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"), "[REDACTED_EMAIL]")
     }
 
     fun clearLogs(context: Context) {

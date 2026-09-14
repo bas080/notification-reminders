@@ -125,6 +125,15 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 
 ---
 
+## Exception Handling & Try-Catch Guidelines
+
+- **Service & System API Calls**: Wrap background service starts (e.g. `startForegroundService`, `startForeground`) and Android OS intent/system calls in `try-catch` blocks to prevent system-level framework exceptions (such as `ForegroundServiceStartNotAllowedException` or `SecurityException`) from crashing the app process.
+- **Log Errors Safely**: When catching non-fatal exceptions in `try-catch` blocks, log the error using `AppLogger` so it is captured in `app_logs.txt` for diagnostic purposes without crashing the user interface.
+- **Do Not Silently Swallow Critical Failures**: Only catch expected non-fatal system/framework exceptions. Fatal or unrecoverable application state errors should be allowed to propagate to `NotificationRemindersApplication`'s uncaught exception handler so the crash can be saved and reported.
+- **Privacy & Logging**: Do not write sensitive user information (such as email addresses, personal messages, or private reminder content) to application logs.
+
+---
+
 ## Code Style & Conventions
 
 - Follow standard Kotlin coding conventions.
