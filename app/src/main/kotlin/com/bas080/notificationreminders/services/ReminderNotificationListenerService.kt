@@ -99,7 +99,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             )
 
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle("Reminder: $matchedReminder")
                 .setContentText(content)
                 .setAutoCancel(true)
@@ -176,7 +176,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .build()
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Monitoring notifications for active reminders")
                 .setOngoing(true)
