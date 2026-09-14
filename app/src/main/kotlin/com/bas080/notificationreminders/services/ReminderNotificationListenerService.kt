@@ -21,6 +21,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val CHANNEL_ID = "notification_reminders_status_channel"
         const val MATCH_CHANNEL_ID = "notification_reminders_match_channel"
         const val NOTIFICATION_ID = 1001
+        const val SUMMARY_NOTIFICATION_ID = 1000
+        const val GROUP_KEY_REMINDERS = "com.bas080.notificationreminders.REMINDER_MATCHES"
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
         const val ACTION_DONE_REMINDER = "com.bas080.notificationreminders.ACTION_DONE_REMINDER"
         const val EXTRA_REMINDER_TEXT = "extra_reminder_text"
@@ -42,7 +44,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
         fun getNotificationIdForReminder(reminder: String): Int {
             val hash = reminder.trim().lowercase().hashCode() and 0x7fffffff
-            return if (hash == NOTIFICATION_ID) 1002 else if (hash == 0) 1003 else hash
+            return if (hash == NOTIFICATION_ID || hash == SUMMARY_NOTIFICATION_ID) 1002 else if (hash == 0) 1003 else hash
         }
     }
 
@@ -118,17 +120,27 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             ).build()
 
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(matchedReminder)
                 .setContentText(content)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
                 .addAction(doneAction)
+                .setGroup(GROUP_KEY_REMINDERS)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+
+            val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_reminder)
+                .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
+                .setGroup(GROUP_KEY_REMINDERS)
+                .setGroupSummary(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(notificationId, matchNotification)
+            notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
         } catch (_: Exception) {
         }
     }
@@ -196,7 +208,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .build()
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Monitoring notifications for active reminders")
                 .setOngoing(true)

@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Bell body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2A6,6 0,0 0,6 8V14L4,16V17H20V16L18,14V8A6,6 0,0 0,12,2M12,4A4,4 0,0 1,16 8V15H8V8A4,4 0,0 1,12,4Z" />
+    <!-- Bell clapper -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,18A2,2 0,0 0,14 18H10Z" />
+    <!-- Reminder star badge -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M19,2L19.8,4.4L22.2,4.4L20.2,5.8L21,8.2L19,6.8L17,8.2L17.8,5.8L15.8,4.4L18.2,4.4Z" />
+</vector>
