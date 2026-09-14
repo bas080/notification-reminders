@@ -1,6 +1,7 @@
 package com.bas080.notificationreminders.services
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class ReminderNotificationListenerServiceTest {
@@ -27,5 +28,16 @@ class ReminderNotificationListenerServiceTest {
             1001,
             ReminderNotificationListenerService.NOTIFICATION_ID
         )
+    }
+
+    @Test
+    fun testGetNotificationIdForReminderIsDeterministic() {
+        val id1 = ReminderNotificationListenerService.getNotificationIdForReminder("Buy milk")
+        val id2 = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
+        val id3 = ReminderNotificationListenerService.getNotificationIdForReminder("  Buy Milk  ")
+
+        assertEquals(id1, id2)
+        assertEquals(id1, id3)
+        assertNotEquals(ReminderNotificationListenerService.NOTIFICATION_ID, id1)
     }
 }
