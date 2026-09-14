@@ -37,6 +37,11 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             } catch (_: Exception) {
             }
         }
+
+        fun getNotificationIdForReminder(reminder: String): Int {
+            val hash = reminder.trim().lowercase().hashCode() and 0x7fffffff
+            return if (hash == NOTIFICATION_ID) 1002 else if (hash == 0) 1003 else hash
+        }
     }
 
     override fun onCreate() {
@@ -81,12 +86,14 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     private fun postMatchNotification(matchedReminder: String, content: String) {
         try {
+            val notificationId = getNotificationIdForReminder(matchedReminder)
+
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
             val pendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
-                (System.currentTimeMillis() % 10000).toInt(),
+                notificationId,
                 intent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
@@ -101,7 +108,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .build()
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notificationId = (System.currentTimeMillis() and 0xfffffff).toInt()
             notificationManager.notify(notificationId, matchNotification)
         } catch (_: Exception) {
         }
