@@ -17,13 +17,12 @@
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <Button
         android:id="@+id/fab_add_reminder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:src="@android:drawable/ic_input_add"
-        android:contentDescription="@string/add_reminder" />
+        android:text="@string/add_reminder" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/reminders_list"

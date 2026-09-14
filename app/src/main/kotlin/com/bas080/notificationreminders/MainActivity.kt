@@ -37,6 +37,59 @@ class MainActivity : AppCompatActivity() {
 
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
+
+        binding.fabAddReminder.setOnClickListener {
+            showCreateReminderDialog()
+        }
+
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == ReminderNotificationListenerService.ACTION_CREATE_REMINDER) {
+            showCreateReminderDialog()
+        }
+    }
+
+    fun showCreateReminderDialog() {
+        val inputEditText = android.widget.EditText(this).apply {
+            hint = getString(R.string.enter_reminder_text)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val margin = (16 * resources.displayMetrics.density).toInt()
+            val params = android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(margin, margin / 2, margin, margin / 2)
+            layoutParams = params
+            addView(inputEditText)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.add_reminder)
+            .setView(container)
+            .setPositiveButton(R.string.add_reminder) { dialog, _ ->
+                val text = inputEditText.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    saveReminder(text)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun saveReminder(reminderText: String) {
+        // Save reminder logic
     }
 
     override fun onResume() {

@@ -31,7 +31,7 @@ class ReminderMatcher {
          * Extracts significant words from text (filters out common words)
          */
         private fun extractSignificantWords(text: String): List<String> {
-            return text.toLowerCase()
+            return text.lowercase()
                 .split(Regex("\\s+|[,.:;!?]"))
                 .filter { it.isNotEmpty() && it !in commonWords }
         }
