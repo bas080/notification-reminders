@@ -2,7 +2,7 @@ package com.bas080.notificationreminders.utils
 
 object ReminderMatcher {
 
-    val COMMON_WORDS = setOf(
+    val DEFAULT_COMMON_WORDS = setOf(
         "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't",
         "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by",
         "can", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing",
@@ -20,10 +20,22 @@ object ReminderMatcher {
         "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"
     )
 
-    fun extractNonCommonWords(text: String): Set<String> {
+    fun parseCommonWords(commaSeparated: String): Set<String> {
+        if (commaSeparated.isBlank()) return DEFAULT_COMMON_WORDS
+        return commaSeparated.lowercase()
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+    }
+
+    fun extractNonCommonWords(
+        text: String,
+        commonWords: Set<String> = DEFAULT_COMMON_WORDS
+    ): Set<String> {
         return text.lowercase()
             .split(Regex("[^a-zA-Z0-9]+"))
-            .filter { word -> word.length >= 2 && word !in COMMON_WORDS }
+            .filter { word -> word.length >= 2 && word !in commonWords }
             .toSet()
     }
 
@@ -31,12 +43,16 @@ object ReminderMatcher {
      * Checks if a reminder matches the notification content based on non-common word matching
      * or substring inclusion.
      */
-    fun matches(reminder: String, notificationContent: String): Boolean {
+    fun matches(
+        reminder: String,
+        notificationContent: String,
+        commonWords: Set<String> = DEFAULT_COMMON_WORDS
+    ): Boolean {
         val trimmed = reminder.trim()
         if (trimmed.isEmpty()) return false
 
-        val reminderWords = extractNonCommonWords(trimmed)
-        val notificationWords = extractNonCommonWords(notificationContent)
+        val reminderWords = extractNonCommonWords(trimmed, commonWords)
+        val notificationWords = extractNonCommonWords(notificationContent, commonWords)
 
         if (reminderWords.isNotEmpty() && notificationWords.isNotEmpty()) {
             if (reminderWords.any { it in notificationWords }) {

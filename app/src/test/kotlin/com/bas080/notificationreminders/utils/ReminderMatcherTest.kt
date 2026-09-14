@@ -1,5 +1,6 @@
 package com.bas080.notificationreminders.utils
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,11 +16,27 @@ class ReminderMatcherTest {
     }
 
     @Test
+    fun testCustomCommonWordsParsingAndMatching() {
+        val customStr = "de, het, een, van, en, in"
+        val commonWords = ReminderMatcher.parseCommonWords(customStr)
+
+        assertTrue(commonWords.contains("de"))
+        assertTrue(commonWords.contains("het"))
+        assertTrue(commonWords.contains("een"))
+        assertEquals(6, commonWords.size)
+
+        val reminder = "Melk halen in de supermarkt"
+        val notification = "Verse melk in de aanbieding!"
+
+        assertTrue(ReminderMatcher.matches(reminder, notification, commonWords))
+    }
+
+    @Test
     fun testCommonWordsOnlyDoNotMatchUnlessSubstring() {
         val reminder = "and"
         val notification = "This and that"
 
-        // "and" is in COMMON_WORDS, falls back to substring match
+        // "and" is in DEFAULT_COMMON_WORDS, falls back to substring match
         assertTrue(ReminderMatcher.matches(reminder, notification))
     }
 
