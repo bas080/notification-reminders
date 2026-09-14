@@ -14,6 +14,7 @@ import com.bas080.notificationreminders.MainActivity
 import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.utils.ReminderMatcher
+import java.util.concurrent.ConcurrentHashMap
 
 class ReminderNotificationListenerService : NotificationListenerService() {
 
@@ -29,6 +30,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val KEY_TEXT_REPLY = "key_text_reply"
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
+        private const val COOL_DOWN_MS = 10 * 60 * 1000L // 10 minutes cool-down per notification match
+
+        val lastTriggeredMap = ConcurrentHashMap<String, Long>()
 
         fun startService(context: Context) {
             try {
@@ -68,21 +72,37 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         if (sbn == null || sbn.packageName == packageName) return
 
-        val extras = sbn.notification.extras
+        val extras = sbn.notification?.extras ?: return
         val title = extras.getCharSequence("android.title")?.toString() ?: ""
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
         val fullContent = "$title $text"
 
-        checkAndTriggerReminderMatch(fullContent)
+        val sbnKey = sbn.key ?: "${sbn.packageName}_${sbn.id}"
+        checkAndTriggerReminderMatch(fullContent, sbnKey)
     }
 
-    private fun checkAndTriggerReminderMatch(fullContent: String) {
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        super.onNotificationRemoved(sbn)
+        if (sbn == null) return
+        val sbnKey = sbn.key ?: "${sbn.packageName}_${sbn.id}"
+        lastTriggeredMap.keys.removeIf { it.startsWith(sbnKey) }
+    }
+
+    private fun checkAndTriggerReminderMatch(fullContent: String, sbnKey: String) {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+        val now = System.currentTimeMillis()
 
         for (reminder in savedReminders) {
             if (ReminderMatcher.matches(reminder, fullContent)) {
-                postMatchNotification(reminder.trim(), fullContent)
+                val trimmed = reminder.trim()
+                val trackingKey = "${sbnKey}_${trimmed.lowercase()}"
+                val lastTime = lastTriggeredMap[trackingKey] ?: 0L
+
+                if (now - lastTime >= COOL_DOWN_MS) {
+                    lastTriggeredMap[trackingKey] = now
+                    postMatchNotification(trimmed, fullContent)
+                }
                 break
             }
         }
@@ -217,13 +237,12 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
                     android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                } else {
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                }
-                startForeground(NOTIFICATION_ID, notification, serviceType)
+                )
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
