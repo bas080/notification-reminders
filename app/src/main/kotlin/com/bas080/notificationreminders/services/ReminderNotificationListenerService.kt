@@ -20,11 +20,14 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
 
         fun startService(context: Context) {
-            val intent = Intent(context, ReminderNotificationListenerService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                val intent = Intent(context, ReminderNotificationListenerService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (_: Exception) {
             }
         }
     }
@@ -72,41 +75,44 @@ class ReminderNotificationListenerService : NotificationListenerService() {
     }
 
     private fun showStatusNotification() {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val addReminderIntent = Intent(this, MainActivity::class.java).apply {
-            action = ACTION_CREATE_REMINDER
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val addReminderPendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            1,
-            addReminderIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText("Monitoring notifications for active reminders")
-            .setOngoing(true)
-            .setContentIntent(pendingIntent)
-            .addAction(
-                android.R.drawable.ic_input_add,
-                getString(R.string.add_reminder),
-                addReminderPendingIntent
+        try {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
 
-        startForeground(NOTIFICATION_ID, notification)
+            val addReminderIntent = Intent(this, MainActivity::class.java).apply {
+                action = ACTION_CREATE_REMINDER
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            val addReminderPendingIntent: PendingIntent = PendingIntent.getActivity(
+                this,
+                1,
+                addReminderIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Monitoring notifications for active reminders")
+                .setOngoing(true)
+                .setContentIntent(pendingIntent)
+                .addAction(
+                    android.R.drawable.ic_input_add,
+                    getString(R.string.add_reminder),
+                    addReminderPendingIntent
+                )
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
+
+            startForeground(NOTIFICATION_ID, notification)
+        } catch (_: Exception) {
+        }
     }
 }

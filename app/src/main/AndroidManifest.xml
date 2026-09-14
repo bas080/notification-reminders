@@ -21,6 +21,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".CrashReportActivity"
+            android:exported="true">
+        </activity>
+
         <service
             android:name=".services.ReminderNotificationListenerService"
             android:exported="true"

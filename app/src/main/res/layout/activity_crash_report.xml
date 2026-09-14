@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/crash_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="App Crashed"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#D32F2F"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/crash_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The application encountered an unexpected error. Send this crash report to bas080@hotmail.com:"
+        android:textSize="14sp"
+        android:layout_marginBottom="12dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#1E1E1E"
+        android:padding="8dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/crash_stack_trace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_send_report"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send Report" />
+
+    </LinearLayout>
+
+</LinearLayout>
