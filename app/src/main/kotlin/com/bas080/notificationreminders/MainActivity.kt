@@ -15,14 +15,10 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
-import java.io.PrintWriter
-import java.io.StringWriter
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val PREFS_NAME = "crash_prefs"
-        private const val KEY_CRASH_TRACE = "key_crash_trace"
         private const val REPORT_EMAIL = "bas080@hotmail.com"
     }
 
@@ -35,8 +31,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setupCrashHandler()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -52,26 +46,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupCrashHandler() {
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            saveCrashTrace(throwable)
-            defaultHandler?.uncaughtException(thread, throwable)
-        }
-    }
-
-    private fun saveCrashTrace(throwable: Throwable) {
-        val sw = StringWriter()
-        throwable.printStackTrace(PrintWriter(sw))
-        val stackTrace = sw.toString()
-
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_CRASH_TRACE, stackTrace).commit()
-    }
-
     private fun checkAndShowCrashReportDialog() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val crashTrace = prefs.getString(KEY_CRASH_TRACE, null) ?: return
+        val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
+        val crashTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null) ?: return
 
         AlertDialog.Builder(this)
             .setTitle("Application Crash Report")
@@ -88,8 +65,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun clearCrashTrace() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_CRASH_TRACE).apply()
+        val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(NotificationRemindersApplication.KEY_CRASH_TRACE).apply()
     }
 
     private fun sendCrashReportEmail(crashTrace: String) {
