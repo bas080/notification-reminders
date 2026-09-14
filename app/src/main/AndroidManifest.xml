@@ -32,6 +32,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.bas080.notificationreminders.ACTION_CREATE_REMINDER" />
+                <action android:name="com.bas080.notificationreminders.ACTION_DONE_REMINDER" />
             </intent-filter>
         </receiver>
 

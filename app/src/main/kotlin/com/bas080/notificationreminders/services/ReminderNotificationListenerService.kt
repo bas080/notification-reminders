@@ -22,6 +22,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val MATCH_CHANNEL_ID = "notification_reminders_match_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
+        const val ACTION_DONE_REMINDER = "com.bas080.notificationreminders.ACTION_DONE_REMINDER"
+        const val EXTRA_REMINDER_TEXT = "extra_reminder_text"
         const val KEY_TEXT_REPLY = "key_text_reply"
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
@@ -98,12 +100,30 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
+            val doneIntent = Intent(this, CreateReminderReceiver::class.java).apply {
+                action = ACTION_DONE_REMINDER
+                putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
+            }
+            val donePendingIntent = PendingIntent.getBroadcast(
+                this,
+                notificationId,
+                doneIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val doneAction = NotificationCompat.Action.Builder(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Done",
+                donePendingIntent
+            ).build()
+
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle(matchedReminder)
                 .setContentText(content)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
+                .addAction(doneAction)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
