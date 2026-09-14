@@ -28,6 +28,15 @@ A Kotlin Android app that monitors your notifications and intelligently reminds 
 - **Quick Actions**: Swipe, mark done, edit, or delete reminders directly from notifications
 - **History Tracking**: Completed reminders are stored with timestamps (viewing history coming in v2)
 
+## Installation & Google Play Protect
+
+Because the APK releases downloaded directly from GitHub are self-signed (sideloaded), Android's **Google Play Protect** may show a warning dialog when installing (e.g. *"Unrecognized app"* or *"Blocked by Play Protect"*).
+
+### How to Install:
+1. Open the downloaded `.apk` file on your Android device.
+2. When the Google Play Protect prompt appears, tap **"More details"** (or **"Advanced"**).
+3. Tap **"Install anyway"** to complete installation.
+
 ## Tech Stack
 
 - **Language**: Kotlin
