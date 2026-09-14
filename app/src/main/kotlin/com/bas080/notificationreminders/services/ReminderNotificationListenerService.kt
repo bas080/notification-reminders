@@ -13,6 +13,7 @@ import androidx.core.app.RemoteInput
 import com.bas080.notificationreminders.MainActivity
 import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
+import com.bas080.notificationreminders.utils.ReminderMatcher
 
 class ReminderNotificationListenerService : NotificationListenerService() {
 
@@ -71,9 +72,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
 
         for (reminder in savedReminders) {
-            val trimmed = reminder.trim()
-            if (trimmed.isNotEmpty() && fullContent.contains(trimmed, ignoreCase = true)) {
-                postMatchNotification(trimmed, fullContent)
+            if (ReminderMatcher.matches(reminder, fullContent)) {
+                postMatchNotification(reminder.trim(), fullContent)
                 break
             }
         }
