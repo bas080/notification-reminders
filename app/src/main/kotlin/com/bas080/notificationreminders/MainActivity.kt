@@ -16,13 +16,25 @@ import androidx.core.content.ContextCompat
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REPORT_EMAIL = "bas080@hotmail.com"
+        private const val PREFS_REMINDERS = "reminders_prefs"
+        private const val KEY_REMINDERS = "key_reminders_list"
     }
 
     private lateinit var binding: ActivityMainBinding
+    private val remindersList = mutableListOf<String>()
+    private lateinit var adapter: RemindersAdapter
 
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
@@ -35,6 +47,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupRecyclerView()
+        loadReminders()
+
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
 
@@ -43,6 +58,29 @@ class MainActivity : AppCompatActivity() {
         }
 
         handleIntent(intent)
+    }
+
+    private fun setupRecyclerView() {
+        adapter = RemindersAdapter(
+            remindersList,
+            onEdit = { position, oldText -> showEditReminderDialog(position, oldText) },
+            onDelete = { position -> deleteReminder(position) }
+        )
+        binding.remindersList.layoutManager = LinearLayoutManager(this)
+        binding.remindersList.adapter = adapter
+    }
+
+    private fun loadReminders() {
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+        remindersList.clear()
+        remindersList.addAll(savedSet)
+        adapter.notifyDataSetChanged()
+    }
+
+    private fun saveRemindersToPrefs() {
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        prefs.edit().putStringSet(KEY_REMINDERS, remindersList.toSet()).apply()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -89,7 +127,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveReminder(reminderText: String) {
-        // Save reminder logic
+        remindersList.add(reminderText)
+        saveRemindersToPrefs()
+        adapter.notifyItemInserted(remindersList.size - 1)
+    }
+
+    private fun deleteReminder(position: Int) {
+        if (position in remindersList.indices) {
+            remindersList.removeAt(position)
+            saveRemindersToPrefs()
+            adapter.notifyItemRemoved(position)
+        }
+    }
+
+    private fun showEditReminderDialog(position: Int, oldText: String) {
+        val inputEditText = android.widget.EditText(this).apply {
+            setText(oldText)
+            hint = getString(R.string.enter_reminder_text)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val margin = (16 * resources.displayMetrics.density).toInt()
+            val params = android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(margin, margin / 2, margin, margin / 2)
+            layoutParams = params
+            addView(inputEditText)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.edit_reminder)
+            .setView(container)
+            .setPositiveButton("Save") { dialog, _ ->
+                val newText = inputEditText.text.toString().trim()
+                if (newText.isNotEmpty() && position in remindersList.indices) {
+                    remindersList[position] = newText
+                    saveRemindersToPrefs()
+                    adapter.notifyItemChanged(position)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     override fun onResume() {
@@ -103,18 +185,12 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
         val crashTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null) ?: return
 
-        AlertDialog.Builder(this)
-            .setTitle("Application Crash Report")
-            .setMessage("The app crashed during its previous run. Would you like to send a crash report to bas080@hotmail.com?")
-            .setPositiveButton("Send Report") { _, _ ->
-                sendCrashReportEmail(crashTrace)
-                clearCrashTrace()
-            }
-            .setNegativeButton("Dismiss") { _, _ ->
-                clearCrashTrace()
-            }
-            .setCancelable(false)
-            .show()
+        clearCrashTrace()
+
+        val intent = Intent(this, CrashReportActivity::class.java).apply {
+            putExtra(CrashReportActivity.EXTRA_CRASH_TRACE, crashTrace)
+        }
+        startActivity(intent)
     }
 
     private fun clearCrashTrace() {
@@ -177,6 +253,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startReminderService() {
-        ReminderNotificationListenerService.startService(this)
+        try {
+            ReminderNotificationListenerService.startService(this)
+        } catch (_: Exception) {
+        }
     }
+}
+
+class RemindersAdapter(
+    private val items: List<String>,
+    private val onEdit: (Int, String) -> Unit,
+    private val onDelete: (Int) -> Unit
+) : RecyclerView.Adapter<RemindersAdapter.ViewHolder>() {
+
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val reminderText: TextView = view.findViewById(R.id.reminder_text)
+        val btnEdit: Button = view.findViewById(R.id.btn_edit)
+        val btnDelete: Button = view.findViewById(R.id.btn_delete)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_reminder, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = items[position]
+        holder.reminderText.text = item
+        holder.btnEdit.setOnClickListener { onEdit(holder.bindingAdapterPosition, item) }
+        holder.btnDelete.setOnClickListener { onDelete(holder.bindingAdapterPosition) }
+    }
+
+    override fun getItemCount(): Int = items.size
 }
