@@ -150,6 +150,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentIntent(pendingIntent)
                 .addAction(doneAction)
                 .setGroup(GROUP_KEY_REMINDERS)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
@@ -170,6 +171,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setAutoCancel(true)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
@@ -260,6 +262,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentIntent(pendingIntent)
                 .addAction(addAction)
                 .setGroup(GROUP_KEY_REMINDERS)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
