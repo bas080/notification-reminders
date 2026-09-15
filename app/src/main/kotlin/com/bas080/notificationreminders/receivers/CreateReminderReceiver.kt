@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.RemoteInput
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
+import com.bas080.notificationreminders.utils.AppLogger
 
 class CreateReminderReceiver : BroadcastReceiver() {
 
@@ -15,6 +16,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        AppLogger.log(context, "CreateReminderReceiver", "onReceive action: ${intent.action}")
         when (intent.action) {
             ReminderNotificationListenerService.ACTION_CREATE_REMINDER -> {
                 val results = RemoteInput.getResultsFromIntent(intent)
@@ -26,6 +28,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                         savedSet.add(reminderText)
                         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
+                        AppLogger.log(context, "CreateReminderReceiver", "Inline reminder created via RemoteInput")
                         ReminderNotificationListenerService.startService(context)
                     }
                 }
@@ -41,6 +44,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(notificationId)
+                    AppLogger.log(context, "CreateReminderReceiver", "Reminder marked done and notification $notificationId cancelled")
                 }
             }
         }

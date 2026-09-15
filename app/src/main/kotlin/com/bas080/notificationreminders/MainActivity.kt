@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLogger.log(this, "MainActivity", "MainActivity onCreate")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -67,16 +68,19 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnClearLogs.setOnClickListener {
             AppLogger.clearLogs(this)
+            AppLogger.log(this, "MainActivity", "Logs cleared by user")
             loadLogs()
         }
     }
 
     private fun showRemindersView() {
+        AppLogger.log(this, "MainActivity", "Navigated to Reminders view")
         binding.remindersContainer.visibility = View.VISIBLE
         binding.logsContainer.visibility = View.GONE
     }
 
     private fun showLogsView() {
+        AppLogger.log(this, "MainActivity", "Navigated to Logs view")
         binding.remindersContainer.visibility = View.GONE
         binding.logsContainer.visibility = View.VISIBLE
         loadLogs()
@@ -94,6 +98,7 @@ class MainActivity : AppCompatActivity() {
                 activeReminders.add(newReminder)
                 saveRemindersToPrefs()
                 adapter.notifyDataSetChanged()
+                AppLogger.log(this, "MainActivity", "Added new reminder (total count: ${activeReminders.size})")
             },
             onUpdateReminder = { index, updatedText ->
                 if (index in activeReminders.indices) {
@@ -121,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                     activeReminders.removeAt(index)
                     saveRemindersToPrefs()
                     adapter.notifyDataSetChanged()
+                    AppLogger.log(this, "MainActivity", "Deleted reminder at index $index (total count: ${activeReminders.size})")
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -155,6 +161,7 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
         val crashTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null) ?: return
 
+        AppLogger.log(this, "MainActivity", "Uncaught crash trace detected, launching CrashReportActivity")
         clearCrashTrace()
 
         val intent = Intent(this, CrashReportActivity::class.java).apply {
@@ -196,10 +203,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNotificationListenerDialog() {
+        AppLogger.log(this, "MainActivity", "Showing notification listener permission dialog")
         AlertDialog.Builder(this)
             .setTitle(R.string.app_name)
             .setMessage("Notification Reminders requires Notification Listener Access to monitor notifications and trigger your reminders.")
             .setPositiveButton("Enable") { _, _ ->
+                AppLogger.log(this, "MainActivity", "User agreed to open notification listener settings")
                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                 startActivity(intent)
             }
@@ -209,8 +218,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun startReminderService() {
         try {
+            AppLogger.log(this, "MainActivity", "Starting ReminderNotificationListenerService")
             ReminderNotificationListenerService.startService(this)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLogger.log(this, "MainActivity", "Failed to start ReminderNotificationListenerService: ${e.message}")
         }
     }
 }

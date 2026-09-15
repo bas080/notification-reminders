@@ -13,6 +13,7 @@ import androidx.core.app.RemoteInput
 import com.bas080.notificationreminders.MainActivity
 import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
+import com.bas080.notificationreminders.utils.AppLogger
 import com.bas080.notificationreminders.utils.ReminderMatcher
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,7 +43,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 } else {
                     context.startService(intent)
                 }
-            } catch (_: Exception) {
+                AppLogger.log(context, "ReminderService", "startService requested")
+            } catch (e: Exception) {
+                AppLogger.log(context, "ReminderService", "startService failed: ${e.message}")
             }
         }
 
@@ -54,23 +57,28 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        AppLogger.log(this, "ReminderService", "ReminderNotificationListenerService onCreate")
         createNotificationChannel()
         showStatusNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        AppLogger.log(this, "ReminderService", "onStartCommand received")
         showStatusNotification()
         return START_STICKY
     }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        AppLogger.log(this, "ReminderService", "Notification listener connected")
         showStatusNotification()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null || sbn.packageName == packageName) return
+
+        AppLogger.log(this, "ReminderService", "Notification posted from package: ${sbn.packageName}")
 
         val extras = sbn.notification?.extras ?: return
         val title = extras.getCharSequence("android.title")?.toString() ?: ""
@@ -84,6 +92,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
         if (sbn == null) return
+        AppLogger.log(this, "ReminderService", "Notification removed for package: ${sbn.packageName}")
         val sbnKey = sbn.key ?: "${sbn.packageName}_${sbn.id}"
         lastTriggeredMap.keys.removeIf { it.startsWith(sbnKey) }
     }
@@ -103,10 +112,12 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 val lastTime = lastTriggeredMap[trackingKey] ?: 0L
 
                 if (now - lastTime >= COOL_DOWN_MS) {
+                    AppLogger.log(this, "ReminderService", "Reminder match found! Triggering notification.")
                     lastTriggeredMap[trackingKey] = now
                     postMatchNotification(trimmed, fullContent)
+                } else {
+                    AppLogger.log(this, "ReminderService", "Reminder match found, but skipped due to cool-down timer.")
                 }
-                break
             }
         }
     }
@@ -178,7 +189,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(notificationId, matchNotification)
             notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
-        } catch (_: Exception) {
+            AppLogger.log(this, "ReminderService", "Posted match notification with ID: $notificationId")
+        } catch (e: Exception) {
+            AppLogger.log(this, "ReminderService", "Failed to post match notification: ${e.message}")
         }
     }
 
@@ -275,7 +288,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
-        } catch (_: Exception) {
+            AppLogger.log(this, "ReminderService", "Status notification updated ($statusText)")
+        } catch (e: Exception) {
+            AppLogger.log(this, "ReminderService", "Failed to show status notification: ${e.message}")
         }
     }
 }
