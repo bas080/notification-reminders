@@ -118,7 +118,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 } else {
                     AppLogger.log(this, "ReminderService", "Reminder match found, but skipped due to cool-down timer.")
                 }
-                break
             }
         }
     }
