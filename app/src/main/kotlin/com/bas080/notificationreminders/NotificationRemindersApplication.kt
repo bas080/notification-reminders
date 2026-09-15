@@ -3,6 +3,7 @@ package com.bas080.notificationreminders
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import com.bas080.notificationreminders.utils.AppLogger
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -15,12 +16,14 @@ class NotificationRemindersApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AppLogger.log(this, "Application", "NotificationRemindersApplication created")
         setupGlobalCrashHandler()
     }
 
     private fun setupGlobalCrashHandler() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            AppLogger.log(this, "Application", "Uncaught exception on thread ${thread.name}: ${throwable.message}")
             saveCrashTrace(throwable)
             defaultHandler?.uncaughtException(thread, throwable)
         }
