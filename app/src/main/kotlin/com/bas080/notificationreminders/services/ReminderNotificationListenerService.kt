@@ -153,9 +153,21 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
+            val summaryIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            val summaryPendingIntent: PendingIntent = PendingIntent.getActivity(
+                this,
+                SUMMARY_NOTIFICATION_ID,
+                summaryIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
             val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
+                .setContentIntent(summaryPendingIntent)
+                .setAutoCancel(true)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
