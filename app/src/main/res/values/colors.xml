@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_color">@android:color/holo_blue_dark</color>
-    <color name="primary_dark_color">@android:color/background_dark</color>
-    <color name="secondary_color">@android:color/holo_blue_light</color>
-    <color name="accent">@android:color/holo_blue_light</color>
-    <color name="accent_danger">@android:color/holo_red_light</color>
+    <color name="bg_dark">#0D0D0D</color>
+    <color name="bg_surface">#1A1A1A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8E8E93</color>
+    <color name="text_muted">#636366</color>
+    <color name="accent">#00E5FF</color>
+    <color name="accent_danger">#FF5252</color>
+    <color name="divider_color">#2C2C2E</color>
+    <color name="primary_color">#0D0D0D</color>
+    <color name="primary_dark_color">#000000</color>
+    <color name="secondary_color">#00E5FF</color>
 </resources>
