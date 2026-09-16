@@ -91,31 +91,19 @@ class MainActivity : AppCompatActivity() {
         binding.remindersContainer.visibility = View.VISIBLE
         binding.logsContainer.visibility = View.GONE
         binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.BOLD)
-        binding.btnNavReminders.setTextColor(getSystemTextColorPrimary())
+        binding.btnNavReminders.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
         binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.NORMAL)
-        binding.btnNavLogs.setTextColor(getSystemTextColorSecondary())
+        binding.btnNavLogs.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
     }
 
     private fun showLogsView() {
         binding.remindersContainer.visibility = View.GONE
         binding.logsContainer.visibility = View.VISIBLE
         binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.NORMAL)
-        binding.btnNavReminders.setTextColor(getSystemTextColorSecondary())
+        binding.btnNavReminders.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
         binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.BOLD)
-        binding.btnNavLogs.setTextColor(getSystemTextColorPrimary())
+        binding.btnNavLogs.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
         loadLogs()
-    }
-
-    private fun getSystemTextColorPrimary(): Int {
-        val typedValue = android.util.TypedValue()
-        theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
-        return typedValue.data
-    }
-
-    private fun getSystemTextColorSecondary(): Int {
-        val typedValue = android.util.TypedValue()
-        theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
-        return typedValue.data
     }
 
     private fun loadLogs() {

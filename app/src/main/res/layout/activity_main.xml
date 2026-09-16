@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground"
+    android:background="@color/bg_dark"
     android:padding="16dp"
     tools:context=".MainActivity">
 
@@ -24,7 +24,7 @@
             android:text="REMINDERS"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="@color/text_primary"
             android:letterSpacing="0.1"
             android:gravity="center"
             android:padding="12dp"
@@ -35,7 +35,7 @@
         <View
             android:layout_width="1dp"
             android:layout_height="16dp"
-            android:background="?android:attr/textColorHint" />
+            android:background="@color/divider_color" />
 
         <TextView
             android:id="@+id/btn_nav_logs"
@@ -45,7 +45,7 @@
             android:text="LOGS"
             android:textSize="14sp"
             android:textStyle="normal"
-            android:textColor="?android:attr/textColorSecondary"
+            android:textColor="@color/text_secondary"
             android:letterSpacing="0.1"
             android:gravity="center"
             android:padding="12dp"
@@ -58,7 +58,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="?android:attr/textColorHint"
+        android:background="@color/divider_color"
         android:layout_marginBottom="12dp" />
 
     <!-- Reminders Section -->
@@ -110,14 +110,14 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?android:attr/colorBackground"
+            android:background="@color/bg_surface"
             android:padding="12dp">
 
             <TextView
                 android:id="@+id/txt_logs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@color/text_primary"
                 android:textSize="12sp"
                 android:fontFamily="monospace"
                 android:textIsSelectable="true"
