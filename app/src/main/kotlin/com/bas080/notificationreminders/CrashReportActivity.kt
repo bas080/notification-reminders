@@ -20,7 +20,6 @@ class CrashReportActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppLogger.log(this, "CrashReportActivity", "CrashReportActivity onCreate")
         setContentView(R.layout.activity_crash_report)
 
         val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
@@ -34,7 +33,6 @@ class CrashReportActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_send_report).setOnClickListener {
             val includeLogs = cbIncludeLogs.isChecked
-            AppLogger.log(this, "CrashReportActivity", "User requested sending crash report email (includeLogs=$includeLogs)")
             sendEmail(crashTrace, includeLogs)
         }
     }
@@ -58,9 +56,7 @@ class CrashReportActivity : AppCompatActivity() {
         }
         try {
             startActivity(Intent.createChooser(intent, "Send Crash Report"))
-            AppLogger.log(this, "CrashReportActivity", "Crash report email intent launched")
-        } catch (e: Exception) {
-            AppLogger.log(this, "CrashReportActivity", "Failed to launch crash report email intent: ${e.message}")
+        } catch (_: Exception) {
         }
     }
 }
