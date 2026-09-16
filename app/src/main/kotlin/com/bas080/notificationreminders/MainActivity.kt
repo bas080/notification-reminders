@@ -20,6 +20,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
@@ -57,6 +60,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
+        markAsButtonAccessibility(binding.btnNavReminders)
+        markAsButtonAccessibility(binding.btnNavLogs)
+        markAsButtonAccessibility(binding.btnClearLogs)
+
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
         }
@@ -69,6 +76,15 @@ class MainActivity : AppCompatActivity() {
             AppLogger.clearLogs(this)
             loadLogs()
         }
+    }
+
+    private fun markAsButtonAccessibility(view: View) {
+        ViewCompat.setAccessibilityDelegate(view, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        })
     }
 
     private fun showRemindersView() {
@@ -269,6 +285,13 @@ class RemindersAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.textWatcher?.let { holder.reminderInput.removeTextChangedListener(it) }
+
+        ViewCompat.setAccessibilityDelegate(holder.btnAction, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        })
 
         val viewType = getItemViewType(position)
 
