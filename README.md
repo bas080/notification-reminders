@@ -1,5 +1,8 @@
 # notification-reminders
 
+[![Stand with Palestine](https://img.shields.io/badge/🇵🇸%20%20Stand%20With%20Palestine-007A3D?style=flat-square&color=brightgreen)](https://www.islamic-relief.org.uk/giving/appeals/palestine/)
+[![Donate via Liberapay](https://img.shields.io/badge/Donate-Liberapay-F6C915?style=flat-square&logo=liberapay&logoColor=black)](https://liberapay.com/bas080)
+
 A Kotlin Android app that monitors your notifications and intelligently reminds you about related to-do items. When you receive a notification containing words from your reminders, the app creates a new notification surfacing the matching reminder so you can take action.
 
 ## How It Works
