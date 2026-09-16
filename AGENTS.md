@@ -149,3 +149,4 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 - Package naming: `com.bas080.notificationreminders`.
 - Use ViewBinding for layout interactions.
 - Avoid committing generated build outputs (`build/`, `.gradle/`).
+- Any change to the spec requires the adding or updating of tests.

@@ -168,7 +168,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
                 .setContentIntent(summaryPendingIntent)
-                .setAutoCancel(true)
+                .setAutoCancel(false)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
