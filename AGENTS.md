@@ -143,6 +143,12 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 
 ---
 
+## Documentation & README Guidelines
+
+- **User-Focused Character of `README.md`**: The `README.md` file must remain end-user focused, high-level, user-centric, and non-technical. It explains features, installation, and user workflow rather than developer-facing technical details or internal implementation specs.
+
+---
+
 ## Code Style & Conventions
 
 - Follow standard Kotlin coding conventions.
