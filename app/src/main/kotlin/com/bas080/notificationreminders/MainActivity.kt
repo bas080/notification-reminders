@@ -74,12 +74,32 @@ class MainActivity : AppCompatActivity() {
     private fun showRemindersView() {
         binding.remindersContainer.visibility = View.VISIBLE
         binding.logsContainer.visibility = View.GONE
+        binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.BOLD)
+        binding.btnNavReminders.setTextColor(getSystemTextColorPrimary())
+        binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.NORMAL)
+        binding.btnNavLogs.setTextColor(getSystemTextColorSecondary())
     }
 
     private fun showLogsView() {
         binding.remindersContainer.visibility = View.GONE
         binding.logsContainer.visibility = View.VISIBLE
+        binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.NORMAL)
+        binding.btnNavReminders.setTextColor(getSystemTextColorSecondary())
+        binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.BOLD)
+        binding.btnNavLogs.setTextColor(getSystemTextColorPrimary())
         loadLogs()
+    }
+
+    private fun getSystemTextColorPrimary(): Int {
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+        return typedValue.data
+    }
+
+    private fun getSystemTextColorSecondary(): Int {
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
+        return typedValue.data
     }
 
     private fun loadLogs() {
@@ -229,12 +249,12 @@ class RemindersAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
-        val btnAction: Button = view.findViewById(R.id.btn_action)
+        val btnAction: android.widget.TextView = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (position == 0 || position == activeReminders.size + 1) {
+        return if (position == 0) {
             TYPE_CREATE_INPUT
         } else {
             TYPE_ACTIVE_REMINDER
@@ -256,6 +276,7 @@ class RemindersAdapter(
             holder.reminderInput.setText("")
             holder.reminderInput.hint = "Add a new reminder..."
             holder.btnAction.text = "+"
+            holder.btnAction.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.accent))
 
             val submitAction = {
                 val text = holder.reminderInput.text.toString().trim()
@@ -282,6 +303,7 @@ class RemindersAdapter(
             holder.reminderInput.hint = "Reminder"
             holder.reminderInput.setText(activeReminders[reminderIndex])
             holder.btnAction.text = "✕"
+            holder.btnAction.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.accent_danger))
 
             val watcher = object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -312,5 +334,5 @@ class RemindersAdapter(
         }
     }
 
-    override fun getItemCount(): Int = activeReminders.size + 2
+    override fun getItemCount(): Int = activeReminders.size + 1
 }

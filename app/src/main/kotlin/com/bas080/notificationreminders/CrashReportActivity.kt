@@ -31,7 +31,7 @@ class CrashReportActivity : AppCompatActivity() {
 
         val cbIncludeLogs = findViewById<CheckBox>(R.id.cb_include_logs)
 
-        findViewById<Button>(R.id.btn_send_report).setOnClickListener {
+        findViewById<TextView>(R.id.btn_send_report).setOnClickListener {
             val includeLogs = cbIncludeLogs.isChecked
             sendEmail(crashTrace, includeLogs)
         }

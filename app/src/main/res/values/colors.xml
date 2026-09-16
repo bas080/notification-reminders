@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="primary_color">@android:color/holo_blue_dark</color>
-    <color name="primary_dark_color">@android:color/holo_blue_dark</color>
+    <color name="primary_dark_color">@android:color/background_dark</color>
     <color name="secondary_color">@android:color/holo_blue_light</color>
+    <color name="accent">@android:color/holo_blue_light</color>
+    <color name="accent_danger">@android:color/holo_red_light</color>
 </resources>

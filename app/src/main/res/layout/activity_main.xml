@@ -4,33 +4,62 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp"
+    android:background="?android:attr/colorBackground"
+    android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Navigation Header -->
+    <!-- Minimal Text Navigation Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="8dp">
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
 
-        <Button
+        <TextView
             android:id="@+id/btn_nav_reminders"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Reminders" />
+            android:text="REMINDERS"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:letterSpacing="0.1"
+            android:gravity="center"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
-        <Button
+        <View
+            android:layout_width="1dp"
+            android:layout_height="16dp"
+            android:background="?android:attr/textColorHint" />
+
+        <TextView
             android:id="@+id/btn_nav_logs"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Logs"
-            android:layout_marginStart="8dp" />
+            android:text="LOGS"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:textColor="?android:attr/textColorSecondary"
+            android:letterSpacing="0.1"
+            android:gravity="center"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/textColorHint"
+        android:layout_marginBottom="12dp" />
 
     <!-- Reminders Section -->
     <LinearLayout
@@ -62,28 +91,37 @@
             android:gravity="end"
             android:layout_marginBottom="8dp">
 
-            <Button
+            <TextView
                 android:id="@+id/btn_clear_logs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Clear Logs" />
+                android:text="CLEAR LOGS"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent_danger"
+                android:letterSpacing="0.1"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
 
         </LinearLayout>
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#111111"
-            android:padding="8dp">
+            android:background="?android:attr/colorBackground"
+            android:padding="12dp">
 
             <TextView
                 android:id="@+id/txt_logs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#00FF00"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="12sp"
-                android:typeface="monospace"
-                android:textIsSelectable="true" />
+                android:fontFamily="monospace"
+                android:textIsSelectable="true"
+                android:lineSpacingExtra="3dp" />
 
         </ScrollView>
 
