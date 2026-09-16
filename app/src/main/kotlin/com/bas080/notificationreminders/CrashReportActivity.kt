@@ -9,6 +9,9 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.bas080.notificationreminders.utils.AppLogger
 
 class CrashReportActivity : AppCompatActivity() {
@@ -31,7 +34,14 @@ class CrashReportActivity : AppCompatActivity() {
 
         val cbIncludeLogs = findViewById<CheckBox>(R.id.cb_include_logs)
 
-        findViewById<TextView>(R.id.btn_send_report).setOnClickListener {
+        val btnSendReport = findViewById<TextView>(R.id.btn_send_report)
+        ViewCompat.setAccessibilityDelegate(btnSendReport, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: android.view.View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        })
+        btnSendReport.setOnClickListener {
             val includeLogs = cbIncludeLogs.isChecked
             sendEmail(crashTrace, includeLogs)
         }
