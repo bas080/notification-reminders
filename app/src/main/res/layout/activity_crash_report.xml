@@ -3,41 +3,45 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="?android:attr/colorBackground"
+    android:padding="20dp">
 
     <TextView
         android:id="@+id/crash_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="App Crashed"
-        android:textSize="22sp"
+        android:text="APPLICATION ERROR"
+        android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="#D32F2F"
-        android:layout_marginBottom="8dp" />
+        android:letterSpacing="0.1"
+        android:textColor="@color/accent_danger"
+        android:layout_marginBottom="12dp" />
 
     <TextView
         android:id="@+id/crash_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="The application encountered an unexpected error. Send this crash report to bas080@hotmail.com:"
-        android:textSize="14sp"
-        android:layout_marginBottom="12dp" />
+        android:text="The application encountered an unexpected error. Send this report to bas080@hotmail.com:"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="16dp" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#1E1E1E"
-        android:padding="8dp"
+        android:background="?android:attr/colorBackground"
+        android:padding="12dp"
         android:layout_marginBottom="16dp">
 
         <TextView
             android:id="@+id/crash_stack_trace"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:fontFamily="monospace" />
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:lineSpacingExtra="2dp" />
     </ScrollView>
 
     <CheckBox
@@ -45,8 +49,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Include application log file"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp"
         android:checked="true"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="16dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -54,11 +60,19 @@
         android:orientation="horizontal"
         android:gravity="end">
 
-        <Button
+        <TextView
             android:id="@+id/btn_send_report"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send Report" />
+            android:text="SEND REPORT"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="@color/accent"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
     </LinearLayout>
 

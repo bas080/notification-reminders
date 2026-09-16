@@ -134,6 +134,15 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 
 ---
 
+## Minimal Text Interface Design Guidelines
+
+- **Typography-Driven UI**: The interface uses a clean, minimal text design where hierarchy is established using font weight (`bold` vs `normal`), letter spacing (`letterSpacing="0.1"`), text size, and contrast rather than heavy button borders, background shadows, or graphic cards.
+- **System Colors & High Contrast**: Uses Android system color attributes (`?android:attr/colorBackground`, `?android:attr/textColorPrimary`, `?android:attr/textColorSecondary`, `@android:color/holo_blue_light`, etc.) to guarantee optimal foreground-to-background text contrast and seamless dark/light system theme support.
+- **Single Top Input Architecture**: The main Reminders UI features a single create input row fixed at the top of the list (position 0 in `RemindersAdapter`). Do not re-add secondary create inputs at the bottom of the list.
+- **Text-Based Actions**: Navigation tabs, clear logs controls, and list item actions (e.g. `+` create and `✕` remove) utilize clean text elements with active/muted visual states.
+
+---
+
 ## Code Style & Conventions
 
 - Follow standard Kotlin coding conventions.

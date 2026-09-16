@@ -4,7 +4,9 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="8dp">
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="4dp"
+    android:layout_marginBottom="4dp">
 
     <EditText
         android:id="@+id/reminder_input"
@@ -12,18 +14,28 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:hint="@string/enter_reminder_text"
-        android:textSize="16sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textColorHint="?android:attr/textColorHint"
+        android:textSize="15sp"
         android:inputType="textCapSentences"
         android:imeOptions="actionDone"
-        android:padding="8dp" />
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="8dp"
+        android:background="@null" />
 
-    <Button
+    <TextView
         android:id="@+id/btn_action"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="+"
-        android:textSize="16sp"
-        android:padding="0dp"
-        android:layout_marginStart="4dp" />
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/accent"
+        android:gravity="center"
+        android:padding="10dp"
+        android:minWidth="40dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless" />
 
 </LinearLayout>

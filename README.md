@@ -23,6 +23,8 @@ A Kotlin Android app that monitors your notifications and intelligently reminds 
 
 ## Features
 
+- **Minimal Text Interface**: Clean, typography-driven UI using system colors for high contrast, distinct text weights, and elegant text navigation
+- **Single Top Input**: A single, clean input field at the top of the main UI for adding new reminders
 - **Persistent Reminders**: Reminders are stored and continuously monitored across all notifications
 - **Smart Word Matching**: Intelligently matches reminder text against notification content while avoiding false positives
 - **Quick Actions**: Swipe, mark done, edit, or delete reminders directly from notifications
