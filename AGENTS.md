@@ -112,6 +112,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 1. **Pull Request Pushes**: Creates a pre-release tagged `pr-<PR_NUMBER>-<SHA>` named `<PR Title> (#<PR Number>)` with signed APK binaries attached.
 2. **Push to `master`**: Creates a pre-release tagged `master-<SHA>` named `<Commit Title> (<Short Hash>)` with signed APK binaries attached.
 3. **Version Tag Push (`v*`)**: Creates a full release named `<Tag Name>` with signed APK binaries attached.
+4. **Manual Workflow Trigger (`workflow_dispatch`)**: Accepts a SemVer tag input (e.g. `v1.1.0`), updates `versionName` in `app/build.gradle.kts`, commits and tags the repository, and creates a full release (not a prerelease) named `<Tag Name>` with signed APK binaries attached.
 
 ---
 

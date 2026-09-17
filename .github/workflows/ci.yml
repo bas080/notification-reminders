@@ -8,6 +8,13 @@ on:
       - master
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'SemVer tag for release (e.g. v1.1.0)'
+        required: true
+        default: 'v1.1.0'
+        type: string
 
 permissions:
   contents: write
@@ -28,6 +35,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
+
+      - name: Update App Version & Create Tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          RAW_INPUT="${{ inputs.tag_name }}"
+          if [[ "$RAW_INPUT" =~ ^v ]]; then
+            TAG_NAME="$RAW_INPUT"
+            VERSION_NAME="${RAW_INPUT#v}"
+          else
+            TAG_NAME="v${RAW_INPUT}"
+            VERSION_NAME="$RAW_INPUT"
+          fi
+
+          echo "Updating versionName in app/build.gradle.kts to ${VERSION_NAME}"
+          sed -i "s/versionName = \".*\"/versionName = \"${VERSION_NAME}\"/" app/build.gradle.kts
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git commit -am "Update app version to ${VERSION_NAME}" || true
+          git tag -f "${TAG_NAME}"
+          git push origin HEAD:master --tags || git push origin "${TAG_NAME}" || true
 
       - name: Run Tests
         run: |
@@ -54,6 +83,15 @@ jobs:
             RELEASE_NAME="${PR_TITLE} (#${PR_NUMBER})"
             TAG_NAME="pr-${PR_NUMBER}-${GITHUB_SHA::7}"
             PRERELEASE="true"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RAW_INPUT="${{ inputs.tag_name }}"
+            if [[ "$RAW_INPUT" =~ ^v ]]; then
+              TAG_NAME="$RAW_INPUT"
+            else
+              TAG_NAME="v${RAW_INPUT}"
+            fi
+            RELEASE_NAME="${TAG_NAME}"
+            PRERELEASE="false"
           elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
             RELEASE_NAME="${GITHUB_REF#refs/tags/}"
             TAG_NAME="${RELEASE_NAME}"
