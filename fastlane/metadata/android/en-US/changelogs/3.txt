@@ -1,0 +1,1 @@
+Version 0.0.1 release featuring smart notification monitoring, quick-add reminder actions, grouped alerts, and in-app activity logging.

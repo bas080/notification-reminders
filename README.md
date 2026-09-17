@@ -2,6 +2,7 @@
 
 [![Stand with Palestine](https://img.shields.io/badge/🇵🇸%20%20Stand%20With%20Palestine-007A3D?style=flat-square&color=brightgreen)](https://www.islamic-relief.org.uk/giving/appeals/palestine/)
 [![Donate via Liberapay](https://img.shields.io/badge/Donate-Liberapay-F6C915?style=flat-square&logo=liberapay&logoColor=black)](https://liberapay.com/bas080)
+[![Available on IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.bas080.notificationreminders&label=IzzyOnDroid&cacheSeconds=86400)](https://apt.izzysoft.de/fdroid/index/apk/com.bas080.notificationreminders)
 
 A simple Android application that keeps track of your reminders and alerts you whenever a relevant notification arrives on your device.
 
@@ -26,6 +27,13 @@ A simple Android application that keeps track of your reminders and alerts you w
 - **Grouped Notification Alerts**: Matched reminders are neatly organized together in your notification center.
 - **In-App Activity Logs**: Easily view app activity logs directly inside the app.
 - **Automatic Crash Reporting**: Includes a simple optional crash report helper if something unexpected occurs.
+
+## Availability & IzzyOnDroid
+
+This repository is fully configured and compliant with **IzzyOnDroid** F-Droid repository criteria:
+- **Fastlane Metadata**: Structured app titles, short and full descriptions, graphics, and changelogs maintained under `fastlane/metadata/android/en-US/`.
+- **Open Source & Privacy-First**: 100% free software under the MIT License with zero ads, analytics, or trackers.
+- **Signed Release Binaries**: Automated CI release workflow attaching signed release APKs (`app-release.apk`) to version tags (`v*`).
 
 ## Installation & Google Play Protect
 
