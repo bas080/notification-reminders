@@ -114,25 +114,21 @@ class ReminderNotificationListenerServiceTest {
             "Matched notification should not contain matched notification content in text",
             matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
         )
+    }
 
-        val summaryIntent = Shadows.shadowOf(summaryNotif.contentIntent).savedIntent
-        assertTrue(
-            "Summary notification intent should contain EXTRA_FOCUS_INPUT extra",
-            summaryIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
-        )
+    @Test
+    fun testStatusNotificationContentTextAndNoContentIntent() {
+        val context = RuntimeEnvironment.getApplication()
+        Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
-        val matchedIntent = Shadows.shadowOf(matchedNotif.contentIntent).savedIntent
-        assertTrue(
-            "Matched notification intent should contain EXTRA_FOCUS_INPUT extra",
-            matchedIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
-        )
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
 
         val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
         assertNotNull("Status notification should be posted", statusNotif)
-        val statusIntent = Shadows.shadowOf(statusNotif.contentIntent).savedIntent
-        assertTrue(
-            "Status notification intent should contain EXTRA_FOCUS_INPUT extra",
-            statusIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
-        )
+
+        val text = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        assertTrue("Status notification text should hint about tapping '+' to add", text.contains("Tap '+' to add"))
+        assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
     }
 }
