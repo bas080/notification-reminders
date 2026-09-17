@@ -49,7 +49,7 @@ class CrashReportActivity : AppCompatActivity() {
 
     private fun sendEmail(crashTrace: String, includeLogs: Boolean) {
         val emailBody = StringBuilder().apply {
-            append("App Version: 1.0.0\n")
+            append("App Version: ${BuildConfig.VERSION_NAME}\n")
             append("Device: ${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})\n\n")
             append("Stack Trace:\n")
             append(crashTrace)
