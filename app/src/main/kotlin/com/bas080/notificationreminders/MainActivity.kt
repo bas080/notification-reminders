@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
-        const val EXTRA_FOCUS_INPUT = "extra_focus_input"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -58,35 +57,6 @@ class MainActivity : AppCompatActivity() {
 
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
-
-        handleIntent(intent)
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleIntent(intent)
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(EXTRA_FOCUS_INPUT, false) == true) {
-            focusCreateInput()
-        }
-    }
-
-    private fun focusCreateInput() {
-        showRemindersView()
-        binding.remindersList.post {
-            binding.remindersList.scrollToPosition(0)
-            binding.remindersList.post {
-                val viewHolder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ViewHolder
-                if (viewHolder != null) {
-                    viewHolder.reminderInput.requestFocus()
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                    imm?.showSoftInput(viewHolder.reminderInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-                }
-            }
-        }
     }
 
     private fun setupNavigation() {

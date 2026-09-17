@@ -117,7 +117,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
             }
             val pendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
@@ -156,7 +155,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val summaryIntent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
             }
             val summaryPendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
@@ -217,17 +215,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             } else {
                 "Monitoring $activeCount active reminders"
             }
-
-            val intent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
-            }
-            val pendingIntent: PendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
+            val expandHintText = "$statusText. Tap '+' to add a reminder."
 
             val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
                 .setLabel(getString(R.string.add_reminder))
@@ -259,9 +247,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(statusText)
+                .setContentText(expandHintText)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(expandHintText))
                 .setOngoing(true)
-                .setContentIntent(pendingIntent)
                 .addAction(addAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
