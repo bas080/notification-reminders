@@ -3,8 +3,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Minimal abstract checkmark vector graphic for Done action -->
+    <!-- Angular checkmark using straight lines only -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M9,16.2L4.8,12L3.4,13.4L9,19L21,7L19.6,5.6L9,16.2Z" />
+        android:fillColor="#00E5FF"
+        android:pathData="M9,16.2 L4.8,12 L3.4,13.4 L9,19 L21,7 L19.6,5.6 Z" />
 </vector>

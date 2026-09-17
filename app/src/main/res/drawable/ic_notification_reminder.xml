@@ -3,12 +3,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Minimal abstract notification bell arch -->
+    <!-- Angular minimal notification bell using straight lines only -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,3 C7.58,3 4,6.58 4,11 L4,15.5 L2.5,17 V18.5 H21.5 V17 L20,15.5 V11 C20,6.58 16.42,3 12,3 Z" />
-    <!-- Minimal abstract reminder indicator dot -->
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,3 L17,10 V15 L20,18 H4 L7,15 V10 Z" />
+    <!-- Secondary accent diamond using straight lines only -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,20 C10.62,20 9.5,21.12 9.5,22.5 H14.5 C14.5,21.12 13.38,20 12,20 Z" />
+        android:fillColor="#00E5FF"
+        android:pathData="M12,20 L14.5,22 L12,24 L9.5,22 Z" />
 </vector>
