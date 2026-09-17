@@ -75,9 +75,11 @@ class ReminderNotificationListenerServiceTest {
             putCharSequence("android.title", "Shopping")
             putCharSequence("android.text", "Need to buy milk today")
         }
-        val targetNotification = Notification.Builder(context)
+        @Suppress("DEPRECATION")
+        val targetNotification = Notification.Builder(context, "test_channel")
             .setExtras(extras)
             .build()
+        @Suppress("DEPRECATION")
         val sbn = StatusBarNotification(
             "com.example.otherapp",
             "com.example.otherapp",

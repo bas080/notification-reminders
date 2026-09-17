@@ -44,6 +44,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+        allWarningsAsErrors = true
     }
 
     buildFeatures {
