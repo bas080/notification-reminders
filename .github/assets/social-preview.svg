@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <rect width="1280" height="640" fill="#0D0D0D" />
+  <!-- Abstract Logo Graphic (Outer circle with 3 subtracted inner circles) -->
+  <g transform="translate(140, 120)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M 200,20 C 299.41,20 380,100.59 380,200 C 380,299.41 299.41,380 200,380 C 100.59,380 20,299.41 20,200 C 20,100.59 100.59,20 200,20 Z M 150,86 C 188.66,86 220,117.34 220,156 C 220,194.66 188.66,226 150,226 C 111.34,226 80,194.66 80,156 C 80,117.34 111.34,86 150,86 Z M 253.3,151.1 C 280.91,151.1 303.3,173.49 303.3,201.1 C 303.3,228.71 280.91,251.1 253.3,251.1 C 225.69,251.1 203.3,228.71 203.3,201.1 C 203.3,173.49 225.69,151.1 253.3,151.1 Z M 180,248 C 197.67,248 212,262.33 212,280 C 212,297.67 197.67,312 180,312 C 162.33,312 148,297.67 148,280 C 148,262.33 162.33,248 180,248 Z" />
+  </g>
+  <!-- Typography and branding -->
+  <text x="580" y="270" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF" letter-spacing="1">Notification Reminders</text>
+  <text x="580" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400" fill="#8E8E93">Smart Android notification monitor &amp; reminder alerts</text>
+  <rect x="580" y="370" width="80" height="4" fill="#00E5FF" rx="2" />
+</svg>
