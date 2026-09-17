@@ -117,6 +117,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
             }
             val pendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
@@ -155,6 +156,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val summaryIntent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
             }
             val summaryPendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
@@ -218,6 +220,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(MainActivity.EXTRA_FOCUS_INPUT, true)
             }
             val pendingIntent: PendingIntent = PendingIntent.getActivity(
                 this,
