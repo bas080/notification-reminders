@@ -47,6 +47,12 @@ android {
         allWarningsAsErrors = true
     }
 
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            allWarningsAsErrors = true
+        }
+    }
+
     buildFeatures {
         viewBinding = true
         buildConfig = true
