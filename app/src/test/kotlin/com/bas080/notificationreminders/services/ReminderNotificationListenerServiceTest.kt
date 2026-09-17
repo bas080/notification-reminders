@@ -114,5 +114,25 @@ class ReminderNotificationListenerServiceTest {
             "Matched notification should not contain matched notification content in text",
             matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
         )
+
+        val summaryIntent = Shadows.shadowOf(summaryNotif.contentIntent).savedIntent
+        assertTrue(
+            "Summary notification intent should contain EXTRA_FOCUS_INPUT extra",
+            summaryIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
+        )
+
+        val matchedIntent = Shadows.shadowOf(matchedNotif.contentIntent).savedIntent
+        assertTrue(
+            "Matched notification intent should contain EXTRA_FOCUS_INPUT extra",
+            matchedIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
+        )
+
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Status notification should be posted", statusNotif)
+        val statusIntent = Shadows.shadowOf(statusNotif.contentIntent).savedIntent
+        assertTrue(
+            "Status notification intent should contain EXTRA_FOCUS_INPUT extra",
+            statusIntent.getBooleanExtra(com.bas080.notificationreminders.MainActivity.EXTRA_FOCUS_INPUT, false)
+        )
     }
 }
