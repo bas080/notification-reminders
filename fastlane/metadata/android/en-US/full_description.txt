@@ -1,0 +1,10 @@
+Notification Reminders is a lightweight, open-source Android application that monitors incoming device notifications and intelligently matches them against your custom active reminders.
+
+### Key Features
+- **Smart Notification Monitoring**: Automatically monitors incoming notifications in the background.
+- **Intelligent Keyword Matching**: Case-insensitive word matching that filters out common stop-words and matches keywords anywhere within incoming messages.
+- **Quick Reminder Management**: Easily add reminders directly in the app or quick-add inline straight from your notification shade.
+- **Grouped Reminder Alerts**: Matched reminders are neatly organized together in your notification center with one-tap action to mark complete.
+- **Privacy First & Lightweight**: Free and open source with zero ads, zero analytics, zero trackers, and no external servers.
+- **In-App Activity Logs**: Built-in visual log viewer to inspect application activity anytime.
+- **Dark & Light Mode**: Clean, text-first user interface that seamlessly follows system themes.
