@@ -13,7 +13,6 @@ on:
       tag_name:
         description: 'SemVer tag for release (e.g. v1.1.0)'
         required: true
-        default: 'v1.1.0'
         type: string
 
 permissions:
@@ -50,6 +49,11 @@ jobs:
 
           echo "Updating versionName in app/build.gradle.kts to ${VERSION_NAME}"
           sed -i "s/versionName = \".*\"/versionName = \"${VERSION_NAME}\"/" app/build.gradle.kts
+
+          CURRENT_VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts)
+          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+          echo "Incrementing versionCode from ${CURRENT_VERSION_CODE} to ${NEW_VERSION_CODE}"
+          sed -i "s/versionCode = [0-9]*/versionCode = ${NEW_VERSION_CODE}/" app/build.gradle.kts
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
