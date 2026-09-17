@@ -104,14 +104,14 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
                 if (now - lastTime >= COOL_DOWN_MS) {
                     lastTriggeredMap[trackingKey] = now
-                    postMatchNotification(trimmed, fullContent)
+                    postMatchNotification(trimmed)
                 }
                 break
             }
         }
     }
 
-    private fun postMatchNotification(matchedReminder: String, content: String) {
+    private fun postMatchNotification(matchedReminder: String) {
         try {
             val notificationId = getNotificationIdForReminder(matchedReminder)
 
@@ -145,7 +145,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(matchedReminder)
-                .setContentText(content)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
                 .addAction(doneAction)

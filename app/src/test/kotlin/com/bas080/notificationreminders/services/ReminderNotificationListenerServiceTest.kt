@@ -107,5 +107,10 @@ class ReminderNotificationListenerServiceTest {
             "Individual match notification should have FLAG_AUTO_CANCEL set",
             (matchedNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
         )
+        assertEquals("buy milk", matchedNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString())
+        assertTrue(
+            "Matched notification should not contain matched notification content in text",
+            matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
+        )
     }
 }
