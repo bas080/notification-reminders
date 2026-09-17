@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Minimal abstract notification bell arch -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 C41,32 30.5,42.5 30.5,55.5 L30.5,68.5 L26,73 V77.5 H82 V73 L77.5,68.5 V55.5 C77.5,42.5 67,32 54,32 Z" />
+    <!-- Minimal abstract reminder accent dot -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,82 C49.8,82 46.5,85.3 46.5,89.5 H61.5 C61.5,85.3 58.2,82 54,82 Z" />
+</vector>

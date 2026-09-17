@@ -137,7 +137,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             )
 
             val doneAction = NotificationCompat.Action.Builder(
-                android.R.drawable.ic_menu_close_clear_cancel,
+                R.drawable.ic_action_done,
                 "Done",
                 donePendingIntent
             ).build()
@@ -247,7 +247,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             )
 
             val addAction = NotificationCompat.Action.Builder(
-                android.R.drawable.ic_input_add,
+                R.drawable.ic_action_add,
                 getString(R.string.add_reminder),
                 addReminderPendingIntent
             )

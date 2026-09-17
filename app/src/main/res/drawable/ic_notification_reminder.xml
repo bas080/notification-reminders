@@ -3,16 +3,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Bell body -->
+    <!-- Minimal abstract notification bell arch -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M12,2A6,6 0,0 0,6 8V14L4,16V17H20V16L18,14V8A6,6 0,0 0,12,2M12,4A4,4 0,0 1,16 8V15H8V8A4,4 0,0 1,12,4Z" />
-    <!-- Bell clapper -->
+        android:pathData="M12,3 C7.58,3 4,6.58 4,11 L4,15.5 L2.5,17 V18.5 H21.5 V17 L20,15.5 V11 C20,6.58 16.42,3 12,3 Z" />
+    <!-- Minimal abstract reminder indicator dot -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M10,18A2,2 0,0 0,14 18H10Z" />
-    <!-- Reminder star badge -->
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M19,2L19.8,4.4L22.2,4.4L20.2,5.8L21,8.2L19,6.8L17,8.2L17.8,5.8L15.8,4.4L18.2,4.4Z" />
+        android:pathData="M12,20 C10.62,20 9.5,21.12 9.5,22.5 H14.5 C14.5,21.12 13.38,20 12,20 Z" />
 </vector>
