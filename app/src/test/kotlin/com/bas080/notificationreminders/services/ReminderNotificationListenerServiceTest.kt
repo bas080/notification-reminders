@@ -114,6 +114,10 @@ class ReminderNotificationListenerServiceTest {
             "Matched notification should not contain matched notification content in text",
             matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
         )
+        assertTrue(
+            "Matched notification contentIntent should be null to allow expand on click",
+            matchedNotif.contentIntent == null
+        )
     }
 
     @Test

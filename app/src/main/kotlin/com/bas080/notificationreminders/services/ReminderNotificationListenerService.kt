@@ -115,16 +115,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         try {
             val notificationId = getNotificationIdForReminder(matchedReminder)
 
-            val intent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            val pendingIntent: PendingIntent = PendingIntent.getActivity(
-                this,
-                notificationId,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
             val doneIntent = Intent(this, CreateReminderReceiver::class.java).apply {
                 action = ACTION_DONE_REMINDER
                 putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
@@ -146,7 +136,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(matchedReminder)
                 .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
                 .addAction(doneAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
