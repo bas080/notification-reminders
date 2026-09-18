@@ -101,6 +101,10 @@ class ReminderNotificationListenerServiceTest {
             "Summary notification should NOT have FLAG_AUTO_CANCEL set",
             (summaryNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
         )
+        assertTrue(
+            "Summary notification contentIntent should be null",
+            summaryNotif.contentIntent == null
+        )
 
         val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
         val matchedNotif = shadowNM.getNotification(matchedNotifId)
