@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Notification Reminders</string>
     <string name="add_reminder">Add Reminder</string>
+    <string name="add">Add</string>
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>

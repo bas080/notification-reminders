@@ -204,7 +204,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val addAction = NotificationCompat.Action.Builder(
                 R.drawable.ic_action_add,
-                getString(R.string.add_reminder),
+                getString(R.string.add),
                 addReminderPendingIntent
             )
                 .addRemoteInput(remoteInput)

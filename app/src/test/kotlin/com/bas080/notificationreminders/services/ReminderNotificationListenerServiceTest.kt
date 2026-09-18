@@ -122,6 +122,9 @@ class ReminderNotificationListenerServiceTest {
             "Matched notification contentIntent should be null to allow expand on click",
             matchedNotif.contentIntent == null
         )
+        assertNotNull("Matched notification should have actions", matchedNotif.actions)
+        assertEquals(1, matchedNotif.actions.size)
+        assertEquals("Done", matchedNotif.actions[0].title.toString())
     }
 
     @Test
@@ -140,5 +143,17 @@ class ReminderNotificationListenerServiceTest {
 
         assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
         assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
+
+        assertNotNull("Status notification should have actions", statusNotif.actions)
+        assertEquals(1, statusNotif.actions.size)
+
+        val addAction = statusNotif.actions[0]
+        assertEquals("Add", addAction.title.toString())
+        assertNotNull("Add action should have remoteInputs", addAction.remoteInputs)
+        assertEquals(1, addAction.remoteInputs.size)
+
+        val remoteInput = addAction.remoteInputs[0]
+        assertEquals(ReminderNotificationListenerService.KEY_TEXT_REPLY, remoteInput.resultKey)
+        assertEquals("Add Reminder", remoteInput.label.toString())
     }
 }
