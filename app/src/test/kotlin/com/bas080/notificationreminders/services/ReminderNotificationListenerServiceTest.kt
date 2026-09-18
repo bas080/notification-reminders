@@ -121,7 +121,7 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testStatusNotificationContentTextAndNoContentIntent() {
+    fun testStatusNotificationTitleTextAndNoContentIntent() {
         val context = RuntimeEnvironment.getApplication()
         Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
@@ -131,8 +131,11 @@ class ReminderNotificationListenerServiceTest {
         val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
         assertNotNull("Status notification should be posted", statusNotif)
 
+        val title = statusNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+        assertEquals("Add Reminder", title)
+
         val text = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        assertTrue("Status notification text should hint about tapping '+' to add", text.contains("Tap '+' to add"))
+        assertTrue("Status notification text should hint about tapping to add", text.contains("Tap to add a new reminder"))
         assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
     }
 }
