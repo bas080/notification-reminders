@@ -10,7 +10,6 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
-import com.bas080.notificationreminders.MainActivity
 import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.utils.ReminderMatcher
@@ -142,20 +141,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
 
-            val summaryIntent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            val summaryPendingIntent: PendingIntent = PendingIntent.getActivity(
-                this,
-                SUMMARY_NOTIFICATION_ID,
-                summaryIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
             val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
-                .setContentIntent(summaryPendingIntent)
                 .setAutoCancel(false)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
