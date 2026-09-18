@@ -195,16 +195,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     private fun showStatusNotification() {
         try {
-            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-            val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
-            val activeCount = savedReminders.filter { it.trim().isNotEmpty() }.size
-
-            val statusText = if (activeCount == 1) {
-                "Monitoring 1 active reminder"
-            } else {
-                "Monitoring $activeCount active reminders"
-            }
-            val addNotificationText = "Tap to add a new reminder • $statusText"
+            val addNotificationText = "Tap to add a new reminder"
 
             val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
                 .setLabel(getString(R.string.add_reminder))
