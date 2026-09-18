@@ -138,8 +138,7 @@ class ReminderNotificationListenerServiceTest {
         val title = statusNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         assertEquals("Add Reminder", title)
 
-        val text = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        assertEquals("Tap to add a new reminder", text)
+        assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
         assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
     }
 }
