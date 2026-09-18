@@ -1,0 +1,23 @@
+Categories:
+  - Time
+License: MIT
+AuthorName: Bas
+AuthorWebSite: https://github.com/bas080
+SourceCode: https://github.com/bas080/notification-reminders
+IssueTracker: https://github.com/bas080/notification-reminders/issues
+
+AutoName: Notification Reminders
+Summary: Smart Android notification monitor and reminder alerts
+Description: |-
+  Notification Reminders is a lightweight, open-source Android application that monitors incoming device notifications and intelligently matches them against your custom active reminders.
+
+RepoType: git
+Repo: https://github.com/bas080/notification-reminders.git
+
+Builds:
+  - versionName: '0.0.1'
+    versionCode: 3
+    commit: v0.0.1
+    output: app/build/outputs/apk/release/app-release-unsigned.apk
+    gradle:
+      - yes

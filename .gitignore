@@ -3,3 +3,10 @@ build/
 app/build/
 *.iml
 .idea/
+
+# F-Droid build server temporary output directories & local config
+config.yml
+logs/
+repo/
+tmp/
+srclibs/
