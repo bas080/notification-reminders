@@ -156,4 +156,5 @@ class ReminderNotificationListenerServiceTest {
         assertEquals(ReminderNotificationListenerService.KEY_TEXT_REPLY, remoteInput.resultKey)
         assertEquals("Add Reminder", remoteInput.label.toString())
     }
+
 }
