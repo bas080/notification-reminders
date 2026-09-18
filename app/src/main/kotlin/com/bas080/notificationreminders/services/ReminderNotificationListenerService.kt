@@ -183,8 +183,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     private fun showStatusNotification() {
         try {
-            val addNotificationText = "Tap to add a new reminder"
-
             val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
                 .setLabel(getString(R.string.add_reminder))
                 .build()
@@ -215,8 +213,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.add_reminder))
-                .setContentText(addNotificationText)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(addNotificationText))
                 .setOngoing(true)
                 .addAction(addAction)
                 .setGroup(GROUP_KEY_REMINDERS)
