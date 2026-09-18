@@ -143,6 +143,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
+                .setContentTitle(getString(R.string.app_name))
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
                 .setAutoCancel(false)
                 .setGroup(GROUP_KEY_REMINDERS)
@@ -215,8 +216,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(getString(R.string.add_reminder))
                 .setOngoing(true)
                 .addAction(addAction)
-                .setGroup(GROUP_KEY_REMINDERS)
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 

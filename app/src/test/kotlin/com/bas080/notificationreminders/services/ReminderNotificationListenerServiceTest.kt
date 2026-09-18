@@ -143,6 +143,7 @@ class ReminderNotificationListenerServiceTest {
 
         assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
         assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
+        assertTrue("Status notification group should be null", statusNotif.group == null)
 
         assertNotNull("Status notification should have actions", statusNotif.actions)
         assertEquals(1, statusNotif.actions.size)
