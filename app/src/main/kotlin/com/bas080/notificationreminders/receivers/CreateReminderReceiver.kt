@@ -4,7 +4,9 @@ import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.core.app.RemoteInput
+import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 
 class CreateReminderReceiver : BroadcastReceiver() {
@@ -27,6 +29,9 @@ class CreateReminderReceiver : BroadcastReceiver() {
                         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
                         ReminderNotificationListenerService.startService(context)
+                        Toast.makeText(context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -41,6 +46,8 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(notificationId)
+
+                    Toast.makeText(context, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
                 }
             }
         }

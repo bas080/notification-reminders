@@ -7,6 +7,11 @@
     <string name="select_notification">Select Notification</string>
     <string name="no_active_notifications">No active notifications found.</string>
     <string name="cancel">Cancel</string>
+    <string name="toast_reminder_created">Reminder created</string>
+    <string name="toast_reminder_create_failed_empty">Failed to create reminder: Text cannot be empty</string>
+    <string name="toast_reminder_done">Reminder marked done</string>
+    <string name="toast_reminder_deleted">Reminder deleted</string>
+    <string name="toast_logs_cleared">Logs cleared</string>
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
