@@ -115,4 +115,36 @@ class ReminderNotificationListenerServiceTest {
             matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
         )
     }
+
+    @Test
+    fun testStatusNotificationTitleTextAndNoContentIntent() {
+        val context = RuntimeEnvironment.getApplication()
+        Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Status notification should be posted", statusNotif)
+
+        val title = statusNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+        assertEquals("Add Reminder", title)
+
+        assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
+
+        assertNotNull("Status notification should have actions", statusNotif.actions)
+        assertEquals(2, statusNotif.actions.size)
+
+        val addAction = statusNotif.actions[0]
+        assertEquals("From Text", addAction.title.toString())
+        assertNotNull("From Text action should have remoteInputs", addAction.remoteInputs)
+        assertEquals(1, addAction.remoteInputs.size)
+
+        val remoteInput = addAction.remoteInputs[0]
+        assertEquals(ReminderNotificationListenerService.KEY_TEXT_REPLY, remoteInput.resultKey)
+        assertEquals("Add Reminder", remoteInput.label.toString())
+
+        val fromNotifAction = statusNotif.actions[1]
+        assertEquals("From Notification", fromNotifAction.title.toString())
+    }
 }
