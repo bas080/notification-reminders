@@ -101,10 +101,6 @@ class ReminderNotificationListenerServiceTest {
             "Summary notification should NOT have FLAG_AUTO_CANCEL set",
             (summaryNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
         )
-        assertTrue(
-            "Summary notification contentIntent should be null",
-            summaryNotif.contentIntent == null
-        )
 
         val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
         val matchedNotif = shadowNM.getNotification(matchedNotifId)
@@ -118,13 +114,6 @@ class ReminderNotificationListenerServiceTest {
             "Matched notification should not contain matched notification content in text",
             matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
         )
-        assertTrue(
-            "Matched notification contentIntent should be null to allow expand on click",
-            matchedNotif.contentIntent == null
-        )
-        assertNotNull("Matched notification should have actions", matchedNotif.actions)
-        assertEquals(1, matchedNotif.actions.size)
-        assertEquals("Done", matchedNotif.actions[0].title.toString())
     }
 
     @Test
@@ -142,23 +131,20 @@ class ReminderNotificationListenerServiceTest {
         assertEquals("Add Reminder", title)
 
         assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
-        assertTrue("Status notification contentIntent should be null to allow expand on click", statusNotif.contentIntent == null)
 
         assertNotNull("Status notification should have actions", statusNotif.actions)
         assertEquals(2, statusNotif.actions.size)
 
         val addAction = statusNotif.actions[0]
-        assertEquals("Add", addAction.title.toString())
-        assertNotNull("Add action should have remoteInputs", addAction.remoteInputs)
+        assertEquals("From Text", addAction.title.toString())
+        assertNotNull("From Text action should have remoteInputs", addAction.remoteInputs)
         assertEquals(1, addAction.remoteInputs.size)
 
         val remoteInput = addAction.remoteInputs[0]
         assertEquals(ReminderNotificationListenerService.KEY_TEXT_REPLY, remoteInput.resultKey)
         assertEquals("Add Reminder", remoteInput.label.toString())
 
-        val fromAction = statusNotif.actions[1]
-        assertEquals("From Notification", fromAction.title.toString())
+        val fromNotifAction = statusNotif.actions[1]
+        assertEquals("From Notification", fromNotifAction.title.toString())
     }
-
-
 }

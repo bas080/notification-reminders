@@ -10,6 +10,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
+import com.bas080.notificationreminders.PickNotificationActivity
 import com.bas080.notificationreminders.R
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.utils.ReminderMatcher
@@ -210,15 +211,15 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 broadcastFlags
             )
 
-            val addAction = NotificationCompat.Action.Builder(
+            val fromTextAction = NotificationCompat.Action.Builder(
                 R.drawable.ic_action_add,
-                getString(R.string.add),
+                getString(R.string.from_text),
                 addReminderPendingIntent
             )
                 .addRemoteInput(remoteInput)
                 .build()
 
-            val fromNotifIntent = Intent(this, com.bas080.notificationreminders.PickNotificationActivity::class.java).apply {
+            val fromNotifIntent = Intent(this, PickNotificationActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val fromNotifPendingIntent = PendingIntent.getActivity(
@@ -237,7 +238,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.add_reminder))
                 .setOngoing(true)
-                .addAction(addAction)
+                .addAction(fromTextAction)
                 .addAction(fromNotifAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
