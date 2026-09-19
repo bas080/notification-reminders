@@ -216,6 +216,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(getString(R.string.add_reminder))
                 .setOngoing(true)
                 .addAction(addAction)
+                .setGroup(GROUP_KEY_REMINDERS)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
