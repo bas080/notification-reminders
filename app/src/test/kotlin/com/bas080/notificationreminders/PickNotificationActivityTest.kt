@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.app.AlertDialog
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -22,7 +23,7 @@ import org.robolectric.shadows.ShadowAlertDialog
 @Config(sdk = [34])
 class PickNotificationActivityTest {
 
-    @org.junit.After
+    @After
     fun tearDown() {
         PickNotificationActivity.mockActiveNotifications = null
     }
