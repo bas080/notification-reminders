@@ -3,6 +3,10 @@
     <string name="app_name">Notification Reminders</string>
     <string name="add_reminder">Add Reminder</string>
     <string name="add">Add</string>
+    <string name="from_notification">From Notification</string>
+    <string name="select_notification">Select Notification</string>
+    <string name="no_active_notifications">No active notifications found.</string>
+    <string name="cancel">Cancel</string>
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
