@@ -4,6 +4,7 @@ import android.app.Notification
 import android.content.Context
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
@@ -82,5 +83,6 @@ class PickNotificationActivity : AppCompatActivity() {
         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
         ReminderNotificationListenerService.startService(this)
+        Toast.makeText(this, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
     }
 }

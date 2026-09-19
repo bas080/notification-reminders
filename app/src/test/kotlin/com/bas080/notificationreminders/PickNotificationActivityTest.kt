@@ -97,6 +97,7 @@ class PickNotificationActivityTest {
         val savedReminders = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
         assertTrue("Saved reminders should contain selected notification text", savedReminders.contains("Email: Meeting at 3pm"))
 
+        assertEquals("Reminder created", org.robolectric.shadows.ShadowToast.getTextOfLatestToast())
         assertTrue(activity.isFinishing)
     }
 }

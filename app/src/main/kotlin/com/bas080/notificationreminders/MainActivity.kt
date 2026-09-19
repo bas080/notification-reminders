@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnClearLogs.setOnClickListener {
             AppLogger.clearLogs(this)
             loadLogs()
+            Toast.makeText(this, R.string.toast_logs_cleared, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -145,6 +147,7 @@ class MainActivity : AppCompatActivity() {
                     activeReminders.removeAt(index)
                     saveRemindersToPrefs()
                     adapter.notifyDataSetChanged()
+                    Toast.makeText(this, R.string.toast_reminder_deleted, Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -294,6 +297,9 @@ class RemindersAdapter(
                 if (text.isNotEmpty()) {
                     holder.reminderInput.setText("")
                     onAddReminder(text)
+                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
                 }
             }
 
