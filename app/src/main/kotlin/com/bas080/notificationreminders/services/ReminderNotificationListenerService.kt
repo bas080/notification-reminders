@@ -31,6 +31,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         private const val KEY_REMINDERS = "key_reminders_list"
         private const val COOL_DOWN_MS = 10 * 60 * 1000L // 10 minutes cool-down per notification match
 
+        var instance: ReminderNotificationListenerService? = null
         val lastTriggeredMap = ConcurrentHashMap<String, Long>()
 
         fun startService(context: Context) {
@@ -53,8 +54,14 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         createNotificationChannel()
         showStatusNotification()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        instance = null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -211,11 +218,27 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .addRemoteInput(remoteInput)
                 .build()
 
+            val fromNotifIntent = Intent(this, com.bas080.notificationreminders.PickNotificationActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val fromNotifPendingIntent = PendingIntent.getActivity(
+                this,
+                2,
+                fromNotifIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val fromNotifAction = NotificationCompat.Action.Builder(
+                R.drawable.ic_action_add,
+                getString(R.string.from_notification),
+                fromNotifPendingIntent
+            ).build()
+
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.add_reminder))
                 .setOngoing(true)
                 .addAction(addAction)
+                .addAction(fromNotifAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
