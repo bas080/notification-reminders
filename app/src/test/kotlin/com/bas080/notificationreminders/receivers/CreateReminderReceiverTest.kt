@@ -121,5 +121,38 @@ class CreateReminderReceiverTest {
         val (ms24h, label24h) = CreateReminderReceiver.parseSnoozeDuration("24h")
         assertEquals(24 * 60 * 60 * 1000L, ms24h)
         assertEquals("24 hours", label24h)
+
+        val (ms2w, label2w) = CreateReminderReceiver.parseSnoozeDuration("2w")
+        assertEquals(2 * 7 * 24 * 60 * 60 * 1000L, ms2w)
+        assertEquals("2 weeks", label2w)
+
+        // Absolute time test with fixed base timestamp e.g. 12:00 PM today
+        val baseCal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 12)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val baseMillis = baseCal.timeInMillis
+
+        // "18:00" from 12:00 -> 6 hours later today
+        val (ms1800, label1800) = CreateReminderReceiver.parseSnoozeDuration("18:00", baseMillis)
+        assertEquals(6 * 60 * 60 * 1000L, ms1800)
+        assertEquals("today at 18:00", label1800)
+
+        // "1800" (no colon) from 12:00 -> 6 hours later today
+        val (ms1800NoColon, label1800NoColon) = CreateReminderReceiver.parseSnoozeDuration("1800", baseMillis)
+        assertEquals(6 * 60 * 60 * 1000L, ms1800NoColon)
+        assertEquals("today at 18:00", label1800NoColon)
+
+        // "7pm" from 12:00 -> 7 hours later today (19:00)
+        val (ms7pm, label7pm) = CreateReminderReceiver.parseSnoozeDuration("7pm", baseMillis)
+        assertEquals(7 * 60 * 60 * 1000L, ms7pm)
+        assertEquals("today at 19:00", label7pm)
+
+        // "1am" from 12:00 PM -> 13 hours later tomorrow (01:00)
+        val (ms1am, label1am) = CreateReminderReceiver.parseSnoozeDuration("1am", baseMillis)
+        assertEquals(13 * 60 * 60 * 1000L, ms1am)
+        assertEquals("tomorrow at 01:00", label1am)
     }
 }
