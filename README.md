@@ -18,6 +18,7 @@ A simple Android application that keeps track of your reminders and alerts you w
 5. **Manage Reminders & Alerts**:
    - Tap any notification group to open the app while keeping your reminder alerts visible in the notification tray.
    - Tap **Done** on an alert notification to mark a reminder complete and clear its notification.
+   - Tap **Share** on an alert notification to share the reminder via any app.
    - Manage active reminders or view app logs anytime inside the app.
 
 ## Features

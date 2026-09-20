@@ -3,6 +3,7 @@ package com.bas080.notificationreminders.services
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import org.junit.Assert.assertEquals
@@ -146,5 +147,68 @@ class ReminderNotificationListenerServiceTest {
 
         val fromNotifAction = statusNotif.actions[1]
         assertEquals("From Notification", fromNotifAction.title.toString())
+    }
+
+    @Test
+    fun testMatchedNotificationHasShareAction() {
+        ReminderNotificationListenerService.lastTriggeredMap.clear()
+        val context = RuntimeEnvironment.getApplication()
+
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("buy milk")).commit()
+
+        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        val extras = Bundle().apply {
+            putCharSequence("android.title", "Shopping")
+            putCharSequence("android.text", "Need to buy milk today")
+        }
+        @Suppress("DEPRECATION")
+        val targetNotification = Notification.Builder(context, "test_channel")
+            .setExtras(extras)
+            .build()
+        @Suppress("DEPRECATION")
+        val sbn = StatusBarNotification(
+            "com.example.otherapp",
+            "com.example.otherapp",
+            1,
+            "tag",
+            1000,
+            1000,
+            1,
+            targetNotification,
+            android.os.Process.myUserHandle(),
+            System.currentTimeMillis()
+        )
+
+        service.onNotificationPosted(sbn)
+
+        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
+        val matchedNotif = shadowNM.getNotification(matchedNotifId)
+        assertNotNull("Matched reminder notification should be posted", matchedNotif)
+        assertNotNull("Matched notification actions should not be null", matchedNotif.actions)
+        assertEquals(2, matchedNotif.actions.size)
+
+        val doneAction = matchedNotif.actions[0]
+        assertEquals("Done", doneAction.title.toString())
+
+        val shareAction = matchedNotif.actions[1]
+        assertEquals("Share", shareAction.title.toString())
+        assertNotNull("Share action intent should not be null", shareAction.actionIntent)
+
+        val shadowPendingIntent = Shadows.shadowOf(shareAction.actionIntent)
+        val chooserIntent = shadowPendingIntent.savedIntent
+        assertNotNull("Chooser intent should not be null", chooserIntent)
+        assertEquals(Intent.ACTION_CHOOSER, chooserIntent.action)
+
+        @Suppress("DEPRECATION")
+        val shareIntent = chooserIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+        assertNotNull("Share intent inside chooser should not be null", shareIntent)
+        assertEquals(Intent.ACTION_SEND, shareIntent?.action)
+        assertEquals("text/plain", shareIntent?.type)
+        assertEquals("buy milk", shareIntent?.getStringExtra(Intent.EXTRA_TEXT))
     }
 }

@@ -15,6 +15,7 @@
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
+    <string name="share">Share</string>
     <string name="dismiss">Dismiss</string>
     <string name="reminders">Reminders</string>
     <string name="no_reminders">No reminders yet. Create one!</string>
