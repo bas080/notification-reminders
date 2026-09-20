@@ -119,6 +119,7 @@ class MainActivity : AppCompatActivity() {
             onAddReminder = { newReminder ->
                 activeReminders.add(newReminder)
                 saveRemindersToPrefs()
+                ReminderNotificationListenerService.instance?.postMatchNotification(newReminder)
                 adapter.notifyDataSetChanged()
             },
             onUpdateReminder = { index, updatedText ->

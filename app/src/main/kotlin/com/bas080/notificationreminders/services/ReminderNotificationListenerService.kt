@@ -135,7 +135,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    private fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
+    fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
         try {
             val notificationId = getNotificationIdForReminder(matchedReminder)
 
@@ -233,6 +233,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(notificationId, matchNotification)
             notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
+            showStatusNotification()
         } catch (_: Exception) {
         }
     }

@@ -116,6 +116,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                         savedSet.add(reminderText)
                         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
+                        ReminderNotificationListenerService.instance?.postMatchNotification(reminderText)
                         ReminderNotificationListenerService.instance?.showStatusNotification()
                             ?: ReminderNotificationListenerService.startService(context)
                         Toast.makeText(context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()

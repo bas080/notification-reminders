@@ -1,5 +1,6 @@
 package com.bas080.notificationreminders.receivers
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.app.RemoteInput
@@ -7,6 +8,7 @@ import com.bas080.notificationreminders.services.ReminderNotificationListenerSer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -34,6 +36,31 @@ class CreateReminderReceiverTest {
         receiver.onReceive(context, intent)
 
         assertEquals("Reminder created", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun testCreateReminderPostsNotificationDirectly() {
+        val context = RuntimeEnvironment.getApplication()
+        Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val receiver = CreateReminderReceiver()
+        val results = Bundle().apply {
+            putCharSequence(ReminderNotificationListenerService.KEY_TEXT_REPLY, "Buy apples")
+        }
+        val intent = Intent(ReminderNotificationListenerService.ACTION_CREATE_REMINDER)
+        RemoteInput.addResultsToIntent(
+            arrayOf(RemoteInput.Builder(ReminderNotificationListenerService.KEY_TEXT_REPLY).build()),
+            intent,
+            results
+        )
+
+        receiver.onReceive(context, intent)
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val shadowNM = org.robolectric.Shadows.shadowOf(notificationManager)
+        val notifId = ReminderNotificationListenerService.getNotificationIdForReminder("Buy apples")
+        val postedNotif = shadowNM.getNotification(notifId)
+        org.junit.Assert.assertNotNull("Creating a reminder should directly post a notification for it", postedNotif)
     }
 
     @Test
