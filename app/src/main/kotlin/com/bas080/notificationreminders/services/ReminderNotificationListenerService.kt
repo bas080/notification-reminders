@@ -108,22 +108,34 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         val commonWordsSet = ReminderMatcher.parseCommonWords(commonWordsStr)
 
         for (reminder in savedReminders) {
-            if (ReminderMatcher.matches(reminder, fullContent, commonWordsSet)) {
-                val trimmed = reminder.trim()
-                val trackingKey = "${sbnKey}_${trimmed.lowercase()}"
-                val lastTime = lastTriggeredMap[trackingKey] ?: 0L
-                val snoozeUntil = lastTriggeredMap["snooze_${trimmed.lowercase()}"] ?: 0L
+            val trimmed = reminder.trim()
+            val lower = trimmed.lowercase()
+            val trackingKey = "${sbnKey}_$lower"
+            val lastTime = lastTriggeredMap[trackingKey] ?: 0L
+            val snoozeUntil = lastTriggeredMap["snooze_$lower"] ?: 0L
 
-                if (now - lastTime >= COOL_DOWN_MS && now >= snoozeUntil) {
+            val isWordMatch = ReminderMatcher.matches(reminder, fullContent, commonWordsSet)
+            val isSnoozeExpired = (snoozeUntil > 0L && now >= snoozeUntil)
+
+            if (isWordMatch) {
+                if (now - lastTime >= COOL_DOWN_MS && (snoozeUntil == 0L || now >= snoozeUntil)) {
+                    if (snoozeUntil > 0L) {
+                        lastTriggeredMap.remove("snooze_$lower")
+                    }
                     lastTriggeredMap[trackingKey] = now
-                    postMatchNotification(trimmed)
+                    postMatchNotification(trimmed, isHighPriority = true)
+                    break
                 }
+            } else if (isSnoozeExpired) {
+                lastTriggeredMap.remove("snooze_$lower")
+                lastTriggeredMap[trackingKey] = now
+                postMatchNotification(trimmed, isHighPriority = false)
                 break
             }
         }
     }
 
-    private fun postMatchNotification(matchedReminder: String) {
+    private fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
         try {
             val notificationId = getNotificationIdForReminder(matchedReminder)
 
@@ -193,6 +205,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 sharePendingIntent
             ).build()
 
+            val priorityVal = if (isHighPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT
+
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(matchedReminder)
@@ -202,7 +216,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .addAction(shareAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(priorityVal)
                 .build()
 
             val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
@@ -213,7 +227,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(priorityVal)
                 .build()
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

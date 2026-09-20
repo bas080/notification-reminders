@@ -275,4 +275,52 @@ class ReminderNotificationListenerServiceTest {
         assertNotNull("Vibration pattern should not be null", channel.vibrationPattern)
         assertNotNull("Sound URI should not be null", channel.sound)
     }
+
+    @Test
+    fun testSnoozeExpiryRetriggersOnAnyNotificationWithNormalPriority() {
+        ReminderNotificationListenerService.lastTriggeredMap.clear()
+        val context = RuntimeEnvironment.getApplication()
+
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("buy milk")).commit()
+
+        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        // Set snooze in the past (expired)
+        ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] = System.currentTimeMillis() - 1000L
+
+        // Post an unrelated notification that does NOT contain "milk"
+        val extras = Bundle().apply {
+            putCharSequence("android.title", "Battery Low")
+            putCharSequence("android.text", "15% remaining")
+        }
+        @Suppress("DEPRECATION")
+        val targetNotification = Notification.Builder(context, "test_channel")
+            .setExtras(extras)
+            .build()
+        @Suppress("DEPRECATION")
+        val sbn = StatusBarNotification(
+            "com.example.system",
+            "com.example.system",
+            1,
+            "tag",
+            1000,
+            1000,
+            1,
+            targetNotification,
+            android.os.Process.myUserHandle(),
+            System.currentTimeMillis()
+        )
+
+        service.onNotificationPosted(sbn)
+
+        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
+        val matchedNotif = shadowNM.getNotification(matchedNotifId)
+        assertNotNull("Expired snoozed item should re-trigger when any notification arrives", matchedNotif)
+        @Suppress("DEPRECATION")
+        assertEquals(Notification.PRIORITY_DEFAULT, matchedNotif.priority)
+    }
 }
