@@ -28,7 +28,8 @@ class CreateReminderReceiver : BroadcastReceiver() {
                         savedSet.add(reminderText)
                         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
-                        ReminderNotificationListenerService.startService(context)
+                        ReminderNotificationListenerService.instance?.showStatusNotification()
+                            ?: ReminderNotificationListenerService.startService(context)
                         Toast.makeText(context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
@@ -47,7 +48,25 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(notificationId)
 
+                    ReminderNotificationListenerService.instance?.showStatusNotification()
+                        ?: ReminderNotificationListenerService.startService(context)
+
                     Toast.makeText(context, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
+                }
+            }
+            ReminderNotificationListenerService.ACTION_SNOOZE_REMINDER -> {
+                val reminderText = intent.getStringExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT)
+                if (!reminderText.isNullOrEmpty()) {
+                    val snoozeMs = 60 * 60 * 1000L
+                    val snoozeUntil = System.currentTimeMillis() + snoozeMs
+                    val trimmed = reminderText.trim().lowercase()
+                    ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] = snoozeUntil
+
+                    val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.cancel(notificationId)
+
+                    Toast.makeText(context, R.string.toast_reminder_snoozed, Toast.LENGTH_SHORT).show()
                 }
             }
         }

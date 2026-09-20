@@ -69,4 +69,20 @@ class CreateReminderReceiverTest {
 
         assertEquals("Reminder marked done", ShadowToast.getTextOfLatestToast())
     }
+
+    @Test
+    fun testSnoozeReminderShowsSuccessToastAndSetsSnoozeTimestamp() {
+        val context = RuntimeEnvironment.getApplication()
+        val receiver = CreateReminderReceiver()
+
+        val intent = Intent(ReminderNotificationListenerService.ACTION_SNOOZE_REMINDER).apply {
+            putExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT, "Buy milk")
+        }
+
+        receiver.onReceive(context, intent)
+
+        assertEquals("Reminder snoozed for 1 hour", ShadowToast.getTextOfLatestToast())
+        val snoozeUntil = ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] ?: 0L
+        org.junit.Assert.assertTrue("Snooze timestamp should be in the future", snoozeUntil > System.currentTimeMillis())
+    }
 }
