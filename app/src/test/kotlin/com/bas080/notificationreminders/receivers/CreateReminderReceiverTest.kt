@@ -85,4 +85,41 @@ class CreateReminderReceiverTest {
         val snoozeUntil = ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] ?: 0L
         org.junit.Assert.assertTrue("Snooze timestamp should be in the future", snoozeUntil > System.currentTimeMillis())
     }
+
+    @Test
+    fun testSnoozeWithSelectedDuration() {
+        val context = RuntimeEnvironment.getApplication()
+        val receiver = CreateReminderReceiver()
+
+        val results = Bundle().apply {
+            putCharSequence(ReminderNotificationListenerService.KEY_SNOOZE_REPLY, "15m")
+        }
+        val intent = Intent(ReminderNotificationListenerService.ACTION_SNOOZE_REMINDER).apply {
+            putExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT, "Buy bread")
+        }
+        RemoteInput.addResultsToIntent(
+            arrayOf(RemoteInput.Builder(ReminderNotificationListenerService.KEY_SNOOZE_REPLY).build()),
+            intent,
+            results
+        )
+
+        receiver.onReceive(context, intent)
+
+        assertEquals("Reminder snoozed for 15 minutes", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun testParseSnoozeDurationHelper() {
+        val (ms15m, label15m) = CreateReminderReceiver.parseSnoozeDuration("15m")
+        assertEquals(15 * 60 * 1000L, ms15m)
+        assertEquals("15 minutes", label15m)
+
+        val (ms4h, label4h) = CreateReminderReceiver.parseSnoozeDuration("4h")
+        assertEquals(4 * 60 * 60 * 1000L, ms4h)
+        assertEquals("4 hours", label4h)
+
+        val (ms24h, label24h) = CreateReminderReceiver.parseSnoozeDuration("24h")
+        assertEquals(24 * 60 * 60 * 1000L, ms24h)
+        assertEquals("24 hours", label24h)
+    }
 }
