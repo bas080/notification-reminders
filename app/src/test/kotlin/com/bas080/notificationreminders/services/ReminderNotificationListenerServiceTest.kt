@@ -323,4 +323,24 @@ class ReminderNotificationListenerServiceTest {
         @Suppress("DEPRECATION")
         assertEquals(Notification.PRIORITY_DEFAULT, matchedNotif.priority)
     }
+
+    @Test
+    fun testGetTopSnoozeChoicesDefaultAndFrequent() {
+        val context = RuntimeEnvironment.getApplication()
+        val defaultChoices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
+        assertEquals(5, defaultChoices.size)
+        assertEquals("15m", defaultChoices[0].toString())
+
+        // Save custom snooze frequencies
+        val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt("30m", 10)
+            .putInt("2h", 5)
+            .commit()
+
+        val updatedChoices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
+        assertEquals(5, updatedChoices.size)
+        assertEquals("30m", updatedChoices[0].toString())
+        assertEquals("2h", updatedChoices[1].toString())
+    }
 }
