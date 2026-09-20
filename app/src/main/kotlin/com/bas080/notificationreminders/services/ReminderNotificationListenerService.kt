@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -26,6 +28,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val GROUP_KEY_REMINDERS = "com.bas080.notificationreminders.REMINDER_MATCHES"
         const val ACTION_CREATE_REMINDER = "com.bas080.notificationreminders.ACTION_CREATE_REMINDER"
         const val ACTION_DONE_REMINDER = "com.bas080.notificationreminders.ACTION_DONE_REMINDER"
+        const val ACTION_SNOOZE_REMINDER = "com.bas080.notificationreminders.ACTION_SNOOZE_REMINDER"
         const val EXTRA_REMINDER_TEXT = "extra_reminder_text"
         const val KEY_TEXT_REPLY = "key_text_reply"
         private const val PREFS_REMINDERS = "reminders_prefs"
@@ -77,7 +80,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        if (sbn == null || sbn.packageName == packageName) return
+        if (sbn == null) return
 
         val extras = sbn.notification?.extras ?: return
         val title = extras.getCharSequence("android.title")?.toString() ?: ""
@@ -108,8 +111,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 val trimmed = reminder.trim()
                 val trackingKey = "${sbnKey}_${trimmed.lowercase()}"
                 val lastTime = lastTriggeredMap[trackingKey] ?: 0L
+                val snoozeUntil = lastTriggeredMap["snooze_${trimmed.lowercase()}"] ?: 0L
 
-                if (now - lastTime >= COOL_DOWN_MS) {
+                if (now - lastTime >= COOL_DOWN_MS && now >= snoozeUntil) {
                     lastTriggeredMap[trackingKey] = now
                     postMatchNotification(trimmed)
                 }
@@ -139,6 +143,23 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 donePendingIntent
             ).build()
 
+            val snoozeIntent = Intent(this, CreateReminderReceiver::class.java).apply {
+                action = ACTION_SNOOZE_REMINDER
+                putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
+            }
+            val snoozePendingIntent = PendingIntent.getBroadcast(
+                this,
+                notificationId + 5000,
+                snoozeIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val snoozeAction = NotificationCompat.Action.Builder(
+                R.drawable.ic_action_snooze,
+                getString(R.string.snooze),
+                snoozePendingIntent
+            ).build()
+
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, matchedReminder)
@@ -164,6 +185,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(matchedReminder)
                 .setAutoCancel(true)
                 .addAction(doneAction)
+                .addAction(snoozeAction)
                 .addAction(shareAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
@@ -196,12 +218,21 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 description = descriptionText
             }
 
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                .build()
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
             val matchChannel = NotificationChannel(
                 MATCH_CHANNEL_ID,
                 "Reminder Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications for matched reminders"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 250, 250)
+                setSound(soundUri, audioAttributes)
             }
 
             val notificationManager: NotificationManager =
@@ -211,8 +242,17 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    private fun showStatusNotification() {
+    fun showStatusNotification() {
         try {
+            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+            val count = savedReminders.size
+            val statusText = when (count) {
+                0 -> getString(R.string.no_active_reminders)
+                1 -> getString(R.string.active_reminder_single)
+                else -> getString(R.string.active_reminders_count, count)
+            }
+
             val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
                 .setLabel(getString(R.string.add_reminder))
                 .build()
@@ -258,6 +298,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(getString(R.string.add_reminder))
+                .setContentText(statusText)
                 .setOngoing(true)
                 .addAction(fromTextAction)
                 .addAction(fromNotifAction)

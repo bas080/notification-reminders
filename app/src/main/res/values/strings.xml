@@ -11,11 +11,16 @@
     <string name="toast_reminder_create_failed_empty">Failed to create reminder: Text cannot be empty</string>
     <string name="toast_reminder_done">Reminder marked done</string>
     <string name="toast_reminder_deleted">Reminder deleted</string>
+    <string name="toast_reminder_snoozed">Reminder snoozed for 1 hour</string>
     <string name="toast_logs_cleared">Logs cleared</string>
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
+    <string name="snooze">Snooze</string>
     <string name="share">Share</string>
+    <string name="active_reminders_count">%d active reminders</string>
+    <string name="active_reminder_single">1 active reminder</string>
+    <string name="no_active_reminders">No active reminders</string>
     <string name="dismiss">Dismiss</string>
     <string name="reminders">Reminders</string>
     <string name="no_reminders">No reminders yet. Create one!</string>

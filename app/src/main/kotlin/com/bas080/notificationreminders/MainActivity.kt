@@ -165,6 +165,7 @@ class MainActivity : AppCompatActivity() {
     private fun saveRemindersToPrefs() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
+        ReminderNotificationListenerService.instance?.showStatusNotification()
     }
 
     override fun onResume() {

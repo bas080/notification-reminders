@@ -120,6 +120,9 @@ class ReminderNotificationListenerServiceTest {
     @Test
     fun testStatusNotificationTitleTextAndNoContentIntent() {
         val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Call mom")).commit()
+
         Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -131,7 +134,8 @@ class ReminderNotificationListenerServiceTest {
         val title = statusNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
         assertEquals("Add Reminder", title)
 
-        assertTrue("Status notification text should be null", statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null)
+        val statusText = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        assertEquals("2 active reminders", statusText)
 
         assertNotNull("Status notification should have actions", statusNotif.actions)
         assertEquals(2, statusNotif.actions.size)
@@ -190,12 +194,15 @@ class ReminderNotificationListenerServiceTest {
         val matchedNotif = shadowNM.getNotification(matchedNotifId)
         assertNotNull("Matched reminder notification should be posted", matchedNotif)
         assertNotNull("Matched notification actions should not be null", matchedNotif.actions)
-        assertEquals(2, matchedNotif.actions.size)
+        assertEquals(3, matchedNotif.actions.size)
 
         val doneAction = matchedNotif.actions[0]
         assertEquals("Done", doneAction.title.toString())
 
-        val shareAction = matchedNotif.actions[1]
+        val snoozeAction = matchedNotif.actions[1]
+        assertEquals("Snooze", snoozeAction.title.toString())
+
+        val shareAction = matchedNotif.actions[2]
         assertEquals("Share", shareAction.title.toString())
         assertNotNull("Share action intent should not be null", shareAction.actionIntent)
 
@@ -210,5 +217,62 @@ class ReminderNotificationListenerServiceTest {
         assertEquals(Intent.ACTION_SEND, shareIntent?.action)
         assertEquals("text/plain", shareIntent?.type)
         assertEquals("buy milk", shareIntent?.getStringExtra(Intent.EXTRA_TEXT))
+    }
+
+    @Test
+    fun testSelfNotificationIsProcessedForReminderMatch() {
+        ReminderNotificationListenerService.lastTriggeredMap.clear()
+        val context = RuntimeEnvironment.getApplication()
+
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("buy milk")).commit()
+
+        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        // Create mock StatusBarNotification originating from the app's own package name
+        val extras = Bundle().apply {
+            putCharSequence("android.title", "Reminder Alert")
+            putCharSequence("android.text", "Need to buy milk today")
+        }
+        @Suppress("DEPRECATION")
+        val targetNotification = Notification.Builder(context, "test_channel")
+            .setExtras(extras)
+            .build()
+        @Suppress("DEPRECATION")
+        val sbn = StatusBarNotification(
+            context.packageName,
+            context.packageName,
+            1,
+            "tag",
+            1000,
+            1000,
+            1,
+            targetNotification,
+            android.os.Process.myUserHandle(),
+            System.currentTimeMillis()
+        )
+
+        service.onNotificationPosted(sbn)
+
+        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
+        val matchedNotif = shadowNM.getNotification(matchedNotifId)
+        assertNotNull("Notification from self package should still trigger reminder match", matchedNotif)
+    }
+
+    @Test
+    fun testMatchNotificationChannelConfiguresVibrationAndSound() {
+        val context = RuntimeEnvironment.getApplication()
+        Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = notificationManager.getNotificationChannel(ReminderNotificationListenerService.MATCH_CHANNEL_ID)
+
+        assertNotNull("Match notification channel should exist", channel)
+        assertTrue("Vibration should be enabled", channel.shouldVibrate())
+        assertNotNull("Vibration pattern should not be null", channel.vibrationPattern)
+        assertNotNull("Sound URI should not be null", channel.sound)
     }
 }
