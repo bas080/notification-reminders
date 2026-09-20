@@ -139,11 +139,32 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 donePendingIntent
             ).build()
 
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, matchedReminder)
+            }
+            val chooserIntent = Intent.createChooser(shareIntent, null).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val sharePendingIntent = PendingIntent.getActivity(
+                this,
+                notificationId,
+                chooserIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val shareAction = NotificationCompat.Action.Builder(
+                R.drawable.ic_action_share,
+                getString(R.string.share),
+                sharePendingIntent
+            ).build()
+
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_reminder)
                 .setContentTitle(matchedReminder)
                 .setAutoCancel(true)
                 .addAction(doneAction)
+                .addAction(shareAction)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
