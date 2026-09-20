@@ -55,6 +55,36 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val hash = reminder.trim().lowercase().hashCode() and 0x7fffffff
             return if (hash == NOTIFICATION_ID || hash == SUMMARY_NOTIFICATION_ID) 1002 else if (hash == 0) 1003 else hash
         }
+
+        fun getTopSnoozeChoices(context: Context): Array<CharSequence> {
+            val defaultChoices = listOf("15m", "1h", "4h", "24h", "1w")
+            val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+            val allEntries = prefs.all
+            if (allEntries.isEmpty()) {
+                return defaultChoices.toTypedArray()
+            }
+
+            val sortedUserChoices = allEntries.entries
+                .mapNotNull { entry ->
+                    val count = (entry.value as? Number)?.toInt() ?: 0
+                    if (count > 0) entry.key to count else null
+                }
+                .sortedByDescending { it.second }
+                .map { it.first }
+
+            val combined = mutableListOf<String>()
+            for (choice in sortedUserChoices) {
+                if (!combined.contains(choice) && combined.size < 5) {
+                    combined.add(choice)
+                }
+            }
+            for (defaultChoice in defaultChoices) {
+                if (!combined.contains(defaultChoice) && combined.size < 5) {
+                    combined.add(defaultChoice)
+                }
+            }
+            return Array(combined.size) { combined[it] }
+        }
     }
 
     override fun onCreate() {
@@ -158,7 +188,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val snoozeRemoteInput = RemoteInput.Builder(KEY_SNOOZE_REPLY)
                 .setLabel(getString(R.string.snooze))
-                .setChoices(arrayOf("15m", "1h", "4h", "24h"))
+                .setChoices(getTopSnoozeChoices(this))
                 .build()
 
             val snoozeIntent = Intent(this, CreateReminderReceiver::class.java).apply {
@@ -324,7 +354,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             ).build()
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_reminder)
+                .setSmallIcon(R.drawable.ic_notification_status)
                 .setContentTitle(getString(R.string.add_reminder))
                 .setContentText(statusText)
                 .setOngoing(true)

@@ -14,6 +14,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
     companion object {
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
+        private const val PREFS_SNOOZE_FREQ = "snooze_freq_prefs"
 
         fun parseSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String> {
             val raw = input?.trim()?.lowercase() ?: ""
@@ -148,6 +149,13 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 if (!reminderText.isNullOrEmpty()) {
                     val remoteResults = RemoteInput.getResultsFromIntent(intent)
                     val chosenDurationStr = remoteResults?.getCharSequence(ReminderNotificationListenerService.KEY_SNOOZE_REPLY)?.toString()
+
+                    if (!chosenDurationStr.isNullOrBlank()) {
+                        val freqPrefs = context.getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
+                        val choiceKey = chosenDurationStr.trim().lowercase()
+                        val currentCount = freqPrefs.getInt(choiceKey, 0)
+                        freqPrefs.edit().putInt(choiceKey, currentCount + 1).apply()
+                    }
 
                     val (snoozeMs, durationLabel) = parseSnoozeDuration(chosenDurationStr)
                     val snoozeUntil = System.currentTimeMillis() + snoozeMs
