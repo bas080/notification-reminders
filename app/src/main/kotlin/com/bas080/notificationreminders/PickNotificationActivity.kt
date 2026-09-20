@@ -82,6 +82,7 @@ class PickNotificationActivity : AppCompatActivity() {
         savedSet.add(reminderText)
         prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
 
+        ReminderNotificationListenerService.instance?.postMatchNotification(reminderText)
         ReminderNotificationListenerService.startService(this)
         Toast.makeText(this, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
     }
