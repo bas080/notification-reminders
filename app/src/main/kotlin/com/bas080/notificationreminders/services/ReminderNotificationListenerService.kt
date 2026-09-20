@@ -31,6 +31,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         const val ACTION_SNOOZE_REMINDER = "com.bas080.notificationreminders.ACTION_SNOOZE_REMINDER"
         const val EXTRA_REMINDER_TEXT = "extra_reminder_text"
         const val KEY_TEXT_REPLY = "key_text_reply"
+        const val KEY_SNOOZE_REPLY = "key_snooze_reply"
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
         private const val COOL_DOWN_MS = 10 * 60 * 1000L // 10 minutes cool-down per notification match
@@ -143,22 +144,34 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 donePendingIntent
             ).build()
 
+            val snoozeRemoteInput = RemoteInput.Builder(KEY_SNOOZE_REPLY)
+                .setLabel(getString(R.string.snooze))
+                .setChoices(arrayOf("15m", "1h", "4h", "24h"))
+                .build()
+
             val snoozeIntent = Intent(this, CreateReminderReceiver::class.java).apply {
                 action = ACTION_SNOOZE_REMINDER
                 putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
+            }
+            val snoozeFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
             }
             val snoozePendingIntent = PendingIntent.getBroadcast(
                 this,
                 notificationId + 5000,
                 snoozeIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                snoozeFlags
             )
 
             val snoozeAction = NotificationCompat.Action.Builder(
                 R.drawable.ic_action_snooze,
                 getString(R.string.snooze),
                 snoozePendingIntent
-            ).build()
+            )
+                .addRemoteInput(snoozeRemoteInput)
+                .build()
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"

@@ -12,6 +12,7 @@
     <string name="toast_reminder_done">Reminder marked done</string>
     <string name="toast_reminder_deleted">Reminder deleted</string>
     <string name="toast_reminder_snoozed">Reminder snoozed for 1 hour</string>
+    <string name="toast_reminder_snoozed_duration">Reminder snoozed for %s</string>
     <string name="toast_logs_cleared">Logs cleared</string>
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
