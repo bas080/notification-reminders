@@ -145,22 +145,31 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val lower = trimmed.lowercase()
             val trackingKey = "${sbnKey}_$lower"
             val lastTime = lastTriggeredMap[trackingKey] ?: 0L
-            val snoozeUntil = lastTriggeredMap["snooze_$lower"] ?: 0L
+            val snoozeUntil = prefs.getLong("snooze_$lower", 0L).let {
+                if (it > 0L) it else (lastTriggeredMap["snooze_$lower"] ?: 0L)
+            }
+
+            val isSnoozed = (snoozeUntil > 0L && now < snoozeUntil)
+            if (isSnoozed) {
+                // Snooze overrules notification match; do not show notification while snoozed
+                continue
+            }
+
+            val isSnoozeExpired = (snoozeUntil > 0L && now >= snoozeUntil)
+            if (isSnoozeExpired) {
+                prefs.edit().remove("snooze_$lower").apply()
+                lastTriggeredMap.remove("snooze_$lower")
+            }
 
             val isWordMatch = ReminderMatcher.matches(reminder, fullContent, commonWordsSet)
-            val isSnoozeExpired = (snoozeUntil > 0L && now >= snoozeUntil)
 
             if (isWordMatch) {
-                if (now - lastTime >= COOL_DOWN_MS && (snoozeUntil == 0L || now >= snoozeUntil)) {
-                    if (snoozeUntil > 0L) {
-                        lastTriggeredMap.remove("snooze_$lower")
-                    }
+                if (now - lastTime >= COOL_DOWN_MS) {
                     lastTriggeredMap[trackingKey] = now
                     postMatchNotification(trimmed, isHighPriority = true)
                     break
                 }
             } else if (isSnoozeExpired) {
-                lastTriggeredMap.remove("snooze_$lower")
                 lastTriggeredMap[trackingKey] = now
                 postMatchNotification(trimmed, isHighPriority = false)
                 break

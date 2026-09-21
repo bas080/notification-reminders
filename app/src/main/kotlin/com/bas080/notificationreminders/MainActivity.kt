@@ -205,8 +205,12 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Are you sure you want to delete \"$reminderText\"?")
             .setPositiveButton("Delete") { _, _ ->
                 if (index in activeReminders.indices) {
-                    activeReminders.removeAt(index)
-                    saveRemindersToPrefs()
+                    val deletedItem = activeReminders.removeAt(index)
+                    val trimmed = deletedItem.trim().lowercase()
+                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+                    val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                    prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
+                    ReminderNotificationListenerService.instance?.showStatusNotification()
                     adapter.notifyDataSetChanged()
                     Toast.makeText(this, R.string.toast_reminder_deleted, Toast.LENGTH_SHORT).show()
                 }

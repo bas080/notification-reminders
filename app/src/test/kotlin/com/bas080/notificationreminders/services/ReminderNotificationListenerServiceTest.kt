@@ -277,6 +277,51 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
+    fun testActiveSnoozeOverrulesNotificationMatch() {
+        ReminderNotificationListenerService.lastTriggeredMap.clear()
+        val context = RuntimeEnvironment.getApplication()
+
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("buy milk"))
+            .putLong("snooze_buy milk", System.currentTimeMillis() + 60000L)
+            .commit()
+
+        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        val extras = Bundle().apply {
+            putCharSequence("android.title", "Shopping")
+            putCharSequence("android.text", "Need to buy milk today")
+        }
+        @Suppress("DEPRECATION")
+        val targetNotification = Notification.Builder(context, "test_channel")
+            .setExtras(extras)
+            .build()
+        @Suppress("DEPRECATION")
+        val sbn = StatusBarNotification(
+            "com.example.otherapp",
+            "com.example.otherapp",
+            1,
+            "tag",
+            1000,
+            1000,
+            1,
+            targetNotification,
+            android.os.Process.myUserHandle(),
+            System.currentTimeMillis()
+        )
+
+        service.onNotificationPosted(sbn)
+
+        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
+        val matchedNotif = shadowNM.getNotification(matchedNotifId)
+        org.junit.Assert.assertNull("Notification match should NOT be posted while snooze is active", matchedNotif)
+    }
+
+    @Test
     fun testSnoozeExpiryRetriggersOnAnyNotificationWithNormalPriority() {
         ReminderNotificationListenerService.lastTriggeredMap.clear()
         val context = RuntimeEnvironment.getApplication()

@@ -178,10 +178,13 @@ class CreateReminderReceiver : BroadcastReceiver() {
             ReminderNotificationListenerService.ACTION_DONE_REMINDER -> {
                 val reminderText = intent.getStringExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT)
                 if (!reminderText.isNullOrEmpty()) {
+                    val trimmed = reminderText.trim().lowercase()
+                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+
                     val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
                     val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
                     savedSet.remove(reminderText)
-                    prefs.edit().putStringSet(KEY_REMINDERS, savedSet).apply()
+                    prefs.edit().putStringSet(KEY_REMINDERS, savedSet).remove("snooze_$trimmed").apply()
 
                     val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -215,6 +218,9 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val snoozeUntil = System.currentTimeMillis() + snoozeMs
                     val trimmed = reminderText.trim().lowercase()
                     ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] = snoozeUntil
+
+                    val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                    prefs.edit().putLong("snooze_$trimmed", snoozeUntil).apply()
 
                     val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
