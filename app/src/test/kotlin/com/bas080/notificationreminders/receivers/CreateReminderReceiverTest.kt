@@ -84,8 +84,11 @@ class CreateReminderReceiverTest {
     }
 
     @Test
-    fun testDoneReminderShowsSuccessToast() {
+    fun testDoneReminderShowsSuccessToastAndClearsSnooze() {
         val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putLong("snooze_buy milk", System.currentTimeMillis() + 60000L).commit()
+
         val receiver = CreateReminderReceiver()
 
         val intent = Intent(ReminderNotificationListenerService.ACTION_DONE_REMINDER).apply {
@@ -95,6 +98,8 @@ class CreateReminderReceiverTest {
         receiver.onReceive(context, intent)
 
         assertEquals("Reminder marked done", ShadowToast.getTextOfLatestToast())
+        val snoozeTimestamp = prefs.getLong("snooze_buy milk", 0L)
+        assertEquals(0L, snoozeTimestamp)
     }
 
     @Test
