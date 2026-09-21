@@ -137,19 +137,19 @@ class CreateReminderReceiverTest {
 
     @Test
     fun testParseSnoozeDurationHelper() {
-        val (ms15m, label15m) = CreateReminderReceiver.parseSnoozeDuration("15m")
+        val (ms15m, label15m) = CreateReminderReceiver.parseSnoozeDuration("15m")!!
         assertEquals(15 * 60 * 1000L, ms15m)
         assertEquals("15 minutes", label15m)
 
-        val (ms4h, label4h) = CreateReminderReceiver.parseSnoozeDuration("4h")
+        val (ms4h, label4h) = CreateReminderReceiver.parseSnoozeDuration("4h")!!
         assertEquals(4 * 60 * 60 * 1000L, ms4h)
         assertEquals("4 hours", label4h)
 
-        val (ms24h, label24h) = CreateReminderReceiver.parseSnoozeDuration("24h")
+        val (ms24h, label24h) = CreateReminderReceiver.parseSnoozeDuration("24h")!!
         assertEquals(24 * 60 * 60 * 1000L, ms24h)
         assertEquals("24 hours", label24h)
 
-        val (ms2w, label2w) = CreateReminderReceiver.parseSnoozeDuration("2w")
+        val (ms2w, label2w) = CreateReminderReceiver.parseSnoozeDuration("2w")!!
         assertEquals(2 * 7 * 24 * 60 * 60 * 1000L, ms2w)
         assertEquals("2 weeks", label2w)
 
@@ -163,23 +163,65 @@ class CreateReminderReceiverTest {
         val baseMillis = baseCal.timeInMillis
 
         // "18:00" from 12:00 -> 6 hours later today
-        val (ms1800, label1800) = CreateReminderReceiver.parseSnoozeDuration("18:00", baseMillis)
+        val (ms1800, label1800) = CreateReminderReceiver.parseSnoozeDuration("18:00", baseMillis)!!
         assertEquals(6 * 60 * 60 * 1000L, ms1800)
         assertEquals("today at 18:00", label1800)
 
         // "1800" (no colon) from 12:00 -> 6 hours later today
-        val (ms1800NoColon, label1800NoColon) = CreateReminderReceiver.parseSnoozeDuration("1800", baseMillis)
+        val (ms1800NoColon, label1800NoColon) = CreateReminderReceiver.parseSnoozeDuration("1800", baseMillis)!!
         assertEquals(6 * 60 * 60 * 1000L, ms1800NoColon)
         assertEquals("today at 18:00", label1800NoColon)
 
         // "7pm" from 12:00 -> 7 hours later today (19:00)
-        val (ms7pm, label7pm) = CreateReminderReceiver.parseSnoozeDuration("7pm", baseMillis)
+        val (ms7pm, label7pm) = CreateReminderReceiver.parseSnoozeDuration("7pm", baseMillis)!!
         assertEquals(7 * 60 * 60 * 1000L, ms7pm)
         assertEquals("today at 19:00", label7pm)
 
         // "1am" from 12:00 PM -> 13 hours later tomorrow (01:00)
-        val (ms1am, label1am) = CreateReminderReceiver.parseSnoozeDuration("1am", baseMillis)
+        val (ms1am, label1am) = CreateReminderReceiver.parseSnoozeDuration("1am", baseMillis)!!
         assertEquals(13 * 60 * 60 * 1000L, ms1am)
         assertEquals("tomorrow at 01:00", label1am)
+    }
+
+    @Test
+    fun testParseSnoozeDurationInvalidInputsReturnNull() {
+        org.junit.Assert.assertNull(CreateReminderReceiver.parseSnoozeDuration("5s"))
+        org.junit.Assert.assertNull(CreateReminderReceiver.parseSnoozeDuration("invalid_text"))
+        org.junit.Assert.assertNull(CreateReminderReceiver.parseSnoozeDuration("0m"))
+    }
+
+    @Test
+    fun testSnoozeWithInvalidDurationShowsErrorToast() {
+        val context = RuntimeEnvironment.getApplication()
+        val receiver = CreateReminderReceiver()
+
+        val results = Bundle().apply {
+            putCharSequence(ReminderNotificationListenerService.KEY_SNOOZE_REPLY, "5s")
+        }
+        val intent = Intent(ReminderNotificationListenerService.ACTION_SNOOZE_REMINDER).apply {
+            putExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT, "Buy milk")
+        }
+        RemoteInput.addResultsToIntent(
+            arrayOf(RemoteInput.Builder(ReminderNotificationListenerService.KEY_SNOOZE_REPLY).build()),
+            intent,
+            results
+        )
+
+        receiver.onReceive(context, intent)
+
+        assertEquals("Failed to snooze: Invalid duration entered", ShadowToast.getTextOfLatestToast())
+        val snoozeUntil = ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] ?: 0L
+        assertEquals(0L, snoozeUntil)
+    }
+
+    @Test
+    fun testCanonicalizeSnoozeChoice() {
+        assertEquals("18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("6pm"))
+        assertEquals("18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("1800"))
+        assertEquals("18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("18:00"))
+        assertEquals("06:00", CreateReminderReceiver.canonicalizeSnoozeChoice("6am"))
+        assertEquals("15m", CreateReminderReceiver.canonicalizeSnoozeChoice("15 mins"))
+        assertEquals("1h", CreateReminderReceiver.canonicalizeSnoozeChoice("1 hour"))
+        org.junit.Assert.assertNull(CreateReminderReceiver.canonicalizeSnoozeChoice("5s"))
     }
 }
