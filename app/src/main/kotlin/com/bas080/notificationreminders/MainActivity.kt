@@ -64,6 +64,8 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnNavReminders)
         markAsButtonAccessibility(binding.btnNavLogs)
         markAsButtonAccessibility(binding.btnClearLogs)
+        markAsButtonAccessibility(binding.btnExportMarkdown)
+        markAsButtonAccessibility(binding.btnImportMarkdown)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -78,6 +80,64 @@ class MainActivity : AppCompatActivity() {
             loadLogs()
             Toast.makeText(this, R.string.toast_logs_cleared, Toast.LENGTH_SHORT).show()
         }
+
+        binding.btnExportMarkdown.setOnClickListener {
+            exportRemindersToMarkdown()
+        }
+
+        binding.btnImportMarkdown.setOnClickListener {
+            showImportMarkdownDialog()
+        }
+    }
+
+    private fun exportRemindersToMarkdown() {
+        if (activeReminders.isEmpty()) {
+            Toast.makeText(this, R.string.toast_no_reminders_to_export, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val markdownText = com.bas080.notificationreminders.utils.MarkdownRemindersUtil.exportToMarkdown(activeReminders)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, markdownText)
+            putExtra(Intent.EXTRA_SUBJECT, "Reminders Export")
+        }
+        val chooserIntent = Intent.createChooser(shareIntent, "Export Reminders")
+        startActivity(chooserIntent)
+    }
+
+    private fun showImportMarkdownDialog() {
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val input = EditText(this).apply {
+            id = R.id.import_input
+            hint = getString(R.string.import_dialog_hint)
+            setLines(6)
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+            setPadding(padding, padding / 2, padding, 0)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.import_dialog_title)
+            .setView(input)
+            .setPositiveButton(R.string.import_button) { _, _ ->
+                val markdownText = input.text.toString()
+                val importedItems = com.bas080.notificationreminders.utils.MarkdownRemindersUtil.importFromMarkdown(markdownText)
+                if (importedItems.isNotEmpty()) {
+                    var addedCount = 0
+                    for (item in importedItems) {
+                        if (!activeReminders.contains(item)) {
+                            activeReminders.add(item)
+                            addedCount++
+                        }
+                    }
+                    if (addedCount > 0) {
+                        saveRemindersToPrefs()
+                        adapter.notifyDataSetChanged()
+                        Toast.makeText(this, getString(R.string.toast_imported_reminders, addedCount), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun markAsButtonAccessibility(view: View) {
