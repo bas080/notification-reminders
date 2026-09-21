@@ -65,4 +65,47 @@ class MainActivityTest {
 
         assertEquals("Logs cleared", ShadowToast.getTextOfLatestToast())
     }
+
+    @Test
+    fun testExportMarkdownWithRemindersLaunchesShareIntent() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ViewHolder
+        holder.reminderInput.setText("Buy milk")
+        holder.btnAction.performClick()
+
+        val btnExport = activity.findViewById<TextView>(R.id.btn_export_markdown)
+        assertNotNull(btnExport)
+        btnExport.performClick()
+
+        val nextStartedActivity = shadowOf(activity).nextStartedActivity
+        assertNotNull(nextStartedActivity)
+        assertEquals(android.content.Intent.ACTION_CHOOSER, nextStartedActivity.action)
+    }
+
+    @Test
+    fun testImportMarkdownDialogParsesAndAddsReminders() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnImport = activity.findViewById<TextView>(R.id.btn_import_markdown)
+        assertNotNull(btnImport)
+        btnImport.performClick()
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull("Import dialog should be shown", dialog)
+
+        val editText = dialog!!.findViewById<EditText>(R.id.import_input)
+        assertNotNull("Import EditText should exist inside dialog", editText)
+
+        editText!!.setText("- [ ] Clean garage unique 123\n- [ ] Fix bike unique 123")
+        val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        assertNotNull("Positive button should exist", positiveBtn)
+        positiveBtn.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Imported 2 new reminder(s)", ShadowToast.getTextOfLatestToast())
+    }
 }

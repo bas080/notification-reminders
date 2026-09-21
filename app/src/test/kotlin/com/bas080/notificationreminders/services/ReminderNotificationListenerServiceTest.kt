@@ -397,4 +397,22 @@ class ReminderNotificationListenerServiceTest {
         assertEquals("1d", choices[3].toString())
         assertEquals("2w", choices[4].toString())
     }
+
+    @Test
+    fun testPostMatchNotificationPostsReminderAndReAddsStatusNotification() {
+        val context = RuntimeEnvironment.getApplication()
+        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val shadowNM = Shadows.shadowOf(notificationManager)
+
+        service.postMatchNotification("Buy grocers")
+
+        val matchId = ReminderNotificationListenerService.getNotificationIdForReminder("Buy grocers")
+        val matchNotif = shadowNM.getNotification(matchId)
+        assertNotNull("Match notification should be posted directly", matchNotif)
+
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Status notification should be re-added when a reminder notification is posted", statusNotif)
+    }
 }
