@@ -1,11 +1,15 @@
 package com.bas080.notificationreminders
 
+import android.app.Notification
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.os.Bundle
 import android.os.Looper
+import android.service.notification.StatusBarNotification
 import android.view.View
 import android.widget.TextView
+import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -16,6 +20,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowAlertDialog
 import com.bas080.notificationreminders.utils.AppLogger
 import java.io.File
 import java.io.FileOutputStream
@@ -40,10 +45,16 @@ class ScreenshotGeneratorTest {
         screenshotsDir = dir
     }
 
+    @After
+    fun tearDown() {
+        PickNotificationActivity.mockActiveNotifications = null
+    }
+
     @Test
     fun captureFeatureScreenshots() {
         captureRemindersListScreenshot()
         captureLogsViewScreenshot()
+        captureNotificationDrawerScreenshot()
     }
 
     private fun captureRemindersListScreenshot() {
@@ -76,6 +87,48 @@ class ScreenshotGeneratorTest {
 
         val decorView = activity.window.decorView
         renderAndSaveView(decorView, File(screenshotsDir, "2.png"))
+    }
+
+    private fun captureNotificationDrawerScreenshot() {
+        val sbn1 = createMockSbn("com.whatsapp", "WhatsApp", "Meeting with design team")
+        val sbn2 = createMockSbn("com.android.calendar", "Calendar", "Doctor's Appointment at 4 PM")
+        val sbn3 = createMockSbn("com.google.android.gm", "Email", "Flight confirmation")
+
+        PickNotificationActivity.mockActiveNotifications = arrayOf(sbn1, sbn2, sbn3)
+
+        val controller = Robolectric.buildActivity(PickNotificationActivity::class.java).setup()
+        val activity = controller.get()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val dialog = ShadowAlertDialog.getLatestDialog()
+        val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
+
+        renderAndSaveView(viewToRender, File(screenshotsDir, "3.png"))
+    }
+
+    private fun createMockSbn(packageName: String, title: String, text: String): StatusBarNotification {
+        val context = RuntimeEnvironment.getApplication()
+        val extras = Bundle().apply {
+            putCharSequence("android.title", title)
+            putCharSequence("android.text", text)
+        }
+        @Suppress("DEPRECATION")
+        val notification = Notification.Builder(context, "test_channel")
+            .setExtras(extras)
+            .build()
+        @Suppress("DEPRECATION")
+        return StatusBarNotification(
+            packageName,
+            packageName,
+            1,
+            "tag",
+            1000,
+            1000,
+            1,
+            notification,
+            android.os.Process.myUserHandle(),
+            System.currentTimeMillis()
+        )
     }
 
     private fun renderAndSaveView(view: View, outputFile: File) {
