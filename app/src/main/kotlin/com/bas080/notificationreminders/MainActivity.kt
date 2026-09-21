@@ -368,9 +368,9 @@ class MainActivity : AppCompatActivity() {
                             showSnoozeOptionsDialog(reminderText)
                         }
                     } else if (direction == ItemTouchHelper.RIGHT) {
-                        // Swipe right -> Delete confirmation
+                        // Swipe right -> Mark Done confirmation
                         adapter.notifyItemChanged(position)
-                        showDeleteConfirmationDialog(reminderText)
+                        showMarkDoneConfirmationDialog(reminderText)
                     }
                 }
             }
@@ -390,12 +390,12 @@ class MainActivity : AppCompatActivity() {
                     val icon: Drawable?
 
                     if (dX > 0) {
-                        // Swipe Right -> Delete (Trash bin icon)
+                        // Swipe Right -> Mark Done (Checkmark icon)
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
                         background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
                         background.draw(c)
 
-                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_delete)
+                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_done)
                         icon?.let {
                             val margin = (itemView.height - it.intrinsicHeight) / 2
                             val top = itemView.top + margin
@@ -494,11 +494,11 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
     }
 
-    private fun showDeleteConfirmationDialog(reminderText: String) {
+    private fun showMarkDoneConfirmationDialog(reminderText: String) {
         AlertDialog.Builder(this)
-            .setTitle("Delete Reminder")
-            .setMessage("Are you sure you want to delete \"$reminderText\"?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(R.string.mark_done)
+            .setMessage("Are you sure you want to mark \"$reminderText\" as done?")
+            .setPositiveButton(R.string.mark_done) { _, _ ->
                 if (activeReminders.contains(reminderText)) {
                     activeReminders.remove(reminderText)
                     val trimmed = reminderText.trim().lowercase()
@@ -507,7 +507,7 @@ class MainActivity : AppCompatActivity() {
                     prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
                     ReminderNotificationListenerService.instance?.showStatusNotification()
                     updateSummaryAndAdapter()
-                    Toast.makeText(this, R.string.toast_reminder_deleted, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)

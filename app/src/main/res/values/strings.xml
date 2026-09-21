@@ -44,7 +44,7 @@
     <string name="sort_status">Status (Active first)</string>
     <string name="sort_snooze_asc">Snooze time (Earliest first)</string>
     <string name="sort_button">Sort</string>
-    <string name="swipe_instructions">Swipe left to toggle snooze • Swipe right to delete</string>
+    <string name="swipe_instructions">Swipe left to toggle snooze • Swipe right to mark done</string>
     <string name="snooze_status_format">Snoozed • until %s</string>
     <string name="reminders_summary_combined">%1$d active • %2$d snoozed</string>
     <string name="share">Share</string>
