@@ -340,7 +340,10 @@ class ReminderNotificationListenerServiceTest {
 
         val updatedChoices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
         assertEquals(5, updatedChoices.size)
-        assertEquals("30m", updatedChoices[0].toString())
-        assertEquals("2h", updatedChoices[1].toString())
+        assertEquals("15m", updatedChoices[0].toString())
+        assertEquals("30m", updatedChoices[1].toString())
+        assertEquals("1h", updatedChoices[2].toString())
+        assertEquals("2h", updatedChoices[3].toString())
+        assertEquals("4h", updatedChoices[4].toString())
     }
 }
