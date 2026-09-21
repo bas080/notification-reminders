@@ -66,8 +66,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
             val sortedUserChoices = allEntries.entries
                 .mapNotNull { entry ->
-                    val count = (entry.value as? Number)?.toInt() ?: 0
-                    if (count > 0) entry.key to count else null
+                    val timestamp = (entry.value as? Number)?.toLong() ?: 0L
+                    if (timestamp > 0L) entry.key to timestamp else null
                 }
                 .sortedByDescending { it.second }
                 .map { it.first }

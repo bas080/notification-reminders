@@ -133,6 +133,10 @@ class CreateReminderReceiverTest {
         receiver.onReceive(context, intent)
 
         assertEquals("Reminder snoozed for 15 minutes", ShadowToast.getTextOfLatestToast())
+
+        val freqPrefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+        val timestamp = freqPrefs.getLong("15m", 0L)
+        org.junit.Assert.assertTrue("Timestamp for 15m snooze choice should be positive", timestamp > 0L)
     }
 
     @Test

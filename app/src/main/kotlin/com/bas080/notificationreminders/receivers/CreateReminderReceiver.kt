@@ -208,8 +208,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val canonicalChoice = canonicalizeSnoozeChoice(chosenDurationStr)
                     if (canonicalChoice != null) {
                         val freqPrefs = context.getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
-                        val currentCount = freqPrefs.getInt(canonicalChoice, 0)
-                        freqPrefs.edit().putInt(canonicalChoice, currentCount + 1).apply()
+                        freqPrefs.edit().putLong(canonicalChoice, System.currentTimeMillis()).apply()
                     }
 
                     val (snoozeMs, durationLabel) = parseResult
