@@ -144,7 +144,7 @@ class MainActivityTest {
         assertNotNull(holder)
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
-        assertTrue(holder.txtStatus.text.toString().startsWith("SNOOZED • until"))
+        assertTrue(holder.txtStatus.text.toString().startsWith("Snoozed • until"))
         assertEquals(View.VISIBLE, holder.btnUnsnooze.visibility)
     }
 
