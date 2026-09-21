@@ -325,17 +325,17 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testGetTopSnoozeChoicesDefaultAndFrequent() {
+    fun testGetTopSnoozeChoicesDefaultAndRecent() {
         val context = RuntimeEnvironment.getApplication()
         val defaultChoices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
         assertEquals(5, defaultChoices.size)
         assertEquals("15m", defaultChoices[0].toString())
 
-        // Save custom snooze frequencies
+        // Save custom snooze timestamps
         val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
         prefs.edit()
-            .putInt("30m", 10)
-            .putInt("2h", 5)
+            .putLong("30m", 1000L)
+            .putLong("2h", 2000L)
             .commit()
 
         val updatedChoices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
@@ -348,19 +348,19 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testGetTopSnoozeChoicesLimitsToTop5MostFrequentAndSortsShortToLong() {
+    fun testGetTopSnoozeChoicesLimitsToTop5LatestUsedAndSortsShortToLong() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
 
-        // Record 7 choices with different frequency counts
+        // Record 7 choices with different timestamps
         prefs.edit()
-            .putInt("10m", 100)
-            .putInt("20m", 90)
-            .putInt("30m", 80)
-            .putInt("2h", 70)
-            .putInt("3d", 60)
-            .putInt("5m", 10)
-            .putInt("1w", 5)
+            .putLong("10m", 100L)
+            .putLong("20m", 200L)
+            .putLong("30m", 300L)
+            .putLong("2h", 400L)
+            .putLong("3d", 500L)
+            .putLong("5m", 10L)
+            .putLong("1w", 5L)
             .commit()
 
         val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
@@ -378,13 +378,13 @@ class ReminderNotificationListenerServiceTest {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
 
-        // Custom duration and absolute time inputs typed by user
+        // Custom duration and absolute time inputs typed by user with timestamps
         prefs.edit()
-            .putInt("5m", 50)
-            .putInt("12h", 40)
-            .putInt("2w", 30)
-            .putInt("45m", 20)
-            .putInt("1d", 10)
+            .putLong("5m", 500L)
+            .putLong("12h", 400L)
+            .putLong("2w", 300L)
+            .putLong("45m", 200L)
+            .putLong("1d", 100L)
             .commit()
 
         val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
