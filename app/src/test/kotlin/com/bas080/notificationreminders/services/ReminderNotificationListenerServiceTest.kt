@@ -346,4 +346,55 @@ class ReminderNotificationListenerServiceTest {
         assertEquals("2h", updatedChoices[3].toString())
         assertEquals("4h", updatedChoices[4].toString())
     }
+
+    @Test
+    fun testGetTopSnoozeChoicesLimitsToTop5MostFrequentAndSortsShortToLong() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+
+        // Record 7 choices with different frequency counts
+        prefs.edit()
+            .putInt("10m", 100)
+            .putInt("20m", 90)
+            .putInt("30m", 80)
+            .putInt("2h", 70)
+            .putInt("3d", 60)
+            .putInt("5m", 10)
+            .putInt("1w", 5)
+            .commit()
+
+        val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
+
+        assertEquals(5, choices.size)
+        assertEquals("10m", choices[0].toString())
+        assertEquals("20m", choices[1].toString())
+        assertEquals("30m", choices[2].toString())
+        assertEquals("2h", choices[3].toString())
+        assertEquals("3d", choices[4].toString())
+    }
+
+    @Test
+    fun testGetTopSnoozeChoicesIncludesCustomTextInputsAndSortsShortToLong() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+
+        // Custom duration and absolute time inputs typed by user
+        prefs.edit()
+            .putInt("5m", 50)
+            .putInt("12h", 40)
+            .putInt("2w", 30)
+            .putInt("45m", 20)
+            .putInt("1d", 10)
+            .commit()
+
+        val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
+
+        // Should contain top 5 user choices sorted from short to long duration: 5m, 45m, 12h, 1d, 2w
+        assertEquals(5, choices.size)
+        assertEquals("5m", choices[0].toString())
+        assertEquals("45m", choices[1].toString())
+        assertEquals("12h", choices[2].toString())
+        assertEquals("1d", choices[3].toString())
+        assertEquals("2w", choices[4].toString())
+    }
 }
