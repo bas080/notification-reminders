@@ -16,7 +16,59 @@ class CreateReminderReceiver : BroadcastReceiver() {
         private const val KEY_REMINDERS = "key_reminders_list"
         private const val PREFS_SNOOZE_FREQ = "snooze_freq_prefs"
 
-        fun parseSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String> {
+        fun canonicalizeSnoozeChoice(input: String?): String? {
+            val raw = input?.trim()?.lowercase() ?: ""
+            if (raw.isEmpty()) return "1h"
+
+            when {
+                raw == "15m" || raw == "15 mins" || raw == "15 minutes" || raw == "15min" -> return "15m"
+                raw == "1h" || raw == "1 hour" || raw == "1 hr" || raw == "1hour" -> return "1h"
+                raw == "4h" || raw == "4 hours" || raw == "4 hrs" || raw == "4hour" -> return "4h"
+                raw == "24h" || raw == "1 day" || raw == "24 hours" || raw == "24 hrs" || raw == "1day" -> return "24h"
+                raw == "1w" || raw == "1 week" || raw == "1week" || raw == "w" -> return "1w"
+            }
+
+            val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(raw)
+            if (amPmMatch != null) {
+                var hour = amPmMatch.groupValues[1].toInt()
+                val min = amPmMatch.groupValues[2].let { if (it.isEmpty()) 0 else it.toInt() }
+                val amPm = amPmMatch.groupValues[3]
+                if (hour in 1..12 && min in 0..59) {
+                    if (amPm == "pm" && hour < 12) hour += 12
+                    if (amPm == "am" && hour == 12) hour = 0
+                    return String.format(java.util.Locale.US, "%02d:%02d", hour, min)
+                }
+            }
+
+            val timeColonMatch = Regex("^(\\d{1,2}):(\\d{2})$").find(raw)
+            if (timeColonMatch != null) {
+                val hour = timeColonMatch.groupValues[1].toInt()
+                val min = timeColonMatch.groupValues[2].toInt()
+                if (hour in 0..23 && min in 0..59) {
+                    return String.format(java.util.Locale.US, "%02d:%02d", hour, min)
+                }
+            }
+
+            if (raw.length in 3..4 && raw.all { it.isDigit() }) {
+                val hour = if (raw.length == 4) raw.substring(0, 2).toInt() else raw.substring(0, 1).toInt()
+                val min = if (raw.length == 4) raw.substring(2, 4).toInt() else raw.substring(1, 3).toInt()
+                if (hour in 0..23 && min in 0..59) {
+                    return String.format(java.util.Locale.US, "%02d:%02d", hour, min)
+                }
+            }
+
+            val numberMatch = Regex("^(\\d+)\\s*([mhdw]?)$").find(raw)
+            if (numberMatch != null) {
+                val num = numberMatch.groupValues[1].toLongOrNull() ?: return null
+                val unit = numberMatch.groupValues[2].ifEmpty { "h" }
+                if (num <= 0) return null
+                return "$num$unit"
+            }
+
+            return null
+        }
+
+        fun parseSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String>? {
             val raw = input?.trim()?.lowercase() ?: ""
             if (raw.isEmpty()) {
                 return Pair(60 * 60 * 1000L, "1 hour")
@@ -35,7 +87,6 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     return Pair(7 * 24 * 60 * 60 * 1000L, "1 week")
             }
 
-            // 12-hour AM/PM absolute time format e.g. "7pm", "1am", "11:30am", "7:00 pm", "12pm"
             val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(raw)
             if (amPmMatch != null) {
                 var hour = amPmMatch.groupValues[1].toInt()
@@ -49,7 +100,6 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 }
             }
 
-            // 24-hour time format with colon e.g. "18:00", "09:30", "9:30", "0:15"
             val timeColonMatch = Regex("^(\\d{1,2}):(\\d{2})$").find(raw)
             if (timeColonMatch != null) {
                 val hour = timeColonMatch.groupValues[1].toInt()
@@ -59,7 +109,6 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 }
             }
 
-            // 24-hour time format without colon e.g. "1800", "0930", "0800", "930"
             if (raw.length in 3..4 && raw.all { it.isDigit() }) {
                 val hour = if (raw.length == 4) raw.substring(0, 2).toInt() else raw.substring(0, 1).toInt()
                 val min = if (raw.length == 4) raw.substring(2, 4).toInt() else raw.substring(1, 3).toInt()
@@ -68,11 +117,11 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 }
             }
 
-            // Relative unit duration e.g. "2w", "30m", "2h", "3d", "5"
             val numberMatch = Regex("^(\\d+)\\s*([mhdw]?)$").find(raw)
             if (numberMatch != null) {
-                val num = numberMatch.groupValues[1].toLongOrNull() ?: 1L
+                val num = numberMatch.groupValues[1].toLongOrNull() ?: return null
                 val unit = numberMatch.groupValues[2]
+                if (num <= 0) return null
                 return when (unit) {
                     "m" -> Pair(num * 60 * 1000L, if (num == 1L) "1 minute" else "$num minutes")
                     "d" -> Pair(num * 24 * 60 * 60 * 1000L, if (num == 1L) "1 day" else "$num days")
@@ -81,7 +130,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 }
             }
 
-            return Pair(60 * 60 * 1000L, "1 hour")
+            return null
         }
 
         private fun calculateAbsoluteTimeSnooze(targetHour: Int, targetMin: Int, nowMillis: Long): Pair<Long, String> {
@@ -150,14 +199,20 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     val remoteResults = RemoteInput.getResultsFromIntent(intent)
                     val chosenDurationStr = remoteResults?.getCharSequence(ReminderNotificationListenerService.KEY_SNOOZE_REPLY)?.toString()
 
-                    if (!chosenDurationStr.isNullOrBlank()) {
-                        val freqPrefs = context.getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
-                        val choiceKey = chosenDurationStr.trim().lowercase()
-                        val currentCount = freqPrefs.getInt(choiceKey, 0)
-                        freqPrefs.edit().putInt(choiceKey, currentCount + 1).apply()
+                    val parseResult = parseSnoozeDuration(chosenDurationStr)
+                    if (parseResult == null) {
+                        Toast.makeText(context, R.string.toast_invalid_snooze_input, Toast.LENGTH_SHORT).show()
+                        return
                     }
 
-                    val (snoozeMs, durationLabel) = parseSnoozeDuration(chosenDurationStr)
+                    val canonicalChoice = canonicalizeSnoozeChoice(chosenDurationStr)
+                    if (canonicalChoice != null) {
+                        val freqPrefs = context.getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
+                        val currentCount = freqPrefs.getInt(canonicalChoice, 0)
+                        freqPrefs.edit().putInt(canonicalChoice, currentCount + 1).apply()
+                    }
+
+                    val (snoozeMs, durationLabel) = parseResult
                     val snoozeUntil = System.currentTimeMillis() + snoozeMs
                     val trimmed = reminderText.trim().lowercase()
                     ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] = snoozeUntil

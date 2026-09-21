@@ -84,7 +84,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 }
             }
             combined.sortBy { choice ->
-                CreateReminderReceiver.parseSnoozeDuration(choice).first
+                CreateReminderReceiver.parseSnoozeDuration(choice)?.first ?: Long.MAX_VALUE
             }
             return Array(combined.size) { combined[it] }
         }
