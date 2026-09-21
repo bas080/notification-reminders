@@ -87,7 +87,10 @@ class CreateReminderReceiverTest {
     fun testDoneReminderShowsSuccessToastAndClearsSnooze() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putLong("snooze_buy milk", System.currentTimeMillis() + 60000L).commit()
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Buy milk"))
+            .putLong("snooze_buy milk", System.currentTimeMillis() + 60000L)
+            .commit()
 
         val receiver = CreateReminderReceiver()
 
@@ -100,6 +103,9 @@ class CreateReminderReceiverTest {
         assertEquals("Reminder marked done", ShadowToast.getTextOfLatestToast())
         val snoozeTimestamp = prefs.getLong("snooze_buy milk", 0L)
         assertEquals(0L, snoozeTimestamp)
+
+        val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        org.junit.Assert.assertTrue("Saved set should contain 'Buy milk #done'", savedSet.contains("Buy milk #done"))
     }
 
     @Test

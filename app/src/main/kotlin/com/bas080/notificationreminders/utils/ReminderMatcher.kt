@@ -62,4 +62,71 @@ object ReminderMatcher {
 
         return notificationContent.contains(trimmed, ignoreCase = true)
     }
+
+    /**
+     * Filters a list of reminders using a 4-tiered search matching algorithm.
+     * Higher tiers prevent lower tiers from evaluating if any matches are found.
+     *
+     * Tier 1: Case-insensitive AND word match
+     * Tier 2: Case-insensitive AND substring match
+     * Tier 3: Case-insensitive OR word match
+     * Tier 4: Case-insensitive OR substring match
+     */
+    fun filterSearchQueryTiered(reminders: List<String>, query: String): List<String> {
+        val q = query.trim()
+        if (q.isEmpty()) return reminders
+
+        fun tokenize(text: String): List<String> {
+            return text.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        }
+
+        val rawQueryWords = q.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (rawQueryWords.isEmpty()) return reminders
+
+        val tokenizedQueryWords = tokenize(q)
+
+        // Tier 1: Case-insensitive AND word match
+        if (tokenizedQueryWords.isNotEmpty()) {
+            val tier1 = reminders.filter { reminder ->
+                val words = tokenize(reminder)
+                tokenizedQueryWords.all { qWord -> words.contains(qWord) }
+            }
+            if (tier1.isNotEmpty()) return tier1
+        }
+
+        // Tier 2: Case-insensitive AND substring match
+        val tier2 = reminders.filter { reminder ->
+            rawQueryWords.all { qWord -> reminder.contains(qWord, ignoreCase = true) }
+        }
+        if (tier2.isNotEmpty()) return tier2
+
+        // Tier 3: Case-insensitive OR word match
+        if (tokenizedQueryWords.isNotEmpty()) {
+            val tier3 = reminders.filter { reminder ->
+                val words = tokenize(reminder)
+                tokenizedQueryWords.any { qWord -> words.contains(qWord) }
+            }
+            if (tier3.isNotEmpty()) return tier3
+        }
+
+        // Tier 4: Case-insensitive OR substring match
+        val tier4 = reminders.filter { reminder ->
+            rawQueryWords.any { qWord -> reminder.contains(qWord, ignoreCase = true) }
+        }
+        if (tier4.isNotEmpty()) return tier4
+
+        return emptyList()
+    }
+
+    /**
+     * Lenient search matching function to check if a reminder matches a search query.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun matchesSearchQuery(
+        reminder: String,
+        query: String,
+        commonWords: Set<String> = DEFAULT_COMMON_WORDS
+    ): Boolean {
+        return filterSearchQueryTiered(listOf(reminder), query).isNotEmpty()
+    }
 }

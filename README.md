@@ -31,6 +31,15 @@ A simple Android application that keeps track of your reminders and alerts you w
 
 To view screenshots of the app features, check out the [Screenshots Gallery](fastlane/metadata/android/en-US/images/phoneScreenshots/).
 
+## Permissions
+
+The app requests minimal Android system permissions to operate transparently:
+
+- **Notification Listener Access (Required)**: Allows the app to monitor incoming notification text so it can match keywords against your active reminders.
+- **Post Notifications (Required on Android 13+)**: Allows the app to post status and matched reminder alerts in your notification tray.
+- **Start at Boot (Automatic / Optional)**: Ensures reminder listeners and background status notifications setup automatically when your device restarts.
+- **Foreground Service**: Keeps reminder monitoring running reliably in the background without being closed by Android battery optimization.
+
 ## Availability & IzzyOnDroid
 
 This repository is fully configured and compliant with **IzzyOnDroid** F-Droid repository criteria:

@@ -52,4 +52,21 @@ class ReminderMatcherTest {
     fun testEmptyReminder() {
         assertFalse(ReminderMatcher.matches("", "Some notification"))
     }
+
+    @Test
+    fun testTieredSearchQueryMatching() {
+        val reminders = listOf("Buy milk at supermarket", "Call dentist", "Buy groceries")
+
+        // Tier 1 / Tier 2 AND match
+        val res1 = ReminderMatcher.filterSearchQueryTiered(reminders, "Buy milk")
+        assertEquals(listOf("Buy milk at supermarket"), res1)
+
+        // Substring / Sub-word match
+        val res2 = ReminderMatcher.filterSearchQueryTiered(reminders, "supermar")
+        assertEquals(listOf("Buy milk at supermarket"), res2)
+
+        // Non-matching query
+        val res3 = ReminderMatcher.filterSearchQueryTiered(reminders, "doctor appointment")
+        assertTrue(res3.isEmpty())
+    }
 }

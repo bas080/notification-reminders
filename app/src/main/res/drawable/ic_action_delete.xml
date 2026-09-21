@@ -3,7 +3,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Trash bin icon -->
     <path
-        android:fillColor="@color/accent"
-        android:pathData="M19,13 H13 V19 H11 V13 H5 V11 H11 V5 H13 V11 H19 Z" />
+        android:fillColor="#FF5252"
+        android:pathData="M6,19c0,1.1 0.9,2 2,2h8c1.1,0 2,-0.9 2,-2V7H6v12zM19,4h-3.5l-1,-1h-5L8.5,4H5v2h14V4z" />
 </vector>

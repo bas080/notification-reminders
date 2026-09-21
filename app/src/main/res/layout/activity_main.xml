@@ -8,7 +8,7 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Minimal Text Navigation Header -->
+    <!-- Minimal Header & Navigation Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -16,133 +16,265 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="12dp">
 
+        <!-- Subtle Tab Navigation -->
         <TextView
             android:id="@+id/btn_nav_reminders"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="REMINDERS"
+            android:text="@string/nav_reminders"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
-            android:letterSpacing="0.1"
-            android:gravity="center"
-            android:padding="12dp"
+            android:paddingVertical="4dp"
+            android:paddingEnd="12dp"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground" />
 
-        <View
-            android:layout_width="1dp"
-            android:layout_height="16dp"
-            android:background="@color/divider_color" />
-
         <TextView
-            android:id="@+id/btn_nav_logs"
-            android:layout_width="0dp"
+            android:id="@+id/btn_nav_about"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="LOGS"
+            android:text="@string/nav_about"
             android:textSize="14sp"
             android:textStyle="normal"
             android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:gravity="center"
-            android:padding="12dp"
+            android:paddingVertical="4dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="12dp"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground" />
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_color"
-        android:layout_marginBottom="12dp" />
-
-    <!-- Reminders Section -->
+    <!-- Reminders Main Content View -->
     <LinearLayout
         android:id="@+id/reminders_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- Section Summary & Control Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end"
+            android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
 
-            <TextView
-                android:id="@+id/btn_import_markdown"
+            <!-- Tags Filter Option Display -->
+            <LinearLayout
+                android:id="@+id/btn_tags_filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/import_markdown"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent"
-                android:letterSpacing="0.1"
-                android:padding="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="4dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/txt_tags_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tags:"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:id="@+id/txt_selected_tags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="All"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_secondary" />
+
+            </LinearLayout>
 
             <View
-                android:layout_width="12dp"
-                android:layout_height="1dp" />
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
+            <!-- Clear Search/Filter Button -->
             <TextView
-                android:id="@+id/btn_export_markdown"
+                android:id="@+id/btn_clear_search"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/export_markdown"
-                android:textSize="12sp"
+                android:text="Clear"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="@color/accent"
-                android:letterSpacing="0.1"
-                android:padding="8dp"
-                android:clickable="true"
-                android:focusable="true"
+                android:textColor="@color/text_muted"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="6dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:enabled="false"
+                android:alpha="0.4"
                 android:background="?attr/selectableItemBackground" />
 
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/reminders_list"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            tools:listitem="@layout/item_reminder" />
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/reminders_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="false"
+                tools:listitem="@layout/item_reminder" />
+
+            <TextView
+                android:id="@+id/txt_empty_reminders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="120dp"
+                android:gravity="center"
+                android:text="@string/no_reminders"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp"
+                android:focusable="false"
+                android:clickable="false"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
     </LinearLayout>
 
-    <!-- Logs Section -->
+    <!-- About Main Content View -->
     <LinearLayout
-        android:id="@+id/logs_container"
+        android:id="@+id/about_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:visibility="gone">
 
+        <!-- App Metadata & Actions Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/txt_app_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Version 1.0"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btn_feedback"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/feedback"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent"
+                    android:letterSpacing="0.05"
+                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/btn_import_markdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/import_markdown"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent"
+                    android:letterSpacing="0.05"
+                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="8dp"
+                    android:layout_marginStart="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/btn_export_markdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/export_markdown"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent"
+                    android:letterSpacing="0.05"
+                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="8dp"
+                    android:layout_marginStart="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Logs Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end"
+            android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APPLICATION LOGS"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:letterSpacing="0.05" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
             <TextView
                 android:id="@+id/btn_clear_logs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CLEAR LOGS"
-                android:textSize="12sp"
+                android:text="@string/clear_logs"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/accent_danger"
-                android:letterSpacing="0.1"
-                android:padding="8dp"
+                android:letterSpacing="0.05"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
@@ -151,8 +283,9 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/bg_surface"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_card"
             android:padding="12dp">
 
             <TextView

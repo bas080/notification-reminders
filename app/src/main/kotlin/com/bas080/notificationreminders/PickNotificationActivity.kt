@@ -34,7 +34,7 @@ class PickNotificationActivity : AppCompatActivity() {
         val notificationsList = getActiveNotificationsList()
 
         if (notificationsList.isEmpty()) {
-            AlertDialog.Builder(this)
+            AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
                 .setTitle(getString(R.string.select_notification))
                 .setMessage(getString(R.string.no_active_notifications))
                 .setNegativeButton(getString(R.string.cancel)) { _, _ -> finish() }
@@ -42,7 +42,7 @@ class PickNotificationActivity : AppCompatActivity() {
                 .show()
         } else {
             val itemsArray = notificationsList.toTypedArray()
-            AlertDialog.Builder(this)
+            AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
                 .setTitle(getString(R.string.select_notification))
                 .setItems(itemsArray) { _, which ->
                     val selectedText = itemsArray[which]
@@ -77,6 +77,7 @@ class PickNotificationActivity : AppCompatActivity() {
     }
 
     private fun saveReminder(reminderText: String) {
+        com.bas080.notificationreminders.utils.AppLogger.log(this, "PickNotificationActivity", "Selected notification as reminder")
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
         savedSet.add(reminderText)
