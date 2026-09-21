@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".NotificationRemindersApplication"
@@ -30,16 +31,33 @@
         </activity>
 
         <activity
+            android:name=".CreateReminderActivity"
+            android:exported="true"
+            android:label="@string/add_reminder"
+            android:theme="@style/Theme.NotificationReminders.Dialog">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_REMINDER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".PickNotificationActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog">
+            android:theme="@style/Theme.NotificationReminders.Dialog">
+        </activity>
+
+        <activity
+            android:name=".SnoozeDialogActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NotificationReminders.Dialog">
         </activity>
 
         <activity
             android:name=".ProcessTextActivity"
             android:exported="true"
             android:label="@string/add_reminder"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog">
+            android:theme="@style/Theme.NotificationReminders.Dialog">
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -58,6 +76,15 @@
             <intent-filter>
                 <action android:name="com.bas080.notificationreminders.ACTION_CREATE_REMINDER" />
                 <action android:name="com.bas080.notificationreminders.ACTION_DONE_REMINDER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receivers.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

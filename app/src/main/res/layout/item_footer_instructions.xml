@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/txt_swipe_instructions"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/swipe_instructions"
+    android:textSize="11sp"
+    android:textColor="@color/text_muted"
+    android:gravity="center"
+    android:layout_marginTop="12dp"
+    android:paddingVertical="8dp" />

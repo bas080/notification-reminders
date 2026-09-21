@@ -1,41 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="4dp"
-    android:layout_marginBottom="4dp">
+    android:background="@drawable/bg_card"
+    android:paddingVertical="10dp"
+    android:paddingHorizontal="12dp"
+    android:layout_marginBottom="8dp">
 
-    <EditText
-        android:id="@+id/reminder_input"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:hint="@string/enter_reminder_text"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textColorHint="?android:attr/textColorHint"
-        android:textSize="15sp"
-        android:inputType="textCapSentences"
-        android:imeOptions="actionDone"
-        android:paddingVertical="10dp"
-        android:paddingHorizontal="8dp"
-        android:background="@null" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/btn_action"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/accent"
-        android:gravity="center"
-        android:padding="10dp"
-        android:minWidth="40dp"
+        <EditText
+            android:id="@+id/reminder_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/enter_reminder_text"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
+            android:textSize="15sp"
+            android:inputType="textMultiLine|textCapSentences"
+            android:scrollHorizontally="false"
+            android:maxLines="4"
+            android:imeOptions="actionDone"
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="4dp"
+            android:background="@null" />
+
+        <TextView
+            android:id="@+id/txt_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/accent"
+            android:letterSpacing="0.05"
+            android:paddingHorizontal="4dp"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/btn_share"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_action_share"
+        app:tint="@color/accent"
+        android:contentDescription="@string/share"
+        android:scaleType="centerInside"
+        android:padding="6dp"
         android:clickable="true"
         android:focusable="true"
-        android:background="?attr/selectableItemBackgroundBorderless" />
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/btn_action"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_action_add"
+        app:tint="@color/accent"
+        android:contentDescription="@string/add_reminder"
+        android:scaleType="centerInside"
+        android:padding="4dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:visibility="gone" />
 
 </LinearLayout>

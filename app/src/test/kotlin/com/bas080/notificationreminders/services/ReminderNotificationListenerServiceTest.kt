@@ -194,15 +194,12 @@ class ReminderNotificationListenerServiceTest {
         val matchedNotif = shadowNM.getNotification(matchedNotifId)
         assertNotNull("Matched reminder notification should be posted", matchedNotif)
         assertNotNull("Matched notification actions should not be null", matchedNotif.actions)
-        assertEquals(3, matchedNotif.actions.size)
+        assertEquals(2, matchedNotif.actions.size)
 
         val doneAction = matchedNotif.actions[0]
         assertEquals("Done", doneAction.title.toString())
 
-        val snoozeAction = matchedNotif.actions[1]
-        assertEquals("Snooze", snoozeAction.title.toString())
-
-        val shareAction = matchedNotif.actions[2]
+        val shareAction = matchedNotif.actions[1]
         assertEquals("Share", shareAction.title.toString())
         assertNotNull("Share action intent should not be null", shareAction.actionIntent)
 
