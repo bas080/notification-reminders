@@ -224,6 +224,40 @@ class CreateReminderReceiverTest {
     }
 
     @Test
+    fun testParseWeekdaySnoozeDuration() {
+        // Fix base timestamp at Wednesday, March 12, 2025 at 10:00 AM
+        val cal = java.util.Calendar.getInstance().apply {
+            set(2025, java.util.Calendar.MARCH, 12, 10, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val nowMillis = cal.timeInMillis
+
+        // "Mon" / "monday" from Wednesday -> next Monday (March 17) at 09:00 AM = 119 hours later
+        val (msMon, labelMon) = CreateReminderReceiver.parseSnoozeDuration("Mon", nowMillis)!!
+        assertEquals(119 * 60 * 60 * 1000L, msMon)
+        assertEquals("Monday at 09:00", labelMon)
+
+        val (msMonday, labelMonday) = CreateReminderReceiver.parseSnoozeDuration("monday", nowMillis)!!
+        assertEquals(119 * 60 * 60 * 1000L, msMonday)
+        assertEquals("Monday at 09:00", labelMonday)
+
+        // "fri 18:00" from Wednesday -> Friday (March 14) at 18:00 = 56 hours later
+        val (msFri18, labelFri18) = CreateReminderReceiver.parseSnoozeDuration("fri 18:00", nowMillis)!!
+        assertEquals(56 * 60 * 60 * 1000L, msFri18)
+        assertEquals("Friday at 18:00", labelFri18)
+
+        // "Friday 6pm" from Wednesday -> Friday (March 14) at 18:00 = 56 hours later
+        val (msFri6pm, labelFri6pm) = CreateReminderReceiver.parseSnoozeDuration("Friday 6pm", nowMillis)!!
+        assertEquals(56 * 60 * 60 * 1000L, msFri6pm)
+        assertEquals("Friday at 18:00", labelFri6pm)
+
+        assertEquals("mon", CreateReminderReceiver.canonicalizeSnoozeChoice("Mon"))
+        assertEquals("mon", CreateReminderReceiver.canonicalizeSnoozeChoice("monday"))
+        assertEquals("fri 18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("Fri 18:00"))
+        assertEquals("fri 18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("Friday 6pm"))
+    }
+
+    @Test
     fun testCanonicalizeSnoozeChoice() {
         assertEquals("18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("6pm"))
         assertEquals("18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("1800"))

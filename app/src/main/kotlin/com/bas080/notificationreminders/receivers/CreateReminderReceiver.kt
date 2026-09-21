@@ -28,6 +28,11 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 raw == "1w" || raw == "1 week" || raw == "1week" || raw == "w" -> return "1w"
             }
 
+            val weekdayResult = parseWeekdaySnooze(raw, System.currentTimeMillis())
+            if (weekdayResult != null) {
+                return weekdayResult.second
+            }
+
             val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(raw)
             if (amPmMatch != null) {
                 var hour = amPmMatch.groupValues[1].toInt()
@@ -87,6 +92,11 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     return Pair(7 * 24 * 60 * 60 * 1000L, "1 week")
             }
 
+            val weekdayResult = parseWeekdaySnooze(raw, nowMillis)
+            if (weekdayResult != null) {
+                return weekdayResult.first
+            }
+
             val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(raw)
             if (amPmMatch != null) {
                 var hour = amPmMatch.groupValues[1].toInt()
@@ -131,6 +141,99 @@ class CreateReminderReceiver : BroadcastReceiver() {
             }
 
             return null
+        }
+
+        private fun parseWeekdaySnooze(raw: String, nowMillis: Long): Pair<Pair<Long, String>, String>? {
+            val weekdayRegex = Regex("\\b(mon|monday|tue|tues|tuesday|wed|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday|sun|sunday)\\b")
+            val match = weekdayRegex.find(raw) ?: return null
+            val weekdayStr = match.value
+
+            val (dayOfWeek, fullDisplayName, shortAbbr) = when (weekdayStr) {
+                "mon", "monday" -> Triple(java.util.Calendar.MONDAY, "Monday", "mon")
+                "tue", "tues", "tuesday" -> Triple(java.util.Calendar.TUESDAY, "Tuesday", "tue")
+                "wed", "wednesday" -> Triple(java.util.Calendar.WEDNESDAY, "Wednesday", "wed")
+                "thu", "thur", "thurs", "thursday" -> Triple(java.util.Calendar.THURSDAY, "Thursday", "thu")
+                "fri", "friday" -> Triple(java.util.Calendar.FRIDAY, "Friday", "fri")
+                "sat", "saturday" -> Triple(java.util.Calendar.SATURDAY, "Saturday", "sat")
+                "sun", "sunday" -> Triple(java.util.Calendar.SUNDAY, "Sunday", "sun")
+                else -> return null
+            }
+
+            val timePart = raw.replace(weekdayStr, "").trim()
+            var targetHour = 9
+            var targetMin = 0
+            var timeSpecified = false
+
+            if (timePart.isNotEmpty()) {
+                val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(timePart)
+                if (amPmMatch != null) {
+                    var hour = amPmMatch.groupValues[1].toInt()
+                    val min = amPmMatch.groupValues[2].let { if (it.isEmpty()) 0 else it.toInt() }
+                    val amPm = amPmMatch.groupValues[3]
+                    if (hour in 1..12 && min in 0..59) {
+                        if (amPm == "pm" && hour < 12) hour += 12
+                        if (amPm == "am" && hour == 12) hour = 0
+                        targetHour = hour
+                        targetMin = min
+                        timeSpecified = true
+                    } else return null
+                } else {
+                    val timeColonMatch = Regex("^(\\d{1,2}):(\\d{2})$").find(timePart)
+                    if (timeColonMatch != null) {
+                        val hour = timeColonMatch.groupValues[1].toInt()
+                        val min = timeColonMatch.groupValues[2].toInt()
+                        if (hour in 0..23 && min in 0..59) {
+                            targetHour = hour
+                            targetMin = min
+                            timeSpecified = true
+                        } else return null
+                    } else if (timePart.length in 3..4 && timePart.all { it.isDigit() }) {
+                        val hour = if (timePart.length == 4) timePart.substring(0, 2).toInt() else timePart.substring(0, 1).toInt()
+                        val min = if (timePart.length == 4) timePart.substring(2, 4).toInt() else timePart.substring(1, 3).toInt()
+                        if (hour in 0..23 && min in 0..59) {
+                            targetHour = hour
+                            targetMin = min
+                            timeSpecified = true
+                        } else return null
+                    } else if (timePart.all { it.isDigit() }) {
+                        val hour = timePart.toInt()
+                        if (hour in 0..23) {
+                            targetHour = hour
+                            targetMin = 0
+                            timeSpecified = true
+                        } else return null
+                    } else {
+                        return null
+                    }
+                }
+            }
+
+            val cal = java.util.Calendar.getInstance().apply {
+                timeInMillis = nowMillis
+                set(java.util.Calendar.HOUR_OF_DAY, targetHour)
+                set(java.util.Calendar.MINUTE, targetMin)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+
+            val currentDayOfWeek = java.util.Calendar.getInstance().apply { timeInMillis = nowMillis }.get(java.util.Calendar.DAY_OF_WEEK)
+            var daysDiff = dayOfWeek - currentDayOfWeek
+            if (daysDiff < 0) {
+                daysDiff += 7
+            } else if (daysDiff == 0 && cal.timeInMillis <= nowMillis) {
+                daysDiff = 7
+            }
+
+            if (daysDiff > 0) {
+                cal.add(java.util.Calendar.DAY_OF_YEAR, daysDiff)
+            }
+
+            val snoozeMs = cal.timeInMillis - nowMillis
+            val timeFormatted = String.format(java.util.Locale.US, "%02d:%02d", targetHour, targetMin)
+            val durationLabel = "$fullDisplayName at $timeFormatted"
+            val canonicalChoice = if (timeSpecified) "$shortAbbr $timeFormatted" else shortAbbr
+
+            return Pair(Pair(snoozeMs, durationLabel), canonicalChoice)
         }
 
         private fun calculateAbsoluteTimeSnooze(targetHour: Int, targetMin: Int, nowMillis: Long): Pair<Long, String> {
