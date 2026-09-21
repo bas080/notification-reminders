@@ -149,6 +149,35 @@ class MainActivityTest {
     }
 
     @Test
+    fun testSnoozeClickShowsDialogAndSnoozesItem() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Pay Bills"))
+            .remove("snooze_pay bills")
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ViewHolder
+        assertEquals(View.VISIBLE, holder.btnSnooze.visibility)
+
+        holder.btnSnooze.performClick()
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull("Snooze dialog should be shown", dialog)
+
+        val listView = dialog!!.listView
+        assertNotNull(listView)
+        shadowOf(listView).performItemClick(1) // Select 1h option
+
+        assertEquals("Reminder snoozed for 1 hour", ShadowToast.getTextOfLatestToast())
+        assertTrue(prefs.getLong("snooze_pay bills", 0L) > System.currentTimeMillis())
+    }
+
+    @Test
     fun testUnsnoozeClickClearsSnoozeAndShowsToast() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
@@ -174,6 +203,72 @@ class MainActivityTest {
         recyclerView.adapter!!.onBindViewHolder(holder, 1)
         assertEquals(View.GONE, holder.txtStatus.visibility)
         assertEquals(View.GONE, holder.btnUnsnooze.visibility)
+        assertEquals(View.VISIBLE, holder.btnSnooze.visibility)
+    }
+
+    @Test
+    fun testFilterRemindersActiveAndSnoozed() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Active Task", "Snoozed Task"))
+            .putLong("snooze_snoozed task", snoozeTime)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
+        val btnFilterSnoozed = activity.findViewById<TextView>(R.id.btn_filter_snoozed)
+
+        // Filter ACTIVE
+        btnFilterActive.performClick()
+        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 1 active task
+
+        val activeHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        recyclerView.adapter!!.onBindViewHolder(activeHolder, 1)
+        assertEquals("Active Task", activeHolder.reminderInput.text.toString())
+
+        // Filter SNOOZED
+        btnFilterSnoozed.performClick()
+        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 1 snoozed task
+
+        val snoozedHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        recyclerView.adapter!!.onBindViewHolder(snoozedHolder, 1)
+        assertEquals("Snoozed Task", snoozedHolder.reminderInput.text.toString())
+    }
+
+    @Test
+    fun testSortRemindersAlphabetical() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Zebra", "Apple"))
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnSort = activity.findViewById<TextView>(R.id.btn_sort)
+
+        btnSort.performClick()
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull(dialog)
+        val listView = dialog!!.listView
+        assertNotNull(listView)
+        shadowOf(listView).performItemClick(1) // Select Alphabetical option
+
+        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+
+        recyclerView.adapter!!.onBindViewHolder(holder1, 1)
+        recyclerView.adapter!!.onBindViewHolder(holder2, 2)
+
+        assertEquals("Apple", holder1.reminderInput.text.toString())
+        assertEquals("Zebra", holder2.reminderInput.text.toString())
     }
 
     @Test

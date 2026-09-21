@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="4dp"
-    android:layout_marginBottom="4dp">
+    android:background="@color/bg_surface"
+    android:paddingVertical="10dp"
+    android:paddingHorizontal="12dp"
+    android:layout_marginBottom="8dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -24,8 +26,8 @@
             android:textSize="15sp"
             android:inputType="textCapSentences"
             android:imeOptions="actionDone"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="4dp"
             android:background="@null" />
 
         <TextView
@@ -36,11 +38,27 @@
             android:textStyle="bold"
             android:textColor="@color/accent"
             android:letterSpacing="0.05"
-            android:paddingHorizontal="8dp"
-            android:paddingBottom="2dp"
+            android:paddingHorizontal="4dp"
+            android:paddingTop="2dp"
             android:visibility="gone" />
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/btn_snooze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/snooze_upper"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textColor="@color/accent"
+        android:letterSpacing="0.05"
+        android:gravity="center"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/btn_unsnooze"
@@ -67,8 +85,8 @@
         android:textStyle="bold"
         android:textColor="@color/accent"
         android:gravity="center"
-        android:padding="10dp"
-        android:minWidth="40dp"
+        android:padding="8dp"
+        android:minWidth="36dp"
         android:clickable="true"
         android:focusable="true"
         android:background="?attr/selectableItemBackgroundBorderless" />
