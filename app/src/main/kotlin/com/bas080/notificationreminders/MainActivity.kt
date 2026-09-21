@@ -114,8 +114,11 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnExportMarkdown)
         markAsButtonAccessibility(binding.btnImportMarkdown)
         markAsButtonAccessibility(binding.btnFilterAll)
+        markAsButtonAccessibility(binding.pillFilterAll)
         markAsButtonAccessibility(binding.btnFilterActive)
+        markAsButtonAccessibility(binding.pillFilterActive)
         markAsButtonAccessibility(binding.btnFilterSnoozed)
+        markAsButtonAccessibility(binding.pillFilterSnoozed)
         markAsButtonAccessibility(binding.btnSort)
 
         binding.btnNavReminders.setOnClickListener {
@@ -144,11 +147,23 @@ class MainActivity : AppCompatActivity() {
             setFilter(ReminderFilter.ALL)
         }
 
+        binding.pillFilterAll.setOnClickListener {
+            setFilter(ReminderFilter.ALL)
+        }
+
         binding.btnFilterActive.setOnClickListener {
             setFilter(ReminderFilter.ACTIVE)
         }
 
+        binding.pillFilterActive.setOnClickListener {
+            setFilter(ReminderFilter.ACTIVE)
+        }
+
         binding.btnFilterSnoozed.setOnClickListener {
+            setFilter(ReminderFilter.SNOOZED)
+        }
+
+        binding.pillFilterSnoozed.setOnClickListener {
             setFilter(ReminderFilter.SNOOZED)
         }
 

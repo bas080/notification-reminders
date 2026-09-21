@@ -306,7 +306,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testFilterPillsShowAccurateCounts() {
+    fun testFilterPillsShowAccurateCountsAndTriggerFilterOnClick() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -318,6 +318,7 @@ class MainActivityTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         val pillAll = activity.findViewById<TextView>(R.id.pill_filter_all)
         val pillActive = activity.findViewById<TextView>(R.id.pill_filter_active)
         val pillSnoozed = activity.findViewById<TextView>(R.id.pill_filter_snoozed)
@@ -329,6 +330,18 @@ class MainActivityTest {
         assertEquals("2", pillAll.text.toString())
         assertEquals("1", pillActive.text.toString())
         assertEquals("1", pillSnoozed.text.toString())
+
+        // Click active pill
+        pillActive.performClick()
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 active + 1 footer
+
+        // Click snoozed pill
+        pillSnoozed.performClick()
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 snoozed + 1 footer
+
+        // Click all pill
+        pillAll.performClick()
+        assertEquals(4, recyclerView.adapter!!.itemCount) // 1 input + 2 tasks + 1 footer
     }
 
     @Test
