@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -24,7 +25,9 @@
             android:textColor="?android:attr/textColorPrimary"
             android:textColorHint="?android:attr/textColorHint"
             android:textSize="15sp"
-            android:inputType="textCapSentences"
+            android:inputType="textMultiLine|textCapSentences"
+            android:scrollHorizontally="false"
+            android:maxLines="4"
             android:imeOptions="actionDone"
             android:paddingVertical="4dp"
             android:paddingHorizontal="4dp"
@@ -44,51 +47,32 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/btn_snooze"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/snooze_upper"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/accent"
-        android:letterSpacing="0.05"
-        android:gravity="center"
-        android:padding="8dp"
+    <ImageView
+        android:id="@+id/btn_share"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_action_share"
+        app:tint="@color/accent"
+        android:contentDescription="@string/share"
+        android:scaleType="centerInside"
+        android:padding="4dp"
         android:clickable="true"
         android:focusable="true"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/btn_unsnooze"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/unsnooze"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:textColor="@color/accent"
-        android:letterSpacing="0.05"
-        android:gravity="center"
-        android:padding="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:visibility="gone" />
-
-    <TextView
+    <ImageView
         android:id="@+id/btn_action"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/accent"
-        android:gravity="center"
-        android:padding="8dp"
-        android:minWidth="36dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_action_add"
+        app:tint="@color/accent"
+        android:contentDescription="@string/add_reminder"
+        android:scaleType="centerInside"
+        android:padding="4dp"
         android:clickable="true"
         android:focusable="true"
-        android:background="?attr/selectableItemBackgroundBorderless" />
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:visibility="gone" />
 
 </LinearLayout>

@@ -8,7 +8,7 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Top App Header Bar -->
+    <!-- Minimal Header & Navigation Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -16,18 +16,42 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="12dp">
 
+        <!-- Subtle Tab Navigation -->
         <TextView
-            android:id="@+id/txt_app_header"
-            android:layout_width="0dp"
+            android:id="@+id/btn_nav_reminders"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/app_header_title"
+            android:text="@string/nav_reminders"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
-            android:letterSpacing="0.1" />
+            android:paddingVertical="4dp"
+            android:paddingEnd="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
-        <!-- Top Right Utility Actions -->
+        <TextView
+            android:id="@+id/btn_nav_logs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_logs"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:textColor="@color/text_secondary"
+            android:paddingVertical="4dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Top Right Quiet Utility Actions -->
         <LinearLayout
             android:id="@+id/container_reminders_actions"
             android:layout_width="wrap_content"
@@ -40,31 +64,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/import_markdown"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/accent"
-                android:letterSpacing="0.1"
-                android:paddingVertical="6dp"
-                android:paddingHorizontal="8dp"
+                android:letterSpacing="0.05"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
-
-            <View
-                android:layout_width="8dp"
-                android:layout_height="1dp" />
 
             <TextView
                 android:id="@+id/btn_export_markdown"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/export_markdown"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/accent"
-                android:letterSpacing="0.1"
-                android:paddingVertical="6dp"
-                android:paddingHorizontal="8dp"
+                android:letterSpacing="0.05"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
@@ -76,71 +96,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/clear_logs"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:textColor="@color/accent_danger"
-            android:letterSpacing="0.1"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="8dp"
+            android:letterSpacing="0.05"
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="6dp"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground"
             android:visibility="gone" />
 
     </LinearLayout>
-
-    <!-- Navigation Tabs Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
-
-        <TextView
-            android:id="@+id/btn_nav_reminders"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/nav_reminders"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:letterSpacing="0.1"
-            android:gravity="center"
-            android:paddingVertical="10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="16dp"
-            android:background="@color/divider_color" />
-
-        <TextView
-            android:id="@+id/btn_nav_logs"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/nav_logs"
-            android:textSize="13sp"
-            android:textStyle="normal"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:gravity="center"
-            android:paddingVertical="10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
-
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_color"
-        android:layout_marginBottom="12dp" />
 
     <!-- Reminders Main Content View -->
     <LinearLayout
@@ -149,25 +116,24 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Section Summary Header -->
-        <TextView
-            android:id="@+id/txt_reminders_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/no_active_reminders"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.05"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Filter & Sort Control Bar -->
+        <!-- Section Summary & Control Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/txt_reminders_summary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/no_active_reminders"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:letterSpacing="0.05" />
 
             <!-- Filter Options -->
             <TextView
@@ -178,9 +144,8 @@
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                android:letterSpacing="0.05"
-                android:paddingVertical="4dp"
-                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="4dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
@@ -193,9 +158,8 @@
                 android:textSize="11sp"
                 android:textStyle="normal"
                 android:textColor="@color/text_secondary"
-                android:letterSpacing="0.05"
-                android:paddingVertical="4dp"
-                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="4dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
@@ -208,17 +172,11 @@
                 android:textSize="11sp"
                 android:textStyle="normal"
                 android:textColor="@color/text_secondary"
-                android:letterSpacing="0.05"
-                android:paddingVertical="4dp"
-                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="4dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
 
             <!-- Sort Option -->
             <TextView
@@ -229,9 +187,9 @@
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/accent"
-                android:letterSpacing="0.05"
-                android:paddingVertical="4dp"
-                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="4dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground" />
@@ -262,6 +220,18 @@
                 android:visibility="gone" />
 
         </FrameLayout>
+
+        <!-- Swipe Gesture Instruction Footer -->
+        <TextView
+            android:id="@+id/txt_swipe_instructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/swipe_instructions"
+            android:textSize="11sp"
+            android:textColor="@color/text_muted"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:paddingVertical="4dp" />
 
     </LinearLayout>
 

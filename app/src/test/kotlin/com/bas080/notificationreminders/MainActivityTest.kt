@@ -41,6 +41,21 @@ class MainActivityTest {
     }
 
     @Test
+    fun testAddReminderOnFocusLoss() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ViewHolder
+        assertNotNull(holder)
+
+        holder!!.reminderInput.setText("Auto Saved Task")
+        holder.reminderInput.onFocusChangeListener?.onFocusChange(holder.reminderInput, false)
+
+        assertEquals("Reminder created", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
     fun testAddReminderEmptyShowsFailureToast() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -115,7 +130,16 @@ class MainActivityTest {
 
     @Test
     fun testFormatSnoozeUntilTodayAndTomorrow() {
-        val now = System.currentTimeMillis()
+        val cal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.YEAR, 2026)
+            set(java.util.Calendar.MONTH, java.util.Calendar.OCTOBER)
+            set(java.util.Calendar.DAY_OF_MONTH, 15)
+            set(java.util.Calendar.HOUR_OF_DAY, 10)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val now = cal.timeInMillis
         val todaySnooze = now + 2 * 3600 * 1000L
         val tomorrowSnooze = now + 24 * 3600 * 1000L
 
@@ -123,11 +147,11 @@ class MainActivityTest {
         assertTrue("Expected 'today at ...', got: $todayFormatted", todayFormatted.startsWith("today at"))
 
         val tomorrowFormatted = MainActivity.formatSnoozeUntil(tomorrowSnooze, now)
-        assertTrue("Expected 'tomorrow at ...' or weekday format, got: $tomorrowFormatted", tomorrowFormatted.contains("at"))
+        assertTrue("Expected 'tomorrow at ...', got: $tomorrowFormatted", tomorrowFormatted.startsWith("tomorrow at"))
     }
 
     @Test
-    fun testSnoozedReminderDisplaysStatusAndUnsnoozeButton() {
+    fun testSnoozedReminderDisplaysStatusLabel() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -145,65 +169,27 @@ class MainActivityTest {
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
         assertTrue(holder.txtStatus.text.toString().startsWith("Snoozed • until"))
-        assertEquals(View.VISIBLE, holder.btnUnsnooze.visibility)
+        assertEquals(View.VISIBLE, holder.btnShare.visibility)
     }
 
     @Test
-    fun testSnoozeClickShowsDialogAndSnoozesItem() {
+    fun testItemShareClickLaunchesShareIntent() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit()
-            .putStringSet("key_reminders_list", setOf("Pay Bills"))
-            .remove("snooze_pay bills")
-            .commit()
+        prefs.edit().putStringSet("key_reminders_list", setOf("Shared Task")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ViewHolder
-        assertEquals(View.VISIBLE, holder.btnSnooze.visibility)
+        assertEquals(View.VISIBLE, holder.btnShare.visibility)
 
-        holder.btnSnooze.performClick()
+        holder.btnShare.performClick()
 
-        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
-        assertNotNull("Snooze dialog should be shown", dialog)
-
-        val listView = dialog!!.listView
-        assertNotNull(listView)
-        shadowOf(listView).performItemClick(1) // Select 1h option
-
-        assertEquals("Reminder snoozed for 1 hour", ShadowToast.getTextOfLatestToast())
-        assertTrue(prefs.getLong("snooze_pay bills", 0L) > System.currentTimeMillis())
-    }
-
-    @Test
-    fun testUnsnoozeClickClearsSnoozeAndShowsToast() {
-        val context = RuntimeEnvironment.getApplication()
-        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        val snoozeTime = System.currentTimeMillis() + 3600000L
-        prefs.edit()
-            .putStringSet("key_reminders_list", setOf("Call Dentist"))
-            .putLong("snooze_call dentist", snoozeTime)
-            .commit()
-
-        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
-        val activity = controller.get()
-
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ViewHolder
-        assertNotNull(holder)
-
-        holder.btnUnsnooze.performClick()
-
-        assertEquals("Snooze cancelled", ShadowToast.getTextOfLatestToast())
-        assertEquals(0L, prefs.getLong("snooze_call dentist", 0L))
-
-        // Re-bind to verify updated UI state
-        recyclerView.adapter!!.onBindViewHolder(holder, 1)
-        assertEquals(View.GONE, holder.txtStatus.visibility)
-        assertEquals(View.GONE, holder.btnUnsnooze.visibility)
-        assertEquals(View.VISIBLE, holder.btnSnooze.visibility)
+        val nextStartedActivity = shadowOf(activity).nextStartedActivity
+        assertNotNull(nextStartedActivity)
+        assertEquals(android.content.Intent.ACTION_CHOOSER, nextStartedActivity.action)
     }
 
     @Test
@@ -272,6 +258,42 @@ class MainActivityTest {
     }
 
     @Test
+    fun testSortRemindersSnoozeAscending() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val snoozeLater = now + 7200000L // 2h
+        val snoozeSooner = now + 3600000L // 1h
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Task Later", "Task Sooner", "Task Active"))
+            .putLong("snooze_task later", snoozeLater)
+            .putLong("snooze_task sooner", snoozeSooner)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnSort = activity.findViewById<TextView>(R.id.btn_sort)
+
+        btnSort.performClick()
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull(dialog)
+        val listView = dialog!!.listView
+        assertNotNull(listView)
+        shadowOf(listView).performItemClick(3) // Select Snooze time (Earliest first) option
+
+        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+
+        recyclerView.adapter!!.onBindViewHolder(holder1, 1)
+        recyclerView.adapter!!.onBindViewHolder(holder2, 2)
+
+        assertEquals("Task Sooner", holder1.reminderInput.text.toString())
+        assertEquals("Task Later", holder2.reminderInput.text.toString())
+    }
+
+    @Test
     fun testSummaryHeaderShowsActiveAndSnoozedCounts() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
@@ -290,7 +312,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testEmptyStateVisibility() {
+    fun testEmptyStateAndSwipeInstructionsVisibility() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         prefs.edit().clear().commit()
@@ -299,7 +321,10 @@ class MainActivityTest {
         val activity = controller.get()
 
         val txtEmpty = activity.findViewById<TextView>(R.id.txt_empty_reminders)
+        val txtInstructions = activity.findViewById<TextView>(R.id.txt_swipe_instructions)
         assertNotNull(txtEmpty)
+        assertNotNull(txtInstructions)
         assertEquals(View.VISIBLE, txtEmpty.visibility)
+        assertEquals(View.VISIBLE, txtInstructions.visibility)
     }
 }
