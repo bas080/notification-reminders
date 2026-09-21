@@ -70,6 +70,20 @@ jobs:
             gradle test
           fi
 
+      - name: Commit Updated Screenshots
+        if: github.event_name != 'pull_request'
+        run: |
+          if [[ -n $(git status --porcelain fastlane/metadata/) ]]; then
+            echo "Fastlane screenshot metadata updated by tests. Committing changes..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add fastlane/metadata/
+            git commit -m "Update Fastlane feature screenshots [skip ci]" || true
+            git push origin HEAD:master || true
+          else
+            echo "No changes to Fastlane screenshot metadata."
+          fi
+
       - name: Build Application (Signed Release & Debug)
         run: |
           if [ -f "./gradlew" ]; then
