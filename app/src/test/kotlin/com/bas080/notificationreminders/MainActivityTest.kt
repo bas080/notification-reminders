@@ -54,7 +54,7 @@ class MainActivityTest {
 
         // Typing "milk" should filter displayed items to 1 reminder ("Buy milk")
         holder.reminderInput.setText("milk")
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
         // 1 input + 1 matched ("Buy milk") + 1 footer = 3 items
         assertEquals("Expected 3 items when filtered", 3, recyclerView.adapter!!.itemCount)
 

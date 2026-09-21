@@ -804,10 +804,39 @@ class RemindersAdapter(
                 }
             }
 
+            val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
+            var searchRunnable: Runnable? = null
+
+            val submitActionWithCancel = {
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
+                submitAction()
+            }
+
+            holder.btnAction.setOnClickListener {
+                val text = holder.reminderInput.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    submitActionWithCancel()
+                } else {
+                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                    submitActionWithCancel()
+                    true
+                } else {
+                    false
+                }
+            }
+
             val searchWatcher = object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    onSearchQueryChanged(s?.toString() ?: "")
+                    searchRunnable?.let { searchHandler.removeCallbacks(it) }
+                    val query = s?.toString() ?: ""
+                    searchRunnable = Runnable { onSearchQueryChanged(query) }
+                    searchHandler.postDelayed(searchRunnable!!, 200L)
                 }
                 override fun afterTextChanged(s: Editable?) {}
             }
