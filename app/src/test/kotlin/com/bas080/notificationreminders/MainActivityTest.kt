@@ -31,7 +31,7 @@ class MainActivityTest {
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         assertNotNull(recyclerView)
 
-        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ViewHolder
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
         assertNotNull(holder)
 
         holder!!.reminderInput.setText("Buy Groceries")
@@ -41,18 +41,30 @@ class MainActivityTest {
     }
 
     @Test
-    fun testAddReminderOnFocusLoss() {
+    fun testInputFiltersRemindersInRealTimeAndAddsOnButtonClick() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
+
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ViewHolder
-        assertNotNull(holder)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
 
-        holder!!.reminderInput.setText("Auto Saved Task")
-        holder.reminderInput.onFocusChangeListener?.onFocusChange(holder.reminderInput, false)
+        // Typing "milk" should filter displayed items to 1 reminder ("Buy milk")
+        holder.reminderInput.setText("milk")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        // 1 input + 1 matched ("Buy milk") + 1 footer = 3 items
+        assertEquals("Expected 3 items when filtered", 3, recyclerView.adapter!!.itemCount)
 
+        // Clicking '+' button should add "milk" as a new reminder and clear search query
+        holder.btnAction.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
         assertEquals("Reminder created", ShadowToast.getTextOfLatestToast())
+
+        // Input text should be cleared and all 3 reminders displayed
+        assertEquals("Expected 5 items total", 5, recyclerView.adapter!!.itemCount)
     }
 
     @Test
@@ -63,7 +75,7 @@ class MainActivityTest {
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         assertNotNull(recyclerView)
 
-        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ViewHolder
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
         assertNotNull(holder)
 
         holder!!.reminderInput.setText("   ")
@@ -91,7 +103,7 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ViewHolder
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
         holder.reminderInput.setText("Buy milk")
         holder.btnAction.performClick()
 
@@ -164,7 +176,7 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(1) as? RemindersAdapter.ViewHolder
+        val holder = recyclerView.findViewHolderForAdapterPosition(1) as? RemindersAdapter.ItemViewHolder
         assertNotNull(holder)
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
@@ -182,7 +194,7 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ViewHolder
+        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
         assertEquals(View.VISIBLE, holder.btnShare.visibility)
 
         holder.btnShare.performClick()
@@ -211,17 +223,17 @@ class MainActivityTest {
 
         // Filter ACTIVE
         btnFilterActive.performClick()
-        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 1 active task
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 active task + 1 footer
 
-        val activeHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val activeHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
         recyclerView.adapter!!.onBindViewHolder(activeHolder, 1)
         assertEquals("Active Task", activeHolder.reminderInput.text.toString())
 
         // Filter SNOOZED
         btnFilterSnoozed.performClick()
-        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 1 snoozed task
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 snoozed task + 1 footer
 
-        val snoozedHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val snoozedHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
         recyclerView.adapter!!.onBindViewHolder(snoozedHolder, 1)
         assertEquals("Snoozed Task", snoozedHolder.reminderInput.text.toString())
     }
@@ -247,8 +259,8 @@ class MainActivityTest {
         assertNotNull(listView)
         shadowOf(listView).performItemClick(1) // Select Alphabetical option
 
-        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
-        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
+        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
 
         recyclerView.adapter!!.onBindViewHolder(holder1, 1)
         recyclerView.adapter!!.onBindViewHolder(holder2, 2)
@@ -283,8 +295,8 @@ class MainActivityTest {
         assertNotNull(listView)
         shadowOf(listView).performItemClick(3) // Select Snooze time (Earliest first) option
 
-        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
-        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ViewHolder
+        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
+        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
 
         recyclerView.adapter!!.onBindViewHolder(holder1, 1)
         recyclerView.adapter!!.onBindViewHolder(holder2, 2)
@@ -312,7 +324,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testEmptyStateAndSwipeInstructionsVisibility() {
+    fun testEmptyStateVisibility() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         prefs.edit().clear().commit()
@@ -321,10 +333,7 @@ class MainActivityTest {
         val activity = controller.get()
 
         val txtEmpty = activity.findViewById<TextView>(R.id.txt_empty_reminders)
-        val txtInstructions = activity.findViewById<TextView>(R.id.txt_swipe_instructions)
         assertNotNull(txtEmpty)
-        assertNotNull(txtInstructions)
         assertEquals(View.VISIBLE, txtEmpty.visibility)
-        assertEquals(View.VISIBLE, txtInstructions.visibility)
     }
 }

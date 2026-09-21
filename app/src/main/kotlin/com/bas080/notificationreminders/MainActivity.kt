@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Canvas
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -82,6 +85,7 @@ class MainActivity : AppCompatActivity() {
 
     private var currentFilter = ReminderFilter.ALL
     private var currentSort = ReminderSort.DEFAULT
+    private var currentSearchQuery = ""
 
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
@@ -287,6 +291,7 @@ class MainActivity : AppCompatActivity() {
             displayedReminders,
             onAddReminder = { newReminder ->
                 activeReminders.add(newReminder)
+                currentSearchQuery = ""
                 saveRemindersToPrefs()
                 ReminderNotificationListenerService.instance?.postMatchNotification(newReminder)
                 updateSummaryAndAdapter()
@@ -313,6 +318,10 @@ class MainActivity : AppCompatActivity() {
                     val chooserIntent = Intent.createChooser(shareIntent, getString(R.string.share))
                     startActivity(chooserIntent)
                 }
+            },
+            onSearchQueryChanged = { query ->
+                currentSearchQuery = query
+                updateSummaryAndAdapter()
             }
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
@@ -322,8 +331,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupSwipeGestures() {
         val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
-                if (viewHolder.bindingAdapterPosition == 0) {
-                    return 0 // Disable swipe on position 0 (Create Input Row)
+                if (viewHolder.itemViewType != RemindersAdapter.TYPE_ACTIVE_REMINDER) {
+                    return 0 // Disable swipe on Create Input Row and Footer Instructions
                 }
                 return super.getSwipeDirs(recyclerView, viewHolder)
             }
@@ -364,6 +373,58 @@ class MainActivity : AppCompatActivity() {
                         showDeleteConfirmationDialog(reminderText)
                     }
                 }
+            }
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                val itemView = viewHolder.itemView
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE && dX != 0f) {
+                    val background = ColorDrawable()
+                    val icon: Drawable?
+
+                    if (dX > 0) {
+                        // Swipe Right -> Delete (Trash bin icon)
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
+                        background.draw(c)
+
+                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_delete)
+                        icon?.let {
+                            val margin = (itemView.height - it.intrinsicHeight) / 2
+                            val top = itemView.top + margin
+                            val bottom = top + it.intrinsicHeight
+                            val left = itemView.left + margin
+                            val right = left + it.intrinsicWidth
+                            it.setBounds(left, top, right, bottom)
+                            it.draw(c)
+                        }
+                    } else if (dX < 0) {
+                        // Swipe Left -> Snooze (Clock icon)
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
+                        background.draw(c)
+
+                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_snooze)
+                        icon?.let {
+                            val margin = (itemView.height - it.intrinsicHeight) / 2
+                            val top = itemView.top + margin
+                            val bottom = top + it.intrinsicHeight
+                            val right = itemView.right - margin
+                            val left = right - it.intrinsicWidth
+                            it.setBounds(left, top, right, bottom)
+                            it.draw(c)
+                        }
+                    }
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
         }
 
@@ -468,11 +529,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSummaryAndAdapter() {
+        if (binding.remindersList.isComputingLayout) {
+            binding.remindersList.post { updateSummaryAndAdapter() }
+            return
+        }
+
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
 
-        // 1. Filter items
-        val filtered = when (currentFilter) {
+        // 1. Filter items by status tab
+        val filteredByStatus = when (currentFilter) {
             ReminderFilter.ALL -> activeReminders.toList()
             ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
                 val trimmed = reminder.trim().lowercase()
@@ -488,6 +554,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 snoozeUntil > now
             }
+        }
+
+        // 2. Filter items by search query
+        val filtered = if (currentSearchQuery.isBlank()) {
+            filteredByStatus
+        } else {
+            filteredByStatus.filter { it.contains(currentSearchQuery, ignoreCase = true) }
         }
 
         // 2. Sort items
@@ -631,16 +704,18 @@ class RemindersAdapter(
     private val displayedReminders: List<String>,
     private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
-    private val onShareReminderRequested: (Int) -> Unit
-) : RecyclerView.Adapter<RemindersAdapter.ViewHolder>() {
+    private val onShareReminderRequested: (Int) -> Unit,
+    private val onSearchQueryChanged: (String) -> Unit = {}
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         const val TYPE_CREATE_INPUT = 0
         const val TYPE_ACTIVE_REMINDER = 1
+        const val TYPE_FOOTER_INSTRUCTIONS = 2
         private const val PREFS_REMINDERS = "reminders_prefs"
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
         val txtStatus: TextView = view.findViewById(R.id.txt_status)
         val btnShare: ImageView = view.findViewById(R.id.btn_share)
@@ -648,21 +723,30 @@ class RemindersAdapter(
         var textWatcher: TextWatcher? = null
     }
 
+    class FooterViewHolder(view: View) : RecyclerView.ViewHolder(view)
+
     override fun getItemViewType(position: Int): Int {
-        return if (position == 0) {
-            TYPE_CREATE_INPUT
-        } else {
-            TYPE_ACTIVE_REMINDER
+        return when {
+            position == 0 -> TYPE_CREATE_INPUT
+            position in 1..displayedReminders.size -> TYPE_ACTIVE_REMINDER
+            else -> TYPE_FOOTER_INSTRUCTIONS
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_reminder, parent, false)
-        return ViewHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == TYPE_FOOTER_INSTRUCTIONS) {
+            val view = inflater.inflate(R.layout.item_footer_instructions, parent, false)
+            FooterViewHolder(view)
+        } else {
+            val view = inflater.inflate(R.layout.item_reminder, parent, false)
+            ItemViewHolder(view)
+        }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder !is ItemViewHolder) return
+
         holder.textWatcher?.let { holder.reminderInput.removeTextChangedListener(it) }
 
         ViewCompat.setAccessibilityDelegate(holder.btnAction, object : AccessibilityDelegateCompat() {
@@ -683,8 +767,7 @@ class RemindersAdapter(
         val context = holder.itemView.context
 
         if (viewType == TYPE_CREATE_INPUT) {
-            holder.reminderInput.setText("")
-            holder.reminderInput.hint = "Add a new reminder..."
+            holder.reminderInput.hint = "Add or search reminders..."
             holder.txtStatus.visibility = View.GONE
             holder.btnShare.visibility = View.GONE
             holder.btnAction.visibility = View.VISIBLE
@@ -710,11 +793,7 @@ class RemindersAdapter(
                 }
             }
 
-            holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
-                if (!hasFocus) {
-                    submitAction()
-                }
-            }
+            holder.reminderInput.setOnFocusChangeListener(null)
 
             holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
@@ -724,6 +803,16 @@ class RemindersAdapter(
                     false
                 }
             }
+
+            val searchWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    onSearchQueryChanged(s?.toString() ?: "")
+                }
+                override fun afterTextChanged(s: Editable?) {}
+            }
+            holder.reminderInput.addTextChangedListener(searchWatcher)
+            holder.textWatcher = searchWatcher
         } else {
             val reminderIndex = position - 1
             val reminderText = displayedReminders[reminderIndex]
@@ -776,5 +865,5 @@ class RemindersAdapter(
         }
     }
 
-    override fun getItemCount(): Int = displayedReminders.size + 1
+    override fun getItemCount(): Int = displayedReminders.size + 2
 }

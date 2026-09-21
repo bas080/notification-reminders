@@ -221,18 +221,6 @@
 
         </FrameLayout>
 
-        <!-- Swipe Gesture Instruction Footer -->
-        <TextView
-            android:id="@+id/txt_swipe_instructions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/swipe_instructions"
-            android:textSize="11sp"
-            android:textColor="@color/text_muted"
-            android:gravity="center"
-            android:layout_marginTop="8dp"
-            android:paddingVertical="4dp" />
-
     </LinearLayout>
 
     <!-- Logs Main Content View -->
