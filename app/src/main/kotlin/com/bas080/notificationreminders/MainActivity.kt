@@ -13,8 +13,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -29,12 +29,43 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 import com.bas080.notificationreminders.utils.AppLogger
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
+
+        fun formatSnoozeUntil(snoozeUntil: Long, now: Long = System.currentTimeMillis()): String {
+            val snoozeCal = Calendar.getInstance().apply { timeInMillis = snoozeUntil }
+            val nowCal = Calendar.getInstance().apply { timeInMillis = now }
+
+            val sameYear = snoozeCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
+            val dayOfYearDiff = snoozeCal.get(Calendar.DAY_OF_YEAR) - nowCal.get(Calendar.DAY_OF_YEAR)
+
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.US)
+            val timeStr = timeFormat.format(snoozeCal.time)
+
+            return when {
+                sameYear && dayOfYearDiff == 0 -> "today at $timeStr"
+                sameYear && dayOfYearDiff == 1 -> "tomorrow at $timeStr"
+                sameYear && dayOfYearDiff in 2..6 -> {
+                    val dayFormat = SimpleDateFormat("EEE 'at' HH:mm", Locale.US)
+                    dayFormat.format(snoozeCal.time)
+                }
+                sameYear -> {
+                    val dateFormat = SimpleDateFormat("MMM d 'at' HH:mm", Locale.US)
+                    dateFormat.format(snoozeCal.time)
+                }
+                else -> {
+                    val fullFormat = SimpleDateFormat("MMM d, yyyy 'at' HH:mm", Locale.US)
+                    fullFormat.format(snoozeCal.time)
+                }
+            }
+        }
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -131,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (addedCount > 0) {
                         saveRemindersToPrefs()
-                        adapter.notifyDataSetChanged()
+                        updateSummaryAndAdapter()
                         Toast.makeText(this, getString(R.string.toast_imported_reminders, addedCount), Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -180,17 +211,30 @@ class MainActivity : AppCompatActivity() {
                 activeReminders.add(newReminder)
                 saveRemindersToPrefs()
                 ReminderNotificationListenerService.instance?.postMatchNotification(newReminder)
-                adapter.notifyDataSetChanged()
+                updateSummaryAndAdapter()
             },
             onUpdateReminder = { index, updatedText ->
                 if (index in activeReminders.indices) {
                     activeReminders[index] = updatedText
                     saveRemindersToPrefs()
+                    updateSummary()
                 }
             },
             onDeleteReminderRequested = { index ->
                 if (index in activeReminders.indices) {
                     showDeleteConfirmationDialog(index)
+                }
+            },
+            onUnsnoozeReminder = { index ->
+                if (index in activeReminders.indices) {
+                    val reminderText = activeReminders[index]
+                    val trimmed = reminderText.trim().lowercase()
+                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+                    val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                    prefs.edit().remove("snooze_$trimmed").apply()
+                    ReminderNotificationListenerService.instance?.showStatusNotification()
+                    updateSummaryAndAdapter()
+                    Toast.makeText(this, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -211,7 +255,7 @@ class MainActivity : AppCompatActivity() {
                     val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
                     prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
                     ReminderNotificationListenerService.instance?.showStatusNotification()
-                    adapter.notifyDataSetChanged()
+                    updateSummaryAndAdapter()
                     Toast.makeText(this, R.string.toast_reminder_deleted, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -224,13 +268,49 @@ class MainActivity : AppCompatActivity() {
         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
         activeReminders.clear()
         activeReminders.addAll(savedSet)
-        adapter.notifyDataSetChanged()
+        updateSummaryAndAdapter()
     }
 
     private fun saveRemindersToPrefs() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
         ReminderNotificationListenerService.instance?.showStatusNotification()
+    }
+
+    private fun updateSummaryAndAdapter() {
+        adapter.notifyDataSetChanged()
+        updateSummary()
+    }
+
+    private fun updateSummary() {
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        var snoozedCount = 0
+        for (reminder in activeReminders) {
+            val trimmed = reminder.trim().lowercase()
+            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+            }
+            if (snoozeUntil > now) {
+                snoozedCount++
+            }
+        }
+        val totalCount = activeReminders.size
+        val activeCount = totalCount - snoozedCount
+
+        if (totalCount == 0) {
+            binding.txtRemindersSummary.setText(R.string.no_active_reminders)
+            binding.txtEmptyReminders.visibility = View.VISIBLE
+        } else {
+            binding.txtEmptyReminders.visibility = View.GONE
+            if (snoozedCount > 0) {
+                binding.txtRemindersSummary.text = getString(R.string.reminders_summary_combined, activeCount, snoozedCount)
+            } else if (totalCount == 1) {
+                binding.txtRemindersSummary.setText(R.string.active_reminder_single)
+            } else {
+                binding.txtRemindersSummary.text = getString(R.string.active_reminders_count, totalCount)
+            }
+        }
     }
 
     override fun onResume() {
@@ -312,17 +392,21 @@ class RemindersAdapter(
     private val activeReminders: List<String>,
     private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
-    private val onDeleteReminderRequested: (Int) -> Unit
+    private val onDeleteReminderRequested: (Int) -> Unit,
+    private val onUnsnoozeReminder: (Int) -> Unit
 ) : RecyclerView.Adapter<RemindersAdapter.ViewHolder>() {
 
     companion object {
         const val TYPE_CREATE_INPUT = 0
         const val TYPE_ACTIVE_REMINDER = 1
+        private const val PREFS_REMINDERS = "reminders_prefs"
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
-        val btnAction: android.widget.TextView = view.findViewById(R.id.btn_action)
+        val txtStatus: TextView = view.findViewById(R.id.txt_status)
+        val btnUnsnooze: TextView = view.findViewById(R.id.btn_unsnooze)
+        val btnAction: TextView = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
     }
 
@@ -350,11 +434,20 @@ class RemindersAdapter(
             }
         })
 
+        ViewCompat.setAccessibilityDelegate(holder.btnUnsnooze, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        })
+
         val viewType = getItemViewType(position)
 
         if (viewType == TYPE_CREATE_INPUT) {
             holder.reminderInput.setText("")
             holder.reminderInput.hint = "Add a new reminder..."
+            holder.txtStatus.visibility = View.GONE
+            holder.btnUnsnooze.visibility = View.GONE
             holder.btnAction.text = "+"
             holder.btnAction.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.accent))
 
@@ -383,10 +476,38 @@ class RemindersAdapter(
             }
         } else {
             val reminderIndex = position - 1
+            val reminderText = activeReminders[reminderIndex]
             holder.reminderInput.hint = "Reminder"
-            holder.reminderInput.setText(activeReminders[reminderIndex])
+            holder.reminderInput.setText(reminderText)
             holder.btnAction.text = "✕"
             holder.btnAction.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.accent_danger))
+
+            val context = holder.itemView.context
+            val trimmed = reminderText.trim().lowercase()
+            val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+            }
+
+            if (snoozeUntil > now) {
+                val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
+                holder.txtStatus.visibility = View.VISIBLE
+                holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
+                holder.btnUnsnooze.visibility = View.VISIBLE
+                holder.btnUnsnooze.setOnClickListener {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        val idx = currentPos - 1
+                        if (idx in activeReminders.indices) {
+                            onUnsnoozeReminder(idx)
+                        }
+                    }
+                }
+            } else {
+                holder.txtStatus.visibility = View.GONE
+                holder.btnUnsnooze.visibility = View.GONE
+            }
 
             val watcher = object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

@@ -14,6 +14,7 @@
     <string name="toast_reminder_snoozed">Reminder snoozed for 1 hour</string>
     <string name="toast_reminder_snoozed_duration">Reminder snoozed for %s</string>
     <string name="toast_invalid_snooze_input">Failed to snooze: Invalid duration entered</string>
+    <string name="toast_snooze_cancelled">Snooze cancelled</string>
     <string name="toast_logs_cleared">Logs cleared</string>
     <string name="export_markdown">EXPORT</string>
     <string name="import_markdown">IMPORT</string>
@@ -26,6 +27,9 @@
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
     <string name="snooze">Snooze</string>
+    <string name="unsnooze">UNSNOOZE</string>
+    <string name="snooze_status_format">SNOOZED • until %s</string>
+    <string name="reminders_summary_combined">%1$d active • %2$d snoozed</string>
     <string name="share">Share</string>
     <string name="active_reminders_count">%d active reminders</string>
     <string name="active_reminder_single">1 active reminder</string>
