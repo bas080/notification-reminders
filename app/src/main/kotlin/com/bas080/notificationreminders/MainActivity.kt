@@ -606,22 +606,14 @@ class MainActivity : AppCompatActivity() {
         val totalCount = activeReminders.size
         val activeCount = totalCount - snoozedCount
 
+        binding.pillFilterAll.text = totalCount.toString()
+        binding.pillFilterActive.text = activeCount.toString()
+        binding.pillFilterSnoozed.text = snoozedCount.toString()
+
         if (displayedReminders.isEmpty()) {
             binding.txtEmptyReminders.visibility = View.VISIBLE
         } else {
             binding.txtEmptyReminders.visibility = View.GONE
-        }
-
-        if (totalCount == 0) {
-            binding.txtRemindersSummary.setText(R.string.no_active_reminders)
-        } else {
-            if (snoozedCount > 0) {
-                binding.txtRemindersSummary.text = getString(R.string.reminders_summary_combined, activeCount, snoozedCount)
-            } else if (totalCount == 1) {
-                binding.txtRemindersSummary.setText(R.string.active_reminder_single)
-            } else {
-                binding.txtRemindersSummary.text = getString(R.string.active_reminders_count, totalCount)
-            }
         }
     }
 

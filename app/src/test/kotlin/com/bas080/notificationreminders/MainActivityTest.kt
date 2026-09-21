@@ -306,7 +306,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testSummaryHeaderShowsActiveAndSnoozedCounts() {
+    fun testFilterPillsShowAccurateCounts() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -318,9 +318,17 @@ class MainActivityTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val txtSummary = activity.findViewById<TextView>(R.id.txt_reminders_summary)
-        assertNotNull(txtSummary)
-        assertEquals("1 active • 1 snoozed", txtSummary.text.toString())
+        val pillAll = activity.findViewById<TextView>(R.id.pill_filter_all)
+        val pillActive = activity.findViewById<TextView>(R.id.pill_filter_active)
+        val pillSnoozed = activity.findViewById<TextView>(R.id.pill_filter_snoozed)
+
+        assertNotNull(pillAll)
+        assertNotNull(pillActive)
+        assertNotNull(pillSnoozed)
+
+        assertEquals("2", pillAll.text.toString())
+        assertEquals("1", pillActive.text.toString())
+        assertEquals("1", pillSnoozed.text.toString())
     }
 
     @Test

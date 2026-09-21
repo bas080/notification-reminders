@@ -124,59 +124,96 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
 
-            <TextView
-                android:id="@+id/txt_reminders_summary"
+            <!-- Filter Options with Count Pills -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/btn_filter_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_all"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:paddingVertical="2dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/pill_filter_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_secondary"
+                    android:background="@drawable/bg_pill"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/btn_filter_active"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_active"
+                    android:textSize="11sp"
+                    android:textStyle="normal"
+                    android:textColor="@color/text_secondary"
+                    android:paddingVertical="2dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/pill_filter_active"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_secondary"
+                    android:background="@drawable/bg_pill"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/btn_filter_snoozed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_snoozed"
+                    android:textSize="11sp"
+                    android:textStyle="normal"
+                    android:textColor="@color/text_secondary"
+                    android:paddingVertical="2dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/pill_filter_snoozed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_secondary"
+                    android:background="@drawable/bg_pill" />
+
+            </LinearLayout>
+
+            <View
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/no_active_reminders"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_secondary"
-                android:letterSpacing="0.05" />
-
-            <!-- Filter Options -->
-            <TextView
-                android:id="@+id/btn_filter_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/filter_all"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="4dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
-
-            <TextView
-                android:id="@+id/btn_filter_active"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/filter_active"
-                android:textSize="11sp"
-                android:textStyle="normal"
-                android:textColor="@color/text_secondary"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="4dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
-
-            <TextView
-                android:id="@+id/btn_filter_snoozed"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/filter_snoozed"
-                android:textSize="11sp"
-                android:textStyle="normal"
-                android:textColor="@color/text_secondary"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="4dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
             <!-- Sort Option -->
             <TextView
