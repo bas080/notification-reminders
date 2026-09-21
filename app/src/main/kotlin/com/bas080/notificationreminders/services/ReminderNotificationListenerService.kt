@@ -83,6 +83,9 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                     combined.add(defaultChoice)
                 }
             }
+            combined.sortBy { choice ->
+                CreateReminderReceiver.parseSnoozeDuration(choice).first
+            }
             return Array(combined.size) { combined[it] }
         }
     }
