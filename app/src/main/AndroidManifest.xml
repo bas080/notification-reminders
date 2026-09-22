@@ -33,20 +33,20 @@
         <activity
             android:name=".PickNotificationActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog">
+            android:theme="@style/Theme.NotificationReminders.Dialog">
         </activity>
 
         <activity
             android:name=".SnoozeDialogActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog">
+            android:theme="@style/Theme.NotificationReminders.Dialog">
         </activity>
 
         <activity
             android:name=".ProcessTextActivity"
             android:exported="true"
             android:label="@string/add_reminder"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog">
+            android:theme="@style/Theme.NotificationReminders.Dialog">
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
