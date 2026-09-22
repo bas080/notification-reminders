@@ -206,37 +206,37 @@ class MainActivityTest {
     }
 
     @Test
-    fun testFilterRemindersActiveAndSnoozed() {
+    fun testTagFilterSelectionDialog() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        val snoozeTime = System.currentTimeMillis() + 3600000L
         prefs.edit()
-            .putStringSet("key_reminders_list", setOf("Active Task", "Snoozed Task"))
-            .putLong("snooze_snoozed task", snoozeTime)
+            .putStringSet("key_reminders_list", setOf("Buy milk #groceries", "Finish report #work"))
             .commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
-        val btnFilterSnoozed = activity.findViewById<TextView>(R.id.btn_filter_snoozed)
+        val btnTagsFilter = activity.findViewById<android.widget.LinearLayout>(R.id.btn_tags_filter)
+        val txtSelectedTags = activity.findViewById<TextView>(R.id.txt_selected_tags)
+        assertNotNull(btnTagsFilter)
+        assertNotNull(txtSelectedTags)
 
-        // Filter ACTIVE
-        btnFilterActive.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 active task + 1 footer
+        // Open tags selection dialog
+        btnTagsFilter.performClick()
 
-        val activeHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
-        recyclerView.adapter!!.onBindViewHolder(activeHolder, 1)
-        assertEquals("Active Task", activeHolder.reminderInput.text.toString())
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull("Tag selection dialog should be shown", dialog)
 
-        // Filter SNOOZED
-        btnFilterSnoozed.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 snoozed task + 1 footer
+        val listView = dialog!!.listView
+        assertNotNull(listView)
+        assertEquals(2, listView.adapter.count)
 
-        val snoozedHolder = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
-        recyclerView.adapter!!.onBindViewHolder(snoozedHolder, 1)
-        assertEquals("Snoozed Task", snoozedHolder.reminderInput.text.toString())
+        // Select first tag (#groceries)
+        shadowOf(listView).performItemClick(0)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("#groceries", txtSelectedTags.text.toString())
     }
 
     @Test
@@ -271,44 +271,6 @@ class MainActivityTest {
         assertEquals("Task Later", holder3.reminderInput.text.toString())
     }
 
-    @Test
-    fun testFilterPillsShowAccurateCountsAndTriggerFilterOnClick() {
-        val context = RuntimeEnvironment.getApplication()
-        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        val snoozeTime = System.currentTimeMillis() + 3600000L
-        prefs.edit()
-            .putStringSet("key_reminders_list", setOf("Active Task", "Snoozed Task"))
-            .putLong("snooze_snoozed task", snoozeTime)
-            .commit()
-
-        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
-        val activity = controller.get()
-
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val pillAll = activity.findViewById<TextView>(R.id.pill_filter_all)
-        val pillActive = activity.findViewById<TextView>(R.id.pill_filter_active)
-        val pillSnoozed = activity.findViewById<TextView>(R.id.pill_filter_snoozed)
-
-        assertNotNull(pillAll)
-        assertNotNull(pillActive)
-        assertNotNull(pillSnoozed)
-
-        assertEquals("2", pillAll.text.toString())
-        assertEquals("1", pillActive.text.toString())
-        assertEquals("1", pillSnoozed.text.toString())
-
-        // Click active pill
-        pillActive.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 active + 1 footer
-
-        // Click snoozed pill
-        pillSnoozed.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 snoozed + 1 footer
-
-        // Click all pill
-        pillAll.performClick()
-        assertEquals(5, recyclerView.adapter!!.itemCount) // 1 input + 1 active + 1 header + 1 snoozed + 1 footer
-    }
 
     @Test
     fun testEmptyStateVisibility() {
@@ -417,7 +379,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testMarkDoneAppendsDoneTagAndFiltersFromActiveAndSnoozed() {
+    fun testMarkDoneAppendsDoneTagAndFiltersFromOverview() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         prefs.edit().putStringSet("key_reminders_list", setOf("Task 1")).commit()
@@ -425,8 +387,6 @@ class MainActivityTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
-        val btnFilterAll = activity.findViewById<TextView>(R.id.btn_filter_all)
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
 
         // Show mark done dialog for "Task 1"
@@ -444,12 +404,7 @@ class MainActivityTest {
         val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
         assertTrue("Saved set should contain 'Task 1 #done'", savedSet.contains("Task 1 #done"))
 
-        // Active filter should exclude done items
-        btnFilterActive.performClick()
-        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
-
-        // All filter should also exclude done items when search does not contain #done
-        btnFilterAll.performClick()
+        // Item should be excluded from overview unless search contains #done
         assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
     }
 
@@ -477,7 +432,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testSnoozedDividerAppearsInAllTabWhenSnoozedItemsExist() {
+    fun testSnoozedDividerAppearsWhenSnoozedItemsExist() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -490,18 +445,11 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnFilterAll = activity.findViewById<TextView>(R.id.btn_filter_all)
-        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
 
-        btnFilterAll.performClick()
-        // Items in All tab: position 0 = create input, position 1 = Active Task, position 2 = SNOOZED header, position 3 = Snoozed Task, position 4 = footer
+        // Items in overview: position 0 = create input, position 1 = Active Task, position 2 = SNOOZED header, position 3 = Snoozed Task, position 4 = footer
         assertEquals(5, recyclerView.adapter!!.itemCount)
 
         val headerType = recyclerView.adapter!!.getItemViewType(2)
         assertEquals(RemindersAdapter.TYPE_SNOOZED_HEADER, headerType)
-
-        // In Active tab, snoozed header should NOT appear
-        btnFilterActive.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 active task + 1 footer
     }
 }

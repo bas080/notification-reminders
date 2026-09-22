@@ -124,92 +124,38 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
 
-            <!-- Filter Options with Count Pills -->
+            <!-- Tags Filter Option Display -->
             <LinearLayout
+                android:id="@+id/btn_tags_filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="4dp"
+                android:background="?attr/selectableItemBackground">
 
                 <TextView
-                    android:id="@+id/btn_filter_all"
+                    android:id="@+id/txt_tags_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/filter_all"
+                    android:text="Tags:"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:paddingVertical="2dp"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="2dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground" />
+                    android:textColor="@color/accent"
+                    android:layout_marginEnd="6dp" />
 
                 <TextView
-                    android:id="@+id/pill_filter_all"
+                    android:id="@+id/txt_selected_tags"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_secondary"
-                    android:background="@drawable/bg_pill"
-                    android:layout_marginEnd="8dp" />
-
-                <TextView
-                    android:id="@+id/btn_filter_active"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/filter_active"
+                    android:text="All"
                     android:textSize="11sp"
-                    android:textStyle="normal"
-                    android:textColor="@color/text_secondary"
-                    android:paddingVertical="2dp"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="2dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground" />
-
-                <TextView
-                    android:id="@+id/pill_filter_active"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_secondary"
-                    android:background="@drawable/bg_pill"
-                    android:layout_marginEnd="8dp" />
-
-                <TextView
-                    android:id="@+id/btn_filter_snoozed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/filter_snoozed"
-                    android:textSize="11sp"
-                    android:textStyle="normal"
-                    android:textColor="@color/text_secondary"
-                    android:paddingVertical="2dp"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="2dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground" />
-
-                <TextView
-                    android:id="@+id/pill_filter_snoozed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_secondary"
-                    android:background="@drawable/bg_pill" />
+                    android:textColor="@color/text_secondary" />
 
             </LinearLayout>
-
 
         </LinearLayout>
 

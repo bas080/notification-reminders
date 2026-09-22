@@ -113,12 +113,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnClearLogs)
         markAsButtonAccessibility(binding.btnExportMarkdown)
         markAsButtonAccessibility(binding.btnImportMarkdown)
-        markAsButtonAccessibility(binding.btnFilterAll)
-        markAsButtonAccessibility(binding.pillFilterAll)
-        markAsButtonAccessibility(binding.btnFilterActive)
-        markAsButtonAccessibility(binding.pillFilterActive)
-        markAsButtonAccessibility(binding.btnFilterSnoozed)
-        markAsButtonAccessibility(binding.pillFilterSnoozed)
+        markAsButtonAccessibility(binding.btnTagsFilter)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -142,47 +137,62 @@ class MainActivity : AppCompatActivity() {
             showImportMarkdownDialog()
         }
 
-        binding.btnFilterAll.setOnClickListener {
-            setFilter(ReminderFilter.ALL)
-        }
-
-        binding.pillFilterAll.setOnClickListener {
-            setFilter(ReminderFilter.ALL)
-        }
-
-        binding.btnFilterActive.setOnClickListener {
-            setFilter(ReminderFilter.ACTIVE)
-        }
-
-        binding.pillFilterActive.setOnClickListener {
-            setFilter(ReminderFilter.ACTIVE)
-        }
-
-        binding.btnFilterSnoozed.setOnClickListener {
-            setFilter(ReminderFilter.SNOOZED)
-        }
-
-        binding.pillFilterSnoozed.setOnClickListener {
-            setFilter(ReminderFilter.SNOOZED)
+        binding.btnTagsFilter.setOnClickListener {
+            showTagsSelectionDialog()
         }
     }
 
-    private fun setFilter(filter: ReminderFilter) {
-        currentFilter = filter
+    private fun extractAllTags(): List<String> {
+        val tagRegex = Regex("#[a-zA-Z0-9_]+")
+        val tagsSet = mutableSetOf<String>()
+        for (reminder in activeReminders) {
+            tagRegex.findAll(reminder).forEach { match ->
+                tagsSet.add(match.value.lowercase())
+            }
+        }
+        return tagsSet.sorted()
+    }
 
-        val textPrimary = ContextCompat.getColor(this, R.color.text_primary)
-        val textSecondary = ContextCompat.getColor(this, R.color.text_secondary)
+    private fun showTagsSelectionDialog() {
+        val allTags = extractAllTags()
+        if (allTags.isEmpty()) {
+            Toast.makeText(this, "No tags found in reminders.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        binding.btnFilterAll.setTypeface(null, if (filter == ReminderFilter.ALL) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        binding.btnFilterAll.setTextColor(if (filter == ReminderFilter.ALL) textPrimary else textSecondary)
+        val checkedItems = BooleanArray(allTags.size) { i ->
+            val tag = allTags[i]
+            currentSearchQuery.contains(tag, ignoreCase = true)
+        }
 
-        binding.btnFilterActive.setTypeface(null, if (filter == ReminderFilter.ACTIVE) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        binding.btnFilterActive.setTextColor(if (filter == ReminderFilter.ACTIVE) textPrimary else textSecondary)
+        AlertDialog.Builder(this)
+            .setTitle("Filter by Tags")
+            .setMultiChoiceItems(allTags.toTypedArray(), checkedItems) { _, which, isChecked ->
+                checkedItems[which] = isChecked
+            }
+            .setPositiveButton("Apply") { _, _ ->
+                var updatedQuery = currentSearchQuery
 
-        binding.btnFilterSnoozed.setTypeface(null, if (filter == ReminderFilter.SNOOZED) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        binding.btnFilterSnoozed.setTextColor(if (filter == ReminderFilter.SNOOZED) textPrimary else textSecondary)
+                for (i in allTags.indices) {
+                    val tag = allTags[i]
+                    val isChecked = checkedItems[i]
+                    val containsTag = updatedQuery.contains(tag, ignoreCase = true)
 
-        updateSummaryAndAdapter()
+                    if (isChecked && !containsTag) {
+                        updatedQuery = if (updatedQuery.isBlank()) tag else "$updatedQuery $tag"
+                    } else if (!isChecked && containsTag) {
+                        updatedQuery = updatedQuery.replace(Regex("(?i)\\b${Regex.escape(tag)}\\b|${Regex.escape(tag)}"), "")
+                            .replace(Regex("\\s+"), " ")
+                            .trim()
+                    }
+                }
+
+                currentSearchQuery = updatedQuery
+                adapter.setSearchQueryText(updatedQuery)
+                updateSummaryAndAdapter()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
 
@@ -640,27 +650,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSummary() {
-        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-        val now = System.currentTimeMillis()
-        var snoozedCount = 0
-        var activeCount = 0
-        for (reminder in activeReminders) {
-            if (reminder.contains("#done", ignoreCase = true)) continue
-            val trimmed = reminder.trim().lowercase()
-            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-            }
-            if (snoozeUntil > now) {
-                snoozedCount++
-            } else {
-                activeCount++
-            }
+        val selectedTags = Regex("#[a-zA-Z0-9_]+").findAll(currentSearchQuery).map { it.value }.toList()
+        if (selectedTags.isEmpty()) {
+            binding.txtSelectedTags.text = "All"
+        } else {
+            binding.txtSelectedTags.text = selectedTags.joinToString(" ")
         }
-        val totalCount = activeReminders.size
-
-        binding.pillFilterAll.text = totalCount.toString()
-        binding.pillFilterActive.text = activeCount.toString()
-        binding.pillFilterSnoozed.text = snoozedCount.toString()
 
         if (displayedReminders.isEmpty()) {
             binding.txtEmptyReminders.visibility = View.VISIBLE
@@ -758,6 +753,13 @@ class RemindersAdapter(
         const val TYPE_FOOTER_INSTRUCTIONS = 2
         const val TYPE_SNOOZED_HEADER = 3
         private const val PREFS_REMINDERS = "reminders_prefs"
+    }
+
+    private var currentSearchQueryText: String = ""
+
+    fun setSearchQueryText(query: String) {
+        currentSearchQueryText = query
+        notifyItemChanged(0)
     }
 
     private class RemindersDiffCallback(
@@ -889,6 +891,10 @@ class RemindersAdapter(
             holder.btnAction.setImageResource(R.drawable.ic_action_add)
             holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
             holder.btnAction.contentDescription = context.getString(R.string.add_reminder)
+
+            if (currentSearchQueryText.isNotBlank() && holder.reminderInput.text.toString() != currentSearchQueryText && !holder.reminderInput.hasFocus()) {
+                holder.reminderInput.setText(currentSearchQueryText)
+            }
 
             val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
             var searchRunnable: Runnable? = null
