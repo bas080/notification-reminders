@@ -239,38 +239,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testSortRemindersAlphabetical() {
-        val context = RuntimeEnvironment.getApplication()
-        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit()
-            .putStringSet("key_reminders_list", setOf("Zebra", "Apple"))
-            .commit()
-
-        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
-        val activity = controller.get()
-
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnSort = activity.findViewById<TextView>(R.id.btn_sort)
-
-        btnSort.performClick()
-        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
-        assertNotNull(dialog)
-        val listView = dialog!!.listView
-        assertNotNull(listView)
-        shadowOf(listView).performItemClick(1) // Select Alphabetical option
-
-        val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
-        val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
-
-        recyclerView.adapter!!.onBindViewHolder(holder1, 1)
-        recyclerView.adapter!!.onBindViewHolder(holder2, 2)
-
-        assertEquals("Apple", holder1.reminderInput.text.toString())
-        assertEquals("Zebra", holder2.reminderInput.text.toString())
-    }
-
-    @Test
-    fun testSortRemindersSnoozeAscending() {
+    fun testActiveItemsSortedFirstAndSnoozedItemsSortedAscendingBySnoozeTime() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
@@ -286,23 +255,19 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnSort = activity.findViewById<TextView>(R.id.btn_sort)
-
-        btnSort.performClick()
-        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
-        assertNotNull(dialog)
-        val listView = dialog!!.listView
-        assertNotNull(listView)
-        shadowOf(listView).performItemClick(3) // Select Snooze time (Earliest first) option
 
         val holder1 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
         val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
+        val holder3 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
 
         recyclerView.adapter!!.onBindViewHolder(holder1, 1)
         recyclerView.adapter!!.onBindViewHolder(holder2, 2)
+        recyclerView.adapter!!.onBindViewHolder(holder3, 3)
 
-        assertEquals("Task Sooner", holder1.reminderInput.text.toString())
-        assertEquals("Task Later", holder2.reminderInput.text.toString())
+        // Active item comes first ("Task Active"), followed by sooner snooze ("Task Sooner"), then later snooze ("Task Later")
+        assertEquals("Task Active", holder1.reminderInput.text.toString())
+        assertEquals("Task Sooner", holder2.reminderInput.text.toString())
+        assertEquals("Task Later", holder3.reminderInput.text.toString())
     }
 
     @Test

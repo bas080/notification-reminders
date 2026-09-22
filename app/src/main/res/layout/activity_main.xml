@@ -210,26 +210,6 @@
 
             </LinearLayout>
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-
-            <!-- Sort Option -->
-            <TextView
-                android:id="@+id/btn_sort"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/sort_button"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent"
-                android:paddingVertical="2dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="4dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
 
         </LinearLayout>
 

@@ -40,7 +40,6 @@ import java.util.Calendar
 import java.util.Locale
 
 enum class ReminderFilter { ALL, ACTIVE, SNOOZED }
-enum class ReminderSort { DEFAULT, ALPHABETICAL, STATUS, SNOOZE_ASC }
 
 class MainActivity : AppCompatActivity() {
 
@@ -84,7 +83,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: RemindersAdapter
 
     private var currentFilter = ReminderFilter.ALL
-    private var currentSort = ReminderSort.DEFAULT
     private var currentSearchQuery = ""
 
     private val requestNotificationPermissionLauncher =
@@ -119,7 +117,6 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.pillFilterActive)
         markAsButtonAccessibility(binding.btnFilterSnoozed)
         markAsButtonAccessibility(binding.pillFilterSnoozed)
-        markAsButtonAccessibility(binding.btnSort)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -166,10 +163,6 @@ class MainActivity : AppCompatActivity() {
         binding.pillFilterSnoozed.setOnClickListener {
             setFilter(ReminderFilter.SNOOZED)
         }
-
-        binding.btnSort.setOnClickListener {
-            showSortOptionsDialog()
-        }
     }
 
     private fun setFilter(filter: ReminderFilter) {
@@ -190,27 +183,6 @@ class MainActivity : AppCompatActivity() {
         updateSummaryAndAdapter()
     }
 
-    private fun showSortOptionsDialog() {
-        val options = arrayOf(
-            getString(R.string.sort_default),
-            getString(R.string.sort_az),
-            getString(R.string.sort_status),
-            getString(R.string.sort_snooze_asc)
-        )
-        AlertDialog.Builder(this)
-            .setTitle(R.string.sort_dialog_title)
-            .setItems(options) { _, which ->
-                currentSort = when (which) {
-                    1 -> ReminderSort.ALPHABETICAL
-                    2 -> ReminderSort.STATUS
-                    3 -> ReminderSort.SNOOZE_ASC
-                    else -> ReminderSort.DEFAULT
-                }
-                updateSummaryAndAdapter()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
 
     private fun exportRemindersToMarkdown() {
         if (activeReminders.isEmpty()) {
@@ -614,25 +586,27 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 3. Sort items
-        val sorted = when (currentSort) {
-            ReminderSort.DEFAULT -> filtered
-            ReminderSort.ALPHABETICAL -> filtered.sortedBy { it.lowercase() }
-            ReminderSort.STATUS -> filtered.sortedByDescending { reminder ->
-                val trimmed = reminder.trim().lowercase()
-                val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                    if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-                }
-                if (snoozeUntil <= now) 1 else 0
+        // 3. Sort items: Active items always first, then snoozed items ordered ascendingly by snooze time
+        val sorted = filtered.sortedWith(Comparator { r1, r2 ->
+            val trimmed1 = r1.trim().lowercase()
+            val snoozeUntil1 = prefs.getLong("snooze_$trimmed1", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed1"] ?: 0L)
             }
-            ReminderSort.SNOOZE_ASC -> filtered.sortedBy { reminder ->
-                val trimmed = reminder.trim().lowercase()
-                val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                    if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-                }
-                if (snoozeUntil > now) snoozeUntil else Long.MAX_VALUE
+            val isSnoozed1 = snoozeUntil1 > now
+
+            val trimmed2 = r2.trim().lowercase()
+            val snoozeUntil2 = prefs.getLong("snooze_$trimmed2", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed2"] ?: 0L)
             }
-        }
+            val isSnoozed2 = snoozeUntil2 > now
+
+            when {
+                !isSnoozed1 && isSnoozed2 -> -1
+                isSnoozed1 && !isSnoozed2 -> 1
+                isSnoozed1 && isSnoozed2 -> snoozeUntil1.compareTo(snoozeUntil2)
+                else -> 0
+            }
+        })
 
         adapter.updateList(sorted)
         updateSummary()
