@@ -608,7 +608,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 3. Sort items: Active items always first, then snoozed items ordered ascendingly by snooze time
+        // 3. Sort items: Active items sorted by creation (more recently added first), then snoozed items ordered ascendingly by snooze time
         val activeItems = mutableListOf<String>()
         val snoozedItems = mutableListOf<Pair<String, Long>>()
 
@@ -624,6 +624,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        activeItems.reverse()
         snoozedItems.sortBy { it.second }
 
         val sorted = mutableListOf<String>()
