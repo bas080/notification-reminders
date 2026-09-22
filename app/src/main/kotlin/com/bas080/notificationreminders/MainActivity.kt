@@ -316,9 +316,29 @@ class MainActivity : AppCompatActivity() {
                     val oldText = displayedReminders[index]
                     val masterIdx = activeReminders.indexOf(oldText)
                     if (masterIdx != -1) {
+                        if (oldText != updatedText) {
+                            // Cancel any active notification for old reminder text
+                            val oldNotifId = ReminderNotificationListenerService.getNotificationIdForReminder(oldText)
+                            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                            notificationManager?.cancel(oldNotifId)
+
+                            // Migrate snooze timestamp if snoozed
+                            val oldTrimmed = oldText.trim().lowercase()
+                            val newTrimmed = updatedText.trim().lowercase()
+                            if (oldTrimmed != newTrimmed) {
+                                val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                                val snoozeTime = prefs.getLong("snooze_$oldTrimmed", 0L)
+                                if (snoozeTime > 0L) {
+                                    prefs.edit().remove("snooze_$oldTrimmed").putLong("snooze_$newTrimmed", snoozeTime).apply()
+                                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$oldTrimmed")
+                                    ReminderNotificationListenerService.lastTriggeredMap["snooze_$newTrimmed"] = snoozeTime
+                                }
+                            }
+                        }
+
                         activeReminders[masterIdx] = updatedText
                         displayedReminders[index] = updatedText
-                        saveRemindersToPrefs()
+                        saveRemindersToPrefs(updateStatusNotification = false)
                         updateSummary()
                     }
                 }
@@ -547,10 +567,12 @@ class MainActivity : AppCompatActivity() {
         updateSummaryAndAdapter()
     }
 
-    private fun saveRemindersToPrefs() {
+    private fun saveRemindersToPrefs(updateStatusNotification: Boolean = true) {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
-        ReminderNotificationListenerService.instance?.showStatusNotification()
+        if (updateStatusNotification) {
+            ReminderNotificationListenerService.instance?.showStatusNotification()
+        }
     }
 
     private fun updateSummaryAndAdapter() {
