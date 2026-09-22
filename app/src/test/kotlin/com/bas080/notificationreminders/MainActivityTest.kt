@@ -385,4 +385,34 @@ class MainActivityTest {
 
         assertTrue("Position 0 input should retain focus even when 0 items match", holder.reminderInput.hasFocus())
     }
+
+    @Test
+    fun testSearchInputDoesNotLoseFocusWhileTypingCharacterByCharacter() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage", "Walk dog")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+
+        holder.reminderInput.requestFocus()
+        assertTrue("Input should initially have focus", holder.reminderInput.hasFocus())
+
+        val querySequence = "garage"
+        val currentText = StringBuilder()
+
+        for (char in querySequence) {
+            currentText.append(char)
+            holder.reminderInput.setText(currentText.toString())
+            shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+            assertTrue("Input should retain focus while typing character '$char'", holder.reminderInput.hasFocus())
+        }
+
+        // Final check on filtered item count (1 input + 1 match ("Clean garage") + 1 footer = 3 items)
+        assertEquals("Adapter should display filtered match", 3, recyclerView.adapter!!.itemCount)
+        assertTrue("Input should remain focused after typing completes", holder.reminderInput.hasFocus())
+    }
 }
