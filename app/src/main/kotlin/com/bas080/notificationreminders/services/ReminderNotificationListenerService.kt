@@ -38,6 +38,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
         var instance: ReminderNotificationListenerService? = null
         val lastTriggeredMap = ConcurrentHashMap<String, Long>()
+        val activePostedReminders = ConcurrentHashMap.newKeySet<String>()
 
         fun startService(context: Context) {
             try {
@@ -179,6 +180,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
         try {
+            activePostedReminders.add(matchedReminder)
             val notificationId = getNotificationIdForReminder(matchedReminder)
 
             val doneIntent = Intent(this, CreateReminderReceiver::class.java).apply {
@@ -197,35 +199,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 "Done",
                 donePendingIntent
             ).build()
-
-            val snoozeRemoteInput = RemoteInput.Builder(KEY_SNOOZE_REPLY)
-                .setLabel(getString(R.string.snooze))
-                .setChoices(getTopSnoozeChoices(this))
-                .build()
-
-            val snoozeIntent = Intent(this, CreateReminderReceiver::class.java).apply {
-                action = ACTION_SNOOZE_REMINDER
-                putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
-            }
-            val snoozeFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
-            val snoozePendingIntent = PendingIntent.getBroadcast(
-                this,
-                notificationId + 5000,
-                snoozeIntent,
-                snoozeFlags
-            )
-
-            val snoozeAction = NotificationCompat.Action.Builder(
-                R.drawable.ic_action_snooze,
-                getString(R.string.snooze),
-                snoozePendingIntent
-            )
-                .addRemoteInput(snoozeRemoteInput)
-                .build()
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
@@ -247,6 +220,28 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 sharePendingIntent
             ).build()
 
+            val singleSwipeIntent = Intent(this, com.bas080.notificationreminders.SnoozeDialogActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(com.bas080.notificationreminders.SnoozeDialogActivity.EXTRA_REMINDER_TEXT, matchedReminder)
+            }
+            val singleSwipePendingIntent = PendingIntent.getActivity(
+                this,
+                notificationId + 10000,
+                singleSwipeIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val groupSwipeIntent = Intent(this, com.bas080.notificationreminders.SnoozeDialogActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(com.bas080.notificationreminders.SnoozeDialogActivity.EXTRA_REMINDER_LIST, activePostedReminders.toTypedArray())
+            }
+            val groupSwipePendingIntent = PendingIntent.getActivity(
+                this,
+                SUMMARY_NOTIFICATION_ID + 10000,
+                groupSwipeIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
             val priorityVal = if (isHighPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT
 
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
@@ -254,8 +249,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(matchedReminder)
                 .setAutoCancel(true)
                 .addAction(doneAction)
-                .addAction(snoozeAction)
                 .addAction(shareAction)
+                .setDeleteIntent(singleSwipePendingIntent)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(priorityVal)
@@ -266,6 +261,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(getString(R.string.app_name))
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
                 .setAutoCancel(false)
+                .setDeleteIntent(groupSwipePendingIntent)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
