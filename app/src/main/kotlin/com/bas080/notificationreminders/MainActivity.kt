@@ -784,14 +784,14 @@ class RemindersAdapter(
 
         private fun getOldType(position: Int): Int {
             if (position == 0) return TYPE_CREATE_INPUT
-            if (position == oldList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
-            return if (oldList[position - 1] == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+            if (oldList.isNotEmpty() && position == oldList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+            return if (oldList.getOrNull(position - 1) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
         }
 
         private fun getNewType(position: Int): Int {
             if (position == 0) return TYPE_CREATE_INPUT
-            if (position == newList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
-            return if (newList[position - 1] == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+            if (newList.isNotEmpty() && position == newList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+            return if (newList.getOrNull(position - 1) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
         }
 
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
@@ -804,7 +804,7 @@ class RemindersAdapter(
                 TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
                 TYPE_SNOOZED_HEADER -> true
-                else -> oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
+                else -> oldList.getOrNull(oldItemPosition - 1) == newList.getOrNull(newItemPosition - 1)
             }
         }
 
@@ -818,7 +818,7 @@ class RemindersAdapter(
                 TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
                 TYPE_SNOOZED_HEADER -> true
-                else -> oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
+                else -> oldList.getOrNull(oldItemPosition - 1) == newList.getOrNull(newItemPosition - 1)
             }
         }
     }
@@ -847,7 +847,7 @@ class RemindersAdapter(
 
     override fun getItemViewType(position: Int): Int {
         if (position == 0) return TYPE_CREATE_INPUT
-        if (position == displayedReminders.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+        if (displayedReminders.isNotEmpty() && position == displayedReminders.size + 1) return TYPE_FOOTER_INSTRUCTIONS
         val item = displayedReminders[position - 1]
         return if (item == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
     }
@@ -1003,5 +1003,5 @@ class RemindersAdapter(
         }
     }
 
-    override fun getItemCount(): Int = displayedReminders.size + 2
+    override fun getItemCount(): Int = if (displayedReminders.isEmpty()) 1 else displayedReminders.size + 2
 }

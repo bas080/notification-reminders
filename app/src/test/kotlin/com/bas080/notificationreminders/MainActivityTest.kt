@@ -336,8 +336,8 @@ class MainActivityTest {
         holder.reminderInput.setText("nonexistentquery123")
         shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
 
-        // Only create input (1) + footer (1) = 2 items in adapter
-        assertEquals("Adapter should have 2 items when 0 reminders match", 2, recyclerView.adapter!!.itemCount)
+        // Only create input (1) when 0 reminders match (footer instructions hidden)
+        assertEquals("Adapter should have 1 item when 0 reminders match", 1, recyclerView.adapter!!.itemCount)
 
         val txtEmpty = activity.findViewById<TextView>(R.id.txt_empty_reminders)
         assertEquals("Empty reminders view should be VISIBLE", View.VISIBLE, txtEmpty.visibility)
@@ -436,7 +436,7 @@ class MainActivityTest {
         assertTrue("Saved set should contain 'Task 1 #done'", savedSet.contains("Task 1 #done"))
 
         // Item should be excluded from overview unless search contains #done
-        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
+        assertEquals(1, recyclerView.adapter!!.itemCount) // 1 create input + 0 items (footer hidden when empty)
     }
 
     @Test
