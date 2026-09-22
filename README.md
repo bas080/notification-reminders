@@ -29,6 +29,8 @@ A simple Android application that keeps track of your reminders and alerts you w
 - **In-App Activity Logs**: Easily view app activity logs directly inside the app.
 - **Automatic Crash Reporting**: Includes a simple optional crash report helper if something unexpected occurs.
 
+To view screenshots of the app features, check out the [Screenshots Gallery](fastlane/metadata/android/en-US/images/phoneScreenshots/).
+
 ## Permissions
 
 The app requests minimal Android system permissions to operate transparently:
