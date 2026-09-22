@@ -286,8 +286,17 @@ class CreateReminderReceiver : BroadcastReceiver() {
 
                     val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
                     val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
-                    savedSet.remove(reminderText)
-                    prefs.edit().putStringSet(KEY_REMINDERS, savedSet).remove("snooze_$trimmed").apply()
+
+                    if (savedSet.contains(reminderText)) {
+                        savedSet.remove(reminderText)
+                        val doneText = if (reminderText.contains("#done", ignoreCase = true)) {
+                            reminderText
+                        } else {
+                            "$reminderText #done"
+                        }
+                        savedSet.add(doneText)
+                        prefs.edit().putStringSet(KEY_REMINDERS, savedSet).remove("snooze_$trimmed").apply()
+                    }
 
                     val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

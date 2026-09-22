@@ -516,12 +516,23 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.mark_done)
             .setMessage("Are you sure you want to mark \"$reminderText\" as done?")
             .setPositiveButton(R.string.mark_done) { _, _ ->
-                if (activeReminders.contains(reminderText)) {
-                    activeReminders.remove(reminderText)
+                val idx = activeReminders.indexOf(reminderText)
+                if (idx != -1) {
+                    val doneText = if (reminderText.contains("#done", ignoreCase = true)) {
+                        reminderText
+                    } else {
+                        "$reminderText #done"
+                    }
+                    activeReminders[idx] = doneText
                     val trimmed = reminderText.trim().lowercase()
                     ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
                     val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
                     prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
+
+                    val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                    notificationManager?.cancel(notificationId)
+
                     ReminderNotificationListenerService.instance?.showStatusNotification()
                     updateSummaryAndAdapter()
                     Toast.makeText(this, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
@@ -560,6 +571,7 @@ class MainActivity : AppCompatActivity() {
         val filteredByStatus = when (currentFilter) {
             ReminderFilter.ALL -> activeReminders.toList()
             ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
+                if (reminder.contains("#done", ignoreCase = true)) return@filter false
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
@@ -567,6 +579,7 @@ class MainActivity : AppCompatActivity() {
                 snoozeUntil <= now
             }
             ReminderFilter.SNOOZED -> activeReminders.filter { reminder ->
+                if (reminder.contains("#done", ignoreCase = true)) return@filter false
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
@@ -616,17 +629,20 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         var snoozedCount = 0
+        var activeCount = 0
         for (reminder in activeReminders) {
+            if (reminder.contains("#done", ignoreCase = true)) continue
             val trimmed = reminder.trim().lowercase()
             val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                 if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
             }
             if (snoozeUntil > now) {
                 snoozedCount++
+            } else {
+                activeCount++
             }
         }
         val totalCount = activeReminders.size
-        val activeCount = totalCount - snoozedCount
 
         binding.pillFilterAll.text = totalCount.toString()
         binding.pillFilterActive.text = activeCount.toString()

@@ -142,6 +142,10 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         val commonWordsSet = ReminderMatcher.parseCommonWords(commonWordsStr)
 
         for (reminder in savedReminders) {
+            if (reminder.contains("#done", ignoreCase = true)) {
+                continue
+            }
+
             val trimmed = reminder.trim()
             val lower = trimmed.lowercase()
             val trackingKey = "${sbnKey}_$lower"

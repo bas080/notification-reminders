@@ -414,4 +414,41 @@ class MainActivityTest {
         val updatedSnooze = prefs.getLong("snooze_snoozed item", 0L)
         assertEquals(0L, updatedSnooze)
     }
+
+    @Test
+    fun testMarkDoneAppendsDoneTagAndFiltersFromActiveAndSnoozed() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Task 1")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
+        val btnFilterAll = activity.findViewById<TextView>(R.id.btn_filter_all)
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+
+        // Show mark done dialog for "Task 1"
+        val method = MainActivity::class.java.getDeclaredMethod("showMarkDoneConfirmationDialog", String::class.java)
+        method.isAccessible = true
+        method.invoke(activity, "Task 1")
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull(dialog)
+        dialog!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Reminder marked done", ShadowToast.getTextOfLatestToast())
+
+        val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        assertTrue("Saved set should contain 'Task 1 #done'", savedSet.contains("Task 1 #done"))
+
+        // Active filter should exclude done items
+        btnFilterActive.performClick()
+        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
+
+        // All filter should include done items
+        btnFilterAll.performClick()
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 done item + 1 footer
+    }
 }
