@@ -176,7 +176,8 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(1) as? RemindersAdapter.ItemViewHolder
+        // Position 0 = create input, Position 1 = SNOOZED header, Position 2 = Snoozed Task
+        val holder = recyclerView.findViewHolderForAdapterPosition(2) as? RemindersAdapter.ItemViewHolder
         assertNotNull(holder)
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
@@ -260,11 +261,11 @@ class MainActivityTest {
         val holder2 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
         val holder3 = recyclerView.adapter!!.createViewHolder(recyclerView, RemindersAdapter.TYPE_ACTIVE_REMINDER) as RemindersAdapter.ItemViewHolder
 
-        recyclerView.adapter!!.onBindViewHolder(holder1, 1)
-        recyclerView.adapter!!.onBindViewHolder(holder2, 2)
-        recyclerView.adapter!!.onBindViewHolder(holder3, 3)
+        recyclerView.adapter!!.onBindViewHolder(holder1, 1) // Task Active
+        recyclerView.adapter!!.onBindViewHolder(holder2, 3) // Task Sooner (Position 2 is SNOOZED header)
+        recyclerView.adapter!!.onBindViewHolder(holder3, 4) // Task Later
 
-        // Active item comes first ("Task Active"), followed by sooner snooze ("Task Sooner"), then later snooze ("Task Later")
+        // Active item comes first ("Task Active"), followed by SNOOZED header, then sooner snooze ("Task Sooner"), then later snooze ("Task Later")
         assertEquals("Task Active", holder1.reminderInput.text.toString())
         assertEquals("Task Sooner", holder2.reminderInput.text.toString())
         assertEquals("Task Later", holder3.reminderInput.text.toString())
@@ -306,7 +307,7 @@ class MainActivityTest {
 
         // Click all pill
         pillAll.performClick()
-        assertEquals(4, recyclerView.adapter!!.itemCount) // 1 input + 2 tasks + 1 footer
+        assertEquals(5, recyclerView.adapter!!.itemCount) // 1 input + 1 active + 1 header + 1 snoozed + 1 footer
     }
 
     @Test
@@ -473,5 +474,34 @@ class MainActivityTest {
         holder.reminderInput.setText("#done")
         shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
         assertEquals("Should show 1 match ('Buy bread #done') when searching '#done'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
+    }
+
+    @Test
+    fun testSnoozedDividerAppearsInAllTabWhenSnoozedItemsExist() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Active Task", "Snoozed Task"))
+            .putLong("snooze_snoozed task", snoozeTime)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnFilterAll = activity.findViewById<TextView>(R.id.btn_filter_all)
+        val btnFilterActive = activity.findViewById<TextView>(R.id.btn_filter_active)
+
+        btnFilterAll.performClick()
+        // Items in All tab: position 0 = create input, position 1 = Active Task, position 2 = SNOOZED header, position 3 = Snoozed Task, position 4 = footer
+        assertEquals(5, recyclerView.adapter!!.itemCount)
+
+        val headerType = recyclerView.adapter!!.getItemViewType(2)
+        assertEquals(RemindersAdapter.TYPE_SNOOZED_HEADER, headerType)
+
+        // In Active tab, snoozed header should NOT appear
+        btnFilterActive.performClick()
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 active task + 1 footer
     }
 }

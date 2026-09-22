@@ -41,6 +41,8 @@ import java.util.Locale
 
 enum class ReminderFilter { ALL, ACTIVE, SNOOZED }
 
+const val HEADER_SNOOZED_SECTION_MARKER = "HEADER_SNOOZED_SECTION_MARKER"
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -607,26 +609,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 3. Sort items: Active items always first, then snoozed items ordered ascendingly by snooze time
-        val sorted = filtered.sortedWith(Comparator { r1, r2 ->
-            val trimmed1 = r1.trim().lowercase()
-            val snoozeUntil1 = prefs.getLong("snooze_$trimmed1", 0L).let {
-                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed1"] ?: 0L)
-            }
-            val isSnoozed1 = snoozeUntil1 > now
+        val activeItems = mutableListOf<String>()
+        val snoozedItems = mutableListOf<Pair<String, Long>>()
 
-            val trimmed2 = r2.trim().lowercase()
-            val snoozeUntil2 = prefs.getLong("snooze_$trimmed2", 0L).let {
-                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed2"] ?: 0L)
+        for (reminder in filtered) {
+            val trimmed = reminder.trim().lowercase()
+            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
             }
-            val isSnoozed2 = snoozeUntil2 > now
+            if (snoozeUntil > now) {
+                snoozedItems.add(reminder to snoozeUntil)
+            } else {
+                activeItems.add(reminder)
+            }
+        }
 
-            when {
-                !isSnoozed1 && isSnoozed2 -> -1
-                isSnoozed1 && !isSnoozed2 -> 1
-                isSnoozed1 && isSnoozed2 -> snoozeUntil1.compareTo(snoozeUntil2)
-                else -> 0
-            }
-        })
+        snoozedItems.sortBy { it.second }
+
+        val sorted = mutableListOf<String>()
+        sorted.addAll(activeItems)
+
+        if (currentFilter == ReminderFilter.ALL && snoozedItems.isNotEmpty()) {
+            sorted.add(HEADER_SNOOZED_SECTION_MARKER)
+        }
+        sorted.addAll(snoozedItems.map { it.first })
 
         adapter.updateList(sorted)
         updateSummary()
@@ -749,6 +755,7 @@ class RemindersAdapter(
         const val TYPE_CREATE_INPUT = 0
         const val TYPE_ACTIVE_REMINDER = 1
         const val TYPE_FOOTER_INSTRUCTIONS = 2
+        const val TYPE_SNOOZED_HEADER = 3
         private const val PREFS_REMINDERS = "reminders_prefs"
     }
 
@@ -759,34 +766,44 @@ class RemindersAdapter(
         override fun getOldListSize(): Int = oldList.size + 2
         override fun getNewListSize(): Int = newList.size + 2
 
+        private fun getOldType(position: Int): Int {
+            if (position == 0) return TYPE_CREATE_INPUT
+            if (position == oldList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+            return if (oldList[position - 1] == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+        }
+
+        private fun getNewType(position: Int): Int {
+            if (position == 0) return TYPE_CREATE_INPUT
+            if (position == newList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+            return if (newList[position - 1] == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+        }
+
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            val oldType = when {
-                oldItemPosition == 0 -> TYPE_CREATE_INPUT
-                oldItemPosition in 1..oldList.size -> TYPE_ACTIVE_REMINDER
-                else -> TYPE_FOOTER_INSTRUCTIONS
-            }
-            val newType = when {
-                newItemPosition == 0 -> TYPE_CREATE_INPUT
-                newItemPosition in 1..newList.size -> TYPE_ACTIVE_REMINDER
-                else -> TYPE_FOOTER_INSTRUCTIONS
-            }
+            val oldType = getOldType(oldItemPosition)
+            val newType = getNewType(newItemPosition)
 
             if (oldType != newType) return false
 
             return when (oldType) {
                 TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
+                TYPE_SNOOZED_HEADER -> true
                 else -> oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
             }
         }
 
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            if (oldItemPosition == 0 && newItemPosition == 0) return true
-            if (oldItemPosition == oldList.size + 1 && newItemPosition == newList.size + 1) return true
-            if (oldItemPosition in 1..oldList.size && newItemPosition in 1..newList.size) {
-                return oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
+            val oldType = getOldType(oldItemPosition)
+            val newType = getNewType(newItemPosition)
+
+            if (oldType != newType) return false
+
+            return when (oldType) {
+                TYPE_CREATE_INPUT -> true
+                TYPE_FOOTER_INSTRUCTIONS -> true
+                TYPE_SNOOZED_HEADER -> true
+                else -> oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
             }
-            return false
         }
     }
 
@@ -806,28 +823,42 @@ class RemindersAdapter(
         var textWatcher: TextWatcher? = null
     }
 
+    class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val txtHeaderTitle: TextView = view.findViewById(R.id.txt_header_title)
+    }
+
     class FooterViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
     override fun getItemViewType(position: Int): Int {
-        return when {
-            position == 0 -> TYPE_CREATE_INPUT
-            position in 1..displayedReminders.size -> TYPE_ACTIVE_REMINDER
-            else -> TYPE_FOOTER_INSTRUCTIONS
-        }
+        if (position == 0) return TYPE_CREATE_INPUT
+        if (position == displayedReminders.size + 1) return TYPE_FOOTER_INSTRUCTIONS
+        val item = displayedReminders[position - 1]
+        return if (item == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_FOOTER_INSTRUCTIONS) {
-            val view = inflater.inflate(R.layout.item_footer_instructions, parent, false)
-            FooterViewHolder(view)
-        } else {
-            val view = inflater.inflate(R.layout.item_reminder, parent, false)
-            ItemViewHolder(view)
+        return when (viewType) {
+            TYPE_FOOTER_INSTRUCTIONS -> {
+                val view = inflater.inflate(R.layout.item_footer_instructions, parent, false)
+                FooterViewHolder(view)
+            }
+            TYPE_SNOOZED_HEADER -> {
+                val view = inflater.inflate(R.layout.item_section_header, parent, false)
+                HeaderViewHolder(view)
+            }
+            else -> {
+                val view = inflater.inflate(R.layout.item_reminder, parent, false)
+                ItemViewHolder(view)
+            }
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is HeaderViewHolder) {
+            holder.txtHeaderTitle.text = "SNOOZED"
+            return
+        }
         if (holder !is ItemViewHolder) return
 
         holder.textWatcher?.let { holder.reminderInput.removeTextChangedListener(it) }
