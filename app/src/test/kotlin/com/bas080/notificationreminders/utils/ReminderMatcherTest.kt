@@ -54,20 +54,19 @@ class ReminderMatcherTest {
     }
 
     @Test
-    fun testMatchesSearchQueryLenientMatching() {
-        val reminder = "Buy milk at supermarket"
+    fun testTieredSearchQueryMatching() {
+        val reminders = listOf("Buy milk at supermarket", "Call dentist", "Buy groceries")
 
-        // 1. Direct substring match
-        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "milk"))
-        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "MILK"))
+        // Tier 1 / Tier 2 AND match
+        val res1 = ReminderMatcher.filterSearchQueryTiered(reminders, "Buy milk")
+        assertEquals(listOf("Buy milk at supermarket"), res1)
 
-        // 2. Token / word stem match
-        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "supermar"))
+        // Substring / Sub-word match
+        val res2 = ReminderMatcher.filterSearchQueryTiered(reminders, "supermar")
+        assertEquals(listOf("Buy milk at supermarket"), res2)
 
-        // 3. Normalized punctuation / token match
-        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "buy-milk!"))
-
-        // 4. Non-matching search query
-        assertFalse(ReminderMatcher.matchesSearchQuery(reminder, "dentist appointment"))
+        // Non-matching query
+        val res3 = ReminderMatcher.filterSearchQueryTiered(reminders, "doctor appointment")
+        assertTrue(res3.isEmpty())
     }
 }

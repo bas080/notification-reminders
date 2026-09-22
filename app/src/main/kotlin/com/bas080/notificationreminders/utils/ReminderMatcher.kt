@@ -64,44 +64,69 @@ object ReminderMatcher {
     }
 
     /**
+     * Filters a list of reminders using a 4-tiered search matching algorithm.
+     * Higher tiers prevent lower tiers from evaluating if any matches are found.
+     *
+     * Tier 1: Case-insensitive AND word match
+     * Tier 2: Case-insensitive AND substring match
+     * Tier 3: Case-insensitive OR word match
+     * Tier 4: Case-insensitive OR substring match
+     */
+    fun filterSearchQueryTiered(reminders: List<String>, query: String): List<String> {
+        val q = query.trim()
+        if (q.isEmpty()) return reminders
+
+        fun tokenize(text: String): List<String> {
+            return text.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        }
+
+        val rawQueryWords = q.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        if (rawQueryWords.isEmpty()) return reminders
+
+        val tokenizedQueryWords = tokenize(q)
+
+        // Tier 1: Case-insensitive AND word match
+        if (tokenizedQueryWords.isNotEmpty()) {
+            val tier1 = reminders.filter { reminder ->
+                val words = tokenize(reminder)
+                tokenizedQueryWords.all { qWord -> words.contains(qWord) }
+            }
+            if (tier1.isNotEmpty()) return tier1
+        }
+
+        // Tier 2: Case-insensitive AND substring match
+        val tier2 = reminders.filter { reminder ->
+            rawQueryWords.all { qWord -> reminder.contains(qWord, ignoreCase = true) }
+        }
+        if (tier2.isNotEmpty()) return tier2
+
+        // Tier 3: Case-insensitive OR word match
+        if (tokenizedQueryWords.isNotEmpty()) {
+            val tier3 = reminders.filter { reminder ->
+                val words = tokenize(reminder)
+                tokenizedQueryWords.any { qWord -> words.contains(qWord) }
+            }
+            if (tier3.isNotEmpty()) return tier3
+        }
+
+        // Tier 4: Case-insensitive OR substring match
+        val tier4 = reminders.filter { reminder ->
+            rawQueryWords.any { qWord -> reminder.contains(qWord, ignoreCase = true) }
+        }
+        if (tier4.isNotEmpty()) return tier4
+
+        return emptyList()
+    }
+
+    /**
      * Lenient search matching function to check if a reminder matches a search query.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun matchesSearchQuery(
         reminder: String,
         query: String,
         commonWords: Set<String> = DEFAULT_COMMON_WORDS
     ): Boolean {
-        val q = query.trim()
-        if (q.isEmpty()) return true
-
-        // 1. Direct case-insensitive substring match
-        if (reminder.contains(q, ignoreCase = true)) return true
-
-        // 2. Normalized alphanumeric match
-        val normalizedReminder = reminder.lowercase().replace(Regex("[^a-z0-9]+"), " ")
-        val normalizedQuery = q.lowercase().replace(Regex("[^a-z0-9]+"), " ")
-
-        if (normalizedReminder.contains(normalizedQuery)) return true
-
-        // 3. Token-level matching: any query token matches a reminder token
-        val queryTokens = normalizedQuery.split(Regex("\\s+")).filter { it.length >= 2 }
-        val reminderTokens = normalizedReminder.split(Regex("\\s+")).filter { it.isNotEmpty() }
-        if (queryTokens.isNotEmpty()) {
-            val hasTokenMatch = queryTokens.any { qToken ->
-                reminderTokens.any { rToken -> rToken.contains(qToken) || qToken.contains(rToken) }
-            }
-            if (hasTokenMatch) return true
-        }
-
-        // 4. Non-common word overlap
-        val nonCommonQueryWords = extractNonCommonWords(q, commonWords)
-        val nonCommonReminderWords = extractNonCommonWords(reminder, commonWords)
-        if (nonCommonQueryWords.isNotEmpty() && nonCommonReminderWords.isNotEmpty()) {
-            if (nonCommonQueryWords.any { qWord -> nonCommonReminderWords.any { rWord -> rWord.contains(qWord) || qWord.contains(rWord) } }) {
-                return true
-            }
-        }
-
-        return false
+        return filterSearchQueryTiered(listOf(reminder), query).isNotEmpty()
     }
 }
