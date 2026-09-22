@@ -585,7 +585,11 @@ class MainActivity : AppCompatActivity() {
         val filtered = if (currentSearchQuery.isBlank()) {
             filteredByStatus
         } else {
-            filteredByStatus.filter { it.contains(currentSearchQuery, ignoreCase = true) }
+            val commonWordsStr = getString(R.string.common_words)
+            val commonWordsSet = com.bas080.notificationreminders.utils.ReminderMatcher.parseCommonWords(commonWordsStr)
+            filteredByStatus.filter { reminder ->
+                com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
+            }
         }
 
         // 3. Sort items

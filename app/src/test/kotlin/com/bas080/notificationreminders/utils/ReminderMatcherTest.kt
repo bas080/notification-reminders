@@ -52,4 +52,22 @@ class ReminderMatcherTest {
     fun testEmptyReminder() {
         assertFalse(ReminderMatcher.matches("", "Some notification"))
     }
+
+    @Test
+    fun testMatchesSearchQueryLenientMatching() {
+        val reminder = "Buy milk at supermarket"
+
+        // 1. Direct substring match
+        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "milk"))
+        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "MILK"))
+
+        // 2. Token / word stem match
+        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "supermar"))
+
+        // 3. Normalized punctuation / token match
+        assertTrue(ReminderMatcher.matchesSearchQuery(reminder, "buy-milk!"))
+
+        // 4. Non-matching search query
+        assertFalse(ReminderMatcher.matchesSearchQuery(reminder, "dentist appointment"))
+    }
 }
