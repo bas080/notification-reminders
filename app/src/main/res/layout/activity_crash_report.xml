@@ -10,7 +10,7 @@
         android:id="@+id/crash_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="APPLICATION ERROR"
+        android:text="@string/crash_report_title"
         android:textSize="16sp"
         android:textStyle="bold"
         android:letterSpacing="0.1"
@@ -21,9 +21,23 @@
         android:id="@+id/crash_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="The application encountered an unexpected error. Send this report to bas080@hotmail.com:"
+        android:text="@string/crash_report_description"
         android:textSize="13sp"
         android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/et_user_comment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/crash_user_comment_hint"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textColorHint="?android:attr/textColorHint"
+        android:minLines="2"
+        android:maxLines="4"
+        android:gravity="top|start"
+        android:background="@null"
         android:layout_marginBottom="16dp" />
 
     <ScrollView
@@ -48,7 +62,7 @@
         android:id="@+id/cb_include_logs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Include application log file"
+        android:text="@string/crash_include_logs"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="13sp"
         android:checked="true"
@@ -61,10 +75,38 @@
         android:gravity="end">
 
         <TextView
+            android:id="@+id/btn_copy_report"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_copy_report"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="@color/text_secondary"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
             android:id="@+id/btn_send_report"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SEND REPORT"
+            android:text="@string/btn_send_report"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="@color/accent"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btn_restart_app"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_restart_app"
             android:textSize="13sp"
             android:textStyle="bold"
             android:letterSpacing="0.1"
