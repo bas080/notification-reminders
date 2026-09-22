@@ -157,6 +157,28 @@
 
             </LinearLayout>
 
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Clear Search/Filter Button -->
+            <TextView
+                android:id="@+id/btn_clear_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="6dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:enabled="false"
+                android:alpha="0.4"
+                android:background="?attr/selectableItemBackground" />
+
         </LinearLayout>
 
         <FrameLayout

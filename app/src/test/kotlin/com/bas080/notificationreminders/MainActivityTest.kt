@@ -206,6 +206,37 @@ class MainActivityTest {
     }
 
     @Test
+    fun testClearSearchButtonClearsQueryAndResetsList() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+        assertNotNull(btnClearSearch)
+
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+
+        // Type "milk" to filter list
+        holder.reminderInput.setText("milk")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+
+        assertEquals("Expected 3 items when filtered", 3, recyclerView.adapter!!.itemCount)
+        assertTrue("Clear button should be enabled when text is entered", btnClearSearch.isEnabled)
+
+        // Click Clear button
+        btnClearSearch.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("", holder.reminderInput.text.toString())
+        assertEquals("Expected 4 items total when cleared", 4, recyclerView.adapter!!.itemCount)
+        org.junit.Assert.assertFalse("Clear button should be disabled when search is cleared", btnClearSearch.isEnabled)
+    }
+
+    @Test
     fun testTagFilterSelectionDialog() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)

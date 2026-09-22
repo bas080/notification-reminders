@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnExportMarkdown)
         markAsButtonAccessibility(binding.btnImportMarkdown)
         markAsButtonAccessibility(binding.btnTagsFilter)
+        markAsButtonAccessibility(binding.btnClearSearch)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -139,6 +140,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnTagsFilter.setOnClickListener {
             showTagsSelectionDialog()
+        }
+
+        binding.btnClearSearch.setOnClickListener {
+            currentSearchQuery = ""
+            adapter.setSearchQueryText("")
+            val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+            holder?.reminderInput?.setText("")
+            updateSummaryAndAdapter()
         }
     }
 
@@ -607,16 +616,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Filter items by search query
-        val filtered = if (currentSearchQuery.isBlank()) {
-            filteredByStatus
-        } else {
-            val commonWordsStr = getString(R.string.common_words)
-            val commonWordsSet = com.bas080.notificationreminders.utils.ReminderMatcher.parseCommonWords(commonWordsStr)
-            filteredByStatus.filter { reminder ->
-                com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
-            }
-        }
+        // 2. Filter items by search query using tiered search matching
+        val filtered = com.bas080.notificationreminders.utils.ReminderMatcher.filterSearchQueryTiered(filteredByStatus, currentSearchQuery)
 
         // 3. Sort items: Active items sorted by creation (more recently added first), then snoozed items ordered ascendingly by snooze time
         val activeItems = mutableListOf<String>()
@@ -655,6 +656,18 @@ class MainActivity : AppCompatActivity() {
             binding.txtSelectedTags.text = "All"
         } else {
             binding.txtSelectedTags.text = selectedTags.joinToString(" ")
+        }
+
+        val hasSearchText = currentSearchQuery.isNotBlank()
+        binding.btnClearSearch.isEnabled = hasSearchText
+        binding.btnClearSearch.isClickable = hasSearchText
+        binding.btnClearSearch.isFocusable = hasSearchText
+        if (hasSearchText) {
+            binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.accent))
+            binding.btnClearSearch.alpha = 1.0f
+        } else {
+            binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
+            binding.btnClearSearch.alpha = 0.4f
         }
 
         if (displayedReminders.isEmpty()) {
@@ -892,7 +905,7 @@ class RemindersAdapter(
             holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
             holder.btnAction.contentDescription = context.getString(R.string.add_reminder)
 
-            if (currentSearchQueryText.isNotBlank() && holder.reminderInput.text.toString() != currentSearchQueryText && !holder.reminderInput.hasFocus()) {
+            if (holder.reminderInput.text.toString() != currentSearchQueryText && !holder.reminderInput.hasFocus()) {
                 holder.reminderInput.setText(currentSearchQueryText)
             }
 
