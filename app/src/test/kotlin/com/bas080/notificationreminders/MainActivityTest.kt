@@ -447,13 +447,13 @@ class MainActivityTest {
         btnFilterActive.performClick()
         assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
 
-        // All filter should include done items
+        // All filter should also exclude done items when search does not contain #done
         btnFilterAll.performClick()
-        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 done item + 1 footer
+        assertEquals(2, recyclerView.adapter!!.itemCount) // 1 create input + 0 items + 1 footer
     }
 
     @Test
-    fun testDoneItemsHiddenFromSearchUnlessExactHashDoneSearch() {
+    fun testDoneItemsHiddenFromSearchUnlessSearchContainsHashDone() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Buy bread #done")).commit()
@@ -472,6 +472,6 @@ class MainActivityTest {
         // Search "#done" -> should match "Buy bread #done"
         holder.reminderInput.setText("#done")
         shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
-        assertEquals("Should show 1 match ('Buy bread #done') when searching exact '#done'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
+        assertEquals("Should show 1 match ('Buy bread #done') when searching '#done'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
     }
 }

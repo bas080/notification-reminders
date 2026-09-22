@@ -567,11 +567,17 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
 
-        // 1. Filter items by status tab
+        val searchContainsDone = currentSearchQuery.contains("#done", ignoreCase = true)
+
+        // 1. Filter items by status tab and #done tag (#done items only shown if search query contains #done)
         val filteredByStatus = when (currentFilter) {
-            ReminderFilter.ALL -> activeReminders.toList()
+            ReminderFilter.ALL -> activeReminders.filter { reminder ->
+                val isDone = reminder.contains("#done", ignoreCase = true)
+                if (isDone) searchContainsDone else true
+            }
             ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
-                if (reminder.contains("#done", ignoreCase = true)) return@filter false
+                val isDone = reminder.contains("#done", ignoreCase = true)
+                if (isDone) return@filter searchContainsDone
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
@@ -579,7 +585,8 @@ class MainActivity : AppCompatActivity() {
                 snoozeUntil <= now
             }
             ReminderFilter.SNOOZED -> activeReminders.filter { reminder ->
-                if (reminder.contains("#done", ignoreCase = true)) return@filter false
+                val isDone = reminder.contains("#done", ignoreCase = true)
+                if (isDone) return@filter searchContainsDone
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
@@ -588,20 +595,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Filter items by search query (Excludes #done items unless search query is exactly "#done")
+        // 2. Filter items by search query
         val filtered = if (currentSearchQuery.isBlank()) {
             filteredByStatus
         } else {
             val commonWordsStr = getString(R.string.common_words)
             val commonWordsSet = com.bas080.notificationreminders.utils.ReminderMatcher.parseCommonWords(commonWordsStr)
-            val isExactDoneSearch = currentSearchQuery.trim().equals("#done", ignoreCase = true)
             filteredByStatus.filter { reminder ->
-                val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone && !isExactDoneSearch) {
-                    false
-                } else {
-                    com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
-                }
+                com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
             }
         }
 
