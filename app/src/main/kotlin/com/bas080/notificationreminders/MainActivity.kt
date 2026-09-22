@@ -588,14 +588,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Filter items by search query
+        // 2. Filter items by search query (Excludes #done items unless search query is exactly "#done")
         val filtered = if (currentSearchQuery.isBlank()) {
             filteredByStatus
         } else {
             val commonWordsStr = getString(R.string.common_words)
             val commonWordsSet = com.bas080.notificationreminders.utils.ReminderMatcher.parseCommonWords(commonWordsStr)
+            val isExactDoneSearch = currentSearchQuery.trim().equals("#done", ignoreCase = true)
             filteredByStatus.filter { reminder ->
-                com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
+                val isDone = reminder.contains("#done", ignoreCase = true)
+                if (isDone && !isExactDoneSearch) {
+                    false
+                } else {
+                    com.bas080.notificationreminders.utils.ReminderMatcher.matchesSearchQuery(reminder, currentSearchQuery, commonWordsSet)
+                }
             }
         }
 

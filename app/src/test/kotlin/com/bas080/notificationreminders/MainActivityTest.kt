@@ -451,4 +451,27 @@ class MainActivityTest {
         btnFilterAll.performClick()
         assertEquals(3, recyclerView.adapter!!.itemCount) // 1 create input + 1 done item + 1 footer
     }
+
+    @Test
+    fun testDoneItemsHiddenFromSearchUnlessExactHashDoneSearch() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Buy bread #done")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+
+        // Search "Buy" -> should match "Buy milk" but exclude "Buy bread #done"
+        holder.reminderInput.setText("Buy")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+        assertEquals("Should show 1 match ('Buy milk') when searching 'Buy'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
+
+        // Search "#done" -> should match "Buy bread #done"
+        holder.reminderInput.setText("#done")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+        assertEquals("Should show 1 match ('Buy bread #done') when searching exact '#done'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
+    }
 }
