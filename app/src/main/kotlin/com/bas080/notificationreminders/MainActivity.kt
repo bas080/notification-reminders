@@ -441,7 +441,8 @@ class MainActivity : AppCompatActivity() {
         }
         val isSnoozed = snoozeUntil > now
 
-        val durations = arrayOf("15m", "1h", "4h", "24h", "1w", "Custom...")
+        val topChoices = ReminderNotificationListenerService.getTopSnoozeChoices(this).map { it.toString() }
+        val durations = (topChoices + "Custom...").toTypedArray()
         val options = if (isSnoozed) {
             arrayOf(getString(R.string.unsnooze)) + durations
         } else {
@@ -459,7 +460,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
                 } else {
                     val durationIndex = if (isSnoozed) which - 1 else which
-                    if (durationIndex in 0..4) {
+                    if (durationIndex in 0 until durations.size - 1) {
                         applySnoozeDuration(reminderText, durations[durationIndex])
                     } else {
                         showCustomSnoozeInputDialog(reminderText)
