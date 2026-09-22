@@ -363,25 +363,11 @@ class MainActivity : AppCompatActivity() {
                 if (position in 1..displayedReminders.size) {
                     val index = position - 1
                     val reminderText = displayedReminders[index]
-                    val trimmed = reminderText.trim().lowercase()
-                    val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-                    val now = System.currentTimeMillis()
-                    val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                        if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-                    }
 
                     if (direction == ItemTouchHelper.LEFT) {
-                        // Swipe left -> Snooze (or Unsnooze if currently snoozed)
-                        if (snoozeUntil > now) {
-                            ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
-                            prefs.edit().remove("snooze_$trimmed").apply()
-                            ReminderNotificationListenerService.instance?.showStatusNotification()
-                            updateSummaryAndAdapter()
-                            Toast.makeText(this@MainActivity, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
-                        } else {
-                            adapter.notifyItemChanged(position)
-                            showSnoozeOptionsDialog(reminderText)
-                        }
+                        // Swipe left -> Open Snooze options dialog (with Unsnooze option if snoozed)
+                        adapter.notifyItemChanged(position)
+                        showSnoozeOptionsDialog(reminderText)
                     } else if (direction == ItemTouchHelper.RIGHT) {
                         // Swipe right -> Mark Done confirmation
                         adapter.notifyItemChanged(position)
@@ -447,14 +433,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSnoozeOptionsDialog(reminderText: String) {
-        val options = arrayOf("15m", "1h", "4h", "24h", "1w", "Custom...")
+        val trimmed = reminderText.trim().lowercase()
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+            if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+        }
+        val isSnoozed = snoozeUntil > now
+
+        val durations = arrayOf("15m", "1h", "4h", "24h", "1w", "Custom...")
+        val options = if (isSnoozed) {
+            arrayOf(getString(R.string.unsnooze)) + durations
+        } else {
+            durations
+        }
+
         AlertDialog.Builder(this)
             .setTitle(R.string.snooze_dialog_title)
             .setItems(options) { _, which ->
-                if (which in 0..4) {
-                    applySnoozeDuration(reminderText, options[which])
+                if (isSnoozed && which == 0) {
+                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+                    prefs.edit().remove("snooze_$trimmed").apply()
+                    ReminderNotificationListenerService.instance?.showStatusNotification()
+                    updateSummaryAndAdapter()
+                    Toast.makeText(this, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
                 } else {
-                    showCustomSnoozeInputDialog(reminderText)
+                    val durationIndex = if (isSnoozed) which - 1 else which
+                    if (durationIndex in 0..4) {
+                        applySnoozeDuration(reminderText, durations[durationIndex])
+                    } else {
+                        showCustomSnoozeInputDialog(reminderText)
+                    }
                 }
             }
             .setNegativeButton(R.string.cancel, null)

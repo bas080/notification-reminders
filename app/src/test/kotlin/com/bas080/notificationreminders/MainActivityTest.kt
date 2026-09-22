@@ -415,4 +415,38 @@ class MainActivityTest {
         assertEquals("Adapter should display filtered match", 3, recyclerView.adapter!!.itemCount)
         assertTrue("Input should remain focused after typing completes", holder.reminderInput.hasFocus())
     }
+
+    @Test
+    fun testSnoozedReminderSwipeOpensDialogWithUnsnoozeOption() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Snoozed Item"))
+            .putLong("snooze_snoozed item", snoozeTime)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        // Trigger snooze dialog directly for snoozed item
+        val method = MainActivity::class.java.getDeclaredMethod("showSnoozeOptionsDialog", String::class.java)
+        method.isAccessible = true
+        method.invoke(activity, "Snoozed Item")
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull("Snooze dialog should be displayed", dialog)
+
+        val listView = dialog!!.listView
+        assertNotNull("Dialog list view should exist", listView)
+        assertEquals("First option should be Unsnooze", "Unsnooze", listView.adapter.getItem(0))
+
+        // Click "Unsnooze" (index 0)
+        shadowOf(listView).performItemClick(0)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Snooze cancelled", ShadowToast.getTextOfLatestToast())
+        val updatedSnooze = prefs.getLong("snooze_snoozed item", 0L)
+        assertEquals(0L, updatedSnooze)
+    }
 }
