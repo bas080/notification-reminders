@@ -254,6 +254,8 @@
                 android:text="@string/no_reminders"
                 android:textColor="@color/text_muted"
                 android:textSize="14sp"
+                android:focusable="false"
+                android:clickable="false"
                 android:visibility="gone" />
 
         </FrameLayout>

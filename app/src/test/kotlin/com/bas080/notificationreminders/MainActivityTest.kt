@@ -357,4 +357,32 @@ class MainActivityTest {
         assertNotNull(txtEmpty)
         assertEquals(View.VISIBLE, txtEmpty.visibility)
     }
+
+    @Test
+    fun testSearchZeroResultsRetainsFocusOnInputAndShowsEmptyText() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+
+        holder.reminderInput.requestFocus()
+        assertTrue("Position 0 input should have focus initially", holder.reminderInput.hasFocus())
+
+        // Search for non-matching text
+        holder.reminderInput.setText("nonexistentquery123")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+
+        // Only create input (1) + footer (1) = 2 items in adapter
+        assertEquals("Adapter should have 2 items when 0 reminders match", 2, recyclerView.adapter!!.itemCount)
+
+        val txtEmpty = activity.findViewById<TextView>(R.id.txt_empty_reminders)
+        assertEquals("Empty reminders view should be VISIBLE", View.VISIBLE, txtEmpty.visibility)
+
+        assertTrue("Position 0 input should retain focus even when 0 items match", holder.reminderInput.hasFocus())
+    }
 }

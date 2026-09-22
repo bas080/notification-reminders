@@ -578,7 +578,7 @@ class MainActivity : AppCompatActivity() {
             filteredByStatus.filter { it.contains(currentSearchQuery, ignoreCase = true) }
         }
 
-        // 2. Sort items
+        // 3. Sort items
         val sorted = when (currentSort) {
             ReminderSort.DEFAULT -> filtered
             ReminderSort.ALPHABETICAL -> filtered.sortedBy { it.lowercase() }
@@ -598,10 +598,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        displayedReminders.clear()
-        displayedReminders.addAll(sorted)
-
-        adapter.notifyDataSetChanged()
+        adapter.updateList(sorted)
         updateSummary()
     }
 
@@ -708,7 +705,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 class RemindersAdapter(
-    private val displayedReminders: List<String>,
+    private val displayedReminders: MutableList<String>,
     private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
     private val onShareReminderRequested: (Int) -> Unit,
@@ -720,6 +717,52 @@ class RemindersAdapter(
         const val TYPE_ACTIVE_REMINDER = 1
         const val TYPE_FOOTER_INSTRUCTIONS = 2
         private const val PREFS_REMINDERS = "reminders_prefs"
+    }
+
+    private class RemindersDiffCallback(
+        private val oldList: List<String>,
+        private val newList: List<String>
+    ) : androidx.recyclerview.widget.DiffUtil.Callback() {
+        override fun getOldListSize(): Int = oldList.size + 2
+        override fun getNewListSize(): Int = newList.size + 2
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldType = when {
+                oldItemPosition == 0 -> TYPE_CREATE_INPUT
+                oldItemPosition in 1..oldList.size -> TYPE_ACTIVE_REMINDER
+                else -> TYPE_FOOTER_INSTRUCTIONS
+            }
+            val newType = when {
+                newItemPosition == 0 -> TYPE_CREATE_INPUT
+                newItemPosition in 1..newList.size -> TYPE_ACTIVE_REMINDER
+                else -> TYPE_FOOTER_INSTRUCTIONS
+            }
+
+            if (oldType != newType) return false
+
+            return when (oldType) {
+                TYPE_CREATE_INPUT -> true
+                TYPE_FOOTER_INSTRUCTIONS -> true
+                else -> oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
+            }
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            if (oldItemPosition == 0 && newItemPosition == 0) return true
+            if (oldItemPosition == oldList.size + 1 && newItemPosition == newList.size + 1) return true
+            if (oldItemPosition in 1..oldList.size && newItemPosition in 1..newList.size) {
+                return oldList[oldItemPosition - 1] == newList[newItemPosition - 1]
+            }
+            return false
+        }
+    }
+
+    fun updateList(newList: List<String>) {
+        val diffCallback = RemindersDiffCallback(displayedReminders, newList)
+        val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(diffCallback)
+        displayedReminders.clear()
+        displayedReminders.addAll(newList)
+        diffResult.dispatchUpdatesTo(this)
     }
 
     class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -782,51 +825,26 @@ class RemindersAdapter(
             holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
             holder.btnAction.contentDescription = context.getString(R.string.add_reminder)
 
-            val submitAction = {
-                val text = holder.reminderInput.text.toString().trim()
-                if (text.isNotEmpty()) {
-                    holder.reminderInput.setText("")
-                    onAddReminder(text)
-                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            holder.btnAction.setOnClickListener {
-                val text = holder.reminderInput.text.toString().trim()
-                if (text.isNotEmpty()) {
-                    submitAction()
-                } else {
-                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            holder.reminderInput.setOnFocusChangeListener(null)
-
-            holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
-                    submitAction()
-                    true
-                } else {
-                    false
-                }
-            }
-
             val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
             var searchRunnable: Runnable? = null
 
             val submitActionWithCancel = {
                 searchRunnable?.let { searchHandler.removeCallbacks(it) }
-                submitAction()
-            }
-
-            holder.btnAction.setOnClickListener {
                 val text = holder.reminderInput.text.toString().trim()
                 if (text.isNotEmpty()) {
-                    submitActionWithCancel()
+                    holder.reminderInput.setText("")
+                    onAddReminder(text)
+                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(holder.itemView.context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
                 }
             }
+
+            holder.btnAction.setOnClickListener {
+                submitActionWithCancel()
+            }
+
+            holder.reminderInput.setOnFocusChangeListener(null)
 
             holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
