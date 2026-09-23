@@ -31,6 +31,17 @@
         </activity>
 
         <activity
+            android:name=".CreateReminderActivity"
+            android:exported="true"
+            android:label="@string/add_reminder"
+            android:theme="@style/Theme.NotificationReminders.Dialog">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_REMINDER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".PickNotificationActivity"
             android:exported="false"
             android:theme="@style/Theme.NotificationReminders.Dialog">
