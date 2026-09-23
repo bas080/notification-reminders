@@ -14,13 +14,15 @@
     </style>
 
     <style name="Theme.NotificationReminders.Dialog" parent="Theme.AppCompat.DayNight.Dialog.Alert">
-        <item name="android:windowBackground">@color/bg_surface</item>
+        <item name="android:windowBackground">@drawable/bg_card</item>
         <item name="android:colorBackground">@color/bg_surface</item>
         <item name="colorPrimary">@color/bg_dark</item>
         <item name="colorAccent">@color/accent</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:textColorAlertDialogListItem">@color/text_primary</item>
-        <item name="android:listDivider">@color/divider_color</item>
+        <item name="android:listDivider">@drawable/dialog_divider</item>
+        <item name="android:divider">@drawable/dialog_divider</item>
+        <item name="android:dividerHeight">1dp</item>
     </style>
 </resources>

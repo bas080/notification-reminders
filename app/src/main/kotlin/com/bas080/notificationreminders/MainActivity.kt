@@ -360,7 +360,7 @@ class MainActivity : AppCompatActivity() {
         val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
                 if (viewHolder.itemViewType != RemindersAdapter.TYPE_ACTIVE_REMINDER) {
-                    return 0 // Disable swipe on Create Input Row and Footer Instructions
+                    return 0 // Disable swipe on Create Input Row, Snoozed Section Header, and Footer Instructions
                 }
                 return super.getSwipeDirs(recyclerView, viewHolder)
             }
@@ -779,8 +779,8 @@ class RemindersAdapter(
         private val oldList: List<String>,
         private val newList: List<String>
     ) : androidx.recyclerview.widget.DiffUtil.Callback() {
-        override fun getOldListSize(): Int = oldList.size + 2
-        override fun getNewListSize(): Int = newList.size + 2
+        override fun getOldListSize(): Int = if (oldList.isEmpty()) 1 else oldList.size + 2
+        override fun getNewListSize(): Int = if (newList.isEmpty()) 1 else newList.size + 2
 
         private fun getOldType(position: Int): Int {
             if (position == 0) return TYPE_CREATE_INPUT
