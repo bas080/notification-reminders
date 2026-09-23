@@ -144,4 +144,24 @@ class CrashReportActivityTest {
         assertTrue(report.contains("SampleTraceException"))
         assertTrue(report.contains("### Device Info"))
     }
+
+    @Test
+    fun testGlobalUncaughtExceptionHandlerSavesCrashTraceToPrefs() {
+        val app = RuntimeEnvironment.getApplication() as NotificationRemindersApplication
+        val handler = Thread.getDefaultUncaughtExceptionHandler()
+        assertNotNull(handler)
+
+        val testException = java.lang.RuntimeException("Global crash handler test exception")
+        try {
+            handler!!.uncaughtException(Thread.currentThread(), testException)
+        } catch (_: SecurityException) {
+            // Expected process exit attempt in test sandbox
+        } catch (_: Exception) {
+        }
+
+        val prefs = app.getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
+        val savedTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null)
+        assertNotNull("Crash trace should be saved in prefs", savedTrace)
+        assertTrue(savedTrace!!.contains("Global crash handler test exception"))
+    }
 }

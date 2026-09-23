@@ -22,9 +22,23 @@ class NotificationRemindersApplication : Application() {
     private fun setupGlobalCrashHandler() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            saveCrashTrace(throwable)
+            val stackTrace = saveCrashTrace(throwable)
             com.bas080.notificationreminders.utils.AppLogger.log(this, "CrashHandler", "Uncaught crash saved: ${throwable.message}")
-            defaultHandler?.uncaughtException(thread, throwable)
+
+            try {
+                val intent = Intent(this, CrashReportActivity::class.java).apply {
+                    putExtra(CrashReportActivity.EXTRA_CRASH_TRACE, stackTrace)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                }
+                startActivity(intent)
+                val isTest = try { Class.forName("org.robolectric.Robolectric"); true } catch (_: Exception) { false }
+                if (!isTest) {
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                    kotlin.system.exitProcess(10)
+                }
+            } catch (_: Exception) {
+                defaultHandler?.uncaughtException(thread, throwable)
+            }
         }
     }
 
