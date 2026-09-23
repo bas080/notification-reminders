@@ -32,6 +32,8 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bas080.notificationreminders.databinding.ActivityMainBinding
+import com.bas080.notificationreminders.jules.JulesManager
+import com.bas080.notificationreminders.jules.JulesSettings
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 import com.bas080.notificationreminders.utils.AppLogger
@@ -118,6 +120,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
         markAsButtonAccessibility(binding.btnClearSearch)
+        markAsButtonAccessibility(binding.btnSaveJules)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -155,6 +158,26 @@ class MainActivity : AppCompatActivity() {
             val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
             holder?.reminderInput?.setText("")
             updateSummaryAndAdapter()
+        }
+
+        binding.btnSaveJules.setOnClickListener {
+            saveJulesSettings()
+        }
+    }
+
+    private fun saveJulesSettings() {
+        val settings = JulesSettings(this)
+        settings.enabled = binding.chkJulesEnable.isChecked
+        settings.baseUrl = binding.inputJulesUrl.text.toString()
+        settings.apiKey = binding.inputJulesApiKey.text.toString()
+        settings.andTags = binding.inputJulesAndTags.text.toString()
+        settings.tagReplacements = binding.inputJulesTagReplacements.text.toString()
+
+        AppLogger.log(this, "MainActivity", "Jules settings saved (enabled: ${settings.enabled})")
+        Toast.makeText(this, "Jules settings saved", Toast.LENGTH_SHORT).show()
+
+        if (settings.enabled) {
+            JulesManager.checkAndProcessJulesQueue(this)
         }
     }
 
@@ -330,6 +353,13 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {
             binding.txtAppVersion.text = getString(R.string.app_version_format, "1.0")
         }
+
+        val julesSettings = JulesSettings(this)
+        binding.chkJulesEnable.isChecked = julesSettings.enabled
+        binding.inputJulesUrl.setText(julesSettings.baseUrl)
+        binding.inputJulesApiKey.setText(julesSettings.apiKey)
+        binding.inputJulesAndTags.setText(julesSettings.andTags)
+        binding.inputJulesTagReplacements.setText(julesSettings.tagReplacements)
 
         loadLogs()
     }

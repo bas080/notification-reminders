@@ -8,12 +8,15 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import com.bas080.notificationreminders.PickNotificationActivity
 import com.bas080.notificationreminders.R
+import com.bas080.notificationreminders.jules.JulesManager
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.utils.ReminderMatcher
 import java.util.concurrent.ConcurrentHashMap
@@ -91,15 +94,28 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private val julesHandler = Handler(Looper.getMainLooper())
+    private val julesRunnable = object : Runnable {
+        override fun run() {
+            try {
+                JulesManager.checkAndProcessJulesQueue(this@ReminderNotificationListenerService)
+            } catch (_: Exception) {
+            }
+            julesHandler.postDelayed(this, 30_000L)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
         createNotificationChannel()
         showStatusNotification()
+        julesHandler.post(julesRunnable)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        julesHandler.removeCallbacks(julesRunnable)
         instance = null
     }
 

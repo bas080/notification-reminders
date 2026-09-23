@@ -166,7 +166,7 @@
             android:orientation="vertical"
             android:background="@drawable/bg_card"
             android:padding="16dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -239,6 +239,101 @@
                     android:background="?attr/selectableItemBackground" />
 
             </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Jules Integration Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="JULES INTEGRATION"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:letterSpacing="0.05" />
+
+                <CheckBox
+                    android:id="@+id/chk_jules_enable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Enable"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/input_jules_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Base URL (e.g. https://api.jules.ai)"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:inputType="textUri"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/input_jules_api_key"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="API Key / Token"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:inputType="textPassword"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/input_jules_and_tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="AND Filter Tags (e.g. #jules #todo)"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:inputType="text"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/input_jules_tag_replacements"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tag Replacements (e.g. #jules -> #sent)"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:inputType="textMultiLine"
+                android:lines="2"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/btn_save_jules"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="SAVE JULES SETTINGS"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent"
+                android:letterSpacing="0.05"
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
 
         </LinearLayout>
 
