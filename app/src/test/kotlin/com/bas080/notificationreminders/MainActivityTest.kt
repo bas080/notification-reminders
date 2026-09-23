@@ -108,6 +108,14 @@ class MainActivityTest {
         val nextStartedActivity = shadowOf(activity).nextStartedActivity
         assertNotNull(nextStartedActivity)
         assertEquals(android.content.Intent.ACTION_CHOOSER, nextStartedActivity.action)
+
+        @Suppress("DEPRECATION")
+        val targetIntent = nextStartedActivity.getParcelableExtra<android.content.Intent>(android.content.Intent.EXTRA_INTENT)
+        assertNotNull(targetIntent)
+        val body = targetIntent!!.getStringExtra(android.content.Intent.EXTRA_TEXT) ?: ""
+        assertTrue("Feedback body should include Feedback header", body.contains("## Feedback"))
+        assertTrue("Feedback body should include Device Info", body.contains("### Device Info"))
+        org.junit.Assert.assertFalse("Feedback body should not include stack trace", body.contains("### Stack Trace"))
     }
 
     @Test

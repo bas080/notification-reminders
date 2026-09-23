@@ -159,9 +159,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendFeedbackEmail() {
+        val versionName = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (_: Exception) {
+            "1.0"
+        }
+
+        val feedbackBody = StringBuilder().apply {
+            append("## Feedback\n\n")
+            append("[ Please type your feedback here ]\n\n")
+
+            append("### Device Info\n")
+            append("- App Version: $versionName (${BuildConfig.VERSION_CODE})\n")
+            append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
+            append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
+
+            val logs = AppLogger.getLogs(this@MainActivity)
+            if (logs.isNotBlank()) {
+                append("### Application Logs\n")
+                append("```\n")
+                append(logs)
+                append("\n```\n")
+            }
+        }.toString()
+
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = android.net.Uri.parse("mailto:bas080@hotmail.com")
             putExtra(Intent.EXTRA_SUBJECT, "Notification Reminders Feedback")
+            putExtra(Intent.EXTRA_TEXT, feedbackBody)
         }
         val chooserIntent = Intent.createChooser(intent, getString(R.string.feedback))
         startActivity(chooserIntent)
