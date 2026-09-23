@@ -87,8 +87,8 @@ class ScreenshotGeneratorTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val btnLogs = activity.findViewById<TextView>(R.id.btn_nav_logs)
-        btnLogs?.performClick()
+        val btnAbout = activity.findViewById<TextView>(R.id.btn_nav_about)
+        btnAbout?.performClick()
         shadowOf(Looper.getMainLooper()).idle()
 
         val decorView = activity.window.decorView

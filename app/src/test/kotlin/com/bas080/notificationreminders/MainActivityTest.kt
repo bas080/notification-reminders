@@ -85,6 +85,32 @@ class MainActivityTest {
     }
 
     @Test
+    fun testAboutViewDisplaysVersionAndFeedbackLaunchesIntent() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnNavAbout = activity.findViewById<TextView>(R.id.btn_nav_about)
+        assertNotNull(btnNavAbout)
+
+        btnNavAbout.performClick()
+
+        val aboutContainer = activity.findViewById<View>(R.id.about_container)
+        assertEquals(View.VISIBLE, aboutContainer.visibility)
+
+        val txtVersion = activity.findViewById<TextView>(R.id.txt_app_version)
+        assertNotNull(txtVersion)
+        assertTrue(txtVersion.text.toString().startsWith("Version"))
+
+        val btnFeedback = activity.findViewById<TextView>(R.id.btn_feedback)
+        assertNotNull(btnFeedback)
+        btnFeedback.performClick()
+
+        val nextStartedActivity = shadowOf(activity).nextStartedActivity
+        assertNotNull(nextStartedActivity)
+        assertEquals(android.content.Intent.ACTION_CHOOSER, nextStartedActivity.action)
+    }
+
+    @Test
     fun testClearLogsShowsToast() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()

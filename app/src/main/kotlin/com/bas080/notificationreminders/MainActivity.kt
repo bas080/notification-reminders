@@ -111,10 +111,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         markAsButtonAccessibility(binding.btnNavReminders)
-        markAsButtonAccessibility(binding.btnNavLogs)
+        markAsButtonAccessibility(binding.btnNavAbout)
         markAsButtonAccessibility(binding.btnClearLogs)
         markAsButtonAccessibility(binding.btnExportMarkdown)
         markAsButtonAccessibility(binding.btnImportMarkdown)
+        markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
         markAsButtonAccessibility(binding.btnClearSearch)
 
@@ -122,8 +123,12 @@ class MainActivity : AppCompatActivity() {
             showRemindersView()
         }
 
-        binding.btnNavLogs.setOnClickListener {
-            showLogsView()
+        binding.btnNavAbout.setOnClickListener {
+            showAboutView()
+        }
+
+        binding.btnFeedback.setOnClickListener {
+            sendFeedbackEmail()
         }
 
         binding.btnClearLogs.setOnClickListener {
@@ -151,6 +156,15 @@ class MainActivity : AppCompatActivity() {
             holder?.reminderInput?.setText("")
             updateSummaryAndAdapter()
         }
+    }
+
+    private fun sendFeedbackEmail() {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = android.net.Uri.parse("mailto:bas080@hotmail.com")
+            putExtra(Intent.EXTRA_SUBJECT, "Notification Reminders Feedback")
+        }
+        val chooserIntent = Intent.createChooser(intent, getString(R.string.feedback))
+        startActivity(chooserIntent)
     }
 
     private fun extractAllTags(): List<String> {
@@ -268,26 +282,30 @@ class MainActivity : AppCompatActivity() {
 
     private fun showRemindersView() {
         binding.remindersContainer.visibility = View.VISIBLE
-        binding.logsContainer.visibility = View.GONE
-        binding.containerRemindersActions.visibility = View.VISIBLE
-        binding.btnClearLogs.visibility = View.GONE
+        binding.aboutContainer.visibility = View.GONE
 
         binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.BOLD)
         binding.btnNavReminders.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
-        binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.NORMAL)
-        binding.btnNavLogs.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+        binding.btnNavAbout.setTypeface(null, android.graphics.Typeface.NORMAL)
+        binding.btnNavAbout.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
     }
 
-    private fun showLogsView() {
+    private fun showAboutView() {
         binding.remindersContainer.visibility = View.GONE
-        binding.logsContainer.visibility = View.VISIBLE
-        binding.containerRemindersActions.visibility = View.GONE
-        binding.btnClearLogs.visibility = View.VISIBLE
+        binding.aboutContainer.visibility = View.VISIBLE
 
         binding.btnNavReminders.setTypeface(null, android.graphics.Typeface.NORMAL)
         binding.btnNavReminders.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-        binding.btnNavLogs.setTypeface(null, android.graphics.Typeface.BOLD)
-        binding.btnNavLogs.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+        binding.btnNavAbout.setTypeface(null, android.graphics.Typeface.BOLD)
+        binding.btnNavAbout.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+
+        try {
+            val pInfo = packageManager.getPackageInfo(packageName, 0)
+            binding.txtAppVersion.text = getString(R.string.app_version_format, pInfo.versionName)
+        } catch (_: Exception) {
+            binding.txtAppVersion.text = getString(R.string.app_version_format, "1.0")
+        }
+
         loadLogs()
     }
 
@@ -698,7 +716,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadReminders()
-        if (binding.logsContainer.visibility == View.VISIBLE) {
+        if (binding.aboutContainer.visibility == View.VISIBLE) {
             loadLogs()
         }
         if (isNotificationListenerEnabled()) {
