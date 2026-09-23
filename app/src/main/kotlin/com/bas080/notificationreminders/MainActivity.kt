@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        AppLogger.log(this, "MainActivity", "onCreate called")
+
         setupNavigation()
         setupRecyclerView()
         setupSwipeGestures()
@@ -298,6 +300,7 @@ class MainActivity : AppCompatActivity() {
         adapter = RemindersAdapter(
             displayedReminders,
             onAddReminder = { newReminder ->
+                AppLogger.log(this, "MainActivity", "Created reminder")
                 activeReminders.add(newReminder)
                 currentSearchQuery = ""
                 saveRemindersToPrefs()
@@ -310,6 +313,7 @@ class MainActivity : AppCompatActivity() {
                     val masterIdx = activeReminders.indexOf(oldText)
                     if (masterIdx != -1) {
                         if (oldText != updatedText) {
+                            AppLogger.log(this, "MainActivity", "Updated reminder text")
                             // Cancel any active notification for old reminder text
                             val oldNotifId = ReminderNotificationListenerService.getNotificationIdForReminder(oldText)
                             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
@@ -507,6 +511,7 @@ class MainActivity : AppCompatActivity() {
     private fun applySnoozeDuration(reminderText: String, durationChoice: String) {
         val parseResult = CreateReminderReceiver.parseSnoozeDuration(durationChoice)
         if (parseResult == null) {
+            AppLogger.log(this, "MainActivity", "Failed to snooze: invalid duration '$durationChoice'")
             Toast.makeText(this, R.string.toast_invalid_snooze_input, Toast.LENGTH_SHORT).show()
             return
         }
@@ -528,6 +533,7 @@ class MainActivity : AppCompatActivity() {
         ReminderNotificationListenerService.instance?.showStatusNotification()
         updateSummaryAndAdapter()
 
+        AppLogger.log(this, "MainActivity", "Snoozed reminder for $durationLabel")
         val toastText = getString(R.string.toast_reminder_snoozed_duration, durationLabel)
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
     }
@@ -556,6 +562,7 @@ class MainActivity : AppCompatActivity() {
 
                     ReminderNotificationListenerService.instance?.showStatusNotification()
                     updateSummaryAndAdapter()
+                    AppLogger.log(this, "MainActivity", "Marked reminder done")
                     Toast.makeText(this, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
                 }
             }

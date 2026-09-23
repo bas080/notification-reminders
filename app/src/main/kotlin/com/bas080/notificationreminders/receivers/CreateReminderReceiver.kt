@@ -264,6 +264,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                 if (results != null) {
                     val reminderText = results.getCharSequence(ReminderNotificationListenerService.KEY_TEXT_REPLY)?.toString()?.trim()
                     if (!reminderText.isNullOrEmpty()) {
+                        com.bas080.notificationreminders.utils.AppLogger.log(context, "CreateReminderReceiver", "Created reminder from notification reply")
                         val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
                         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet())?.toMutableSet() ?: mutableSetOf()
                         savedSet.add(reminderText)
@@ -281,6 +282,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
             ReminderNotificationListenerService.ACTION_DONE_REMINDER -> {
                 val reminderText = intent.getStringExtra(ReminderNotificationListenerService.EXTRA_REMINDER_TEXT)
                 if (!reminderText.isNullOrEmpty()) {
+                    com.bas080.notificationreminders.utils.AppLogger.log(context, "CreateReminderReceiver", "Marked reminder done from notification action")
                     val trimmed = reminderText.trim().lowercase()
                     ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
 

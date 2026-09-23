@@ -110,6 +110,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        com.bas080.notificationreminders.utils.AppLogger.log(this, "NotificationListener", "Listener connected")
         showStatusNotification()
     }
 
@@ -184,6 +185,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
         try {
+            com.bas080.notificationreminders.utils.AppLogger.log(this, "NotificationListener", "Posting notification alert for reminder")
             activePostedReminders.add(matchedReminder)
             val notificationId = getNotificationIdForReminder(matchedReminder)
 

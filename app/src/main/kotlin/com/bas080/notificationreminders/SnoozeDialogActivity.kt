@@ -117,6 +117,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
 
         ReminderNotificationListenerService.instance?.showStatusNotification()
 
+        com.bas080.notificationreminders.utils.AppLogger.log(this, "SnoozeDialogActivity", "Snoozed $durationLabel via notification swipe dialog")
         val toastText = getString(R.string.toast_reminder_snoozed_duration, durationLabel)
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
         finish()

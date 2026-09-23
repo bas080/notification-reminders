@@ -15,6 +15,7 @@ class NotificationRemindersApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        com.bas080.notificationreminders.utils.AppLogger.log(this, "Application", "Application initialized")
         setupGlobalCrashHandler()
     }
 
@@ -22,6 +23,7 @@ class NotificationRemindersApplication : Application() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             saveCrashTrace(throwable)
+            com.bas080.notificationreminders.utils.AppLogger.log(this, "CrashHandler", "Uncaught crash saved: ${throwable.message}")
             defaultHandler?.uncaughtException(thread, throwable)
         }
     }
