@@ -44,7 +44,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
 
         val title = if (targets.size > 1) "Snooze All Reminders" else "Snooze Reminder"
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(title)
             .setItems(durations) { _, which ->
                 if (which in 0 until durations.size - 1) {
@@ -71,7 +71,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
             setPadding(padding, padding / 2, padding, padding / 2)
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(if (targets.size > 1) "Snooze All Reminders" else "Snooze Reminder")
             .setView(input)
             .setPositiveButton(R.string.snooze) { _, _ ->

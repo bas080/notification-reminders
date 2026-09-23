@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             currentSearchQuery.contains(tag, ignoreCase = true)
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle("Filter by Tags")
             .setMultiChoiceItems(allTags.toTypedArray(), checkedItems) { _, which, isChecked ->
                 checkedItems[which] = isChecked
@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(padding, padding / 2, padding, 0)
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.import_dialog_title)
             .setView(input)
             .setPositiveButton(R.string.import_button) { _, _ ->
@@ -462,7 +462,7 @@ class MainActivity : AppCompatActivity() {
             durations
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.snooze_dialog_title)
             .setItems(options) { _, which ->
                 if (isSnoozed && which == 0) {
@@ -533,7 +533,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showMarkDoneConfirmationDialog(reminderText: String) {
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.mark_done)
             .setMessage("Are you sure you want to mark \"$reminderText\" as done?")
             .setPositiveButton(R.string.mark_done) { _, _ ->
@@ -733,7 +733,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNotificationListenerDialog() {
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.app_name)
             .setMessage("Notification Reminders requires Notification Listener Access to monitor notifications and trigger your reminders.")
             .setPositiveButton("Enable") { _, _ ->
