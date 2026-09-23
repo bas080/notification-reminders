@@ -190,6 +190,8 @@
                 android:id="@+id/reminders_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="false"
                 tools:listitem="@layout/item_reminder" />
 
             <TextView

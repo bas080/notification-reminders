@@ -483,4 +483,45 @@ class MainActivityTest {
         val headerType = recyclerView.adapter!!.getItemViewType(2)
         assertEquals(RemindersAdapter.TYPE_SNOOZED_HEADER, headerType)
     }
+
+    @Test
+    fun testSnoozeAndUnsnoozeUpdatesCardStatusView() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Task to snooze")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+
+        // Verify initial state: active task at position 1 has txtStatus GONE
+        val holder1 = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
+        assertEquals(View.GONE, holder1.txtStatus.visibility)
+
+        // Snooze the item for 1 hour
+        val applyMethod = MainActivity::class.java.getDeclaredMethod("applySnoozeDuration", String::class.java, String::class.java)
+        applyMethod.isAccessible = true
+        applyMethod.invoke(activity, "Task to snooze", "1h")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Position 2 is now Snoozed Item (Position 1 is SNOOZED header)
+        val holderSnoozed = recyclerView.findViewHolderForAdapterPosition(2) as RemindersAdapter.ItemViewHolder
+        assertEquals(View.VISIBLE, holderSnoozed.txtStatus.visibility)
+        assertTrue(holderSnoozed.txtStatus.text.toString().startsWith("Snoozed • until"))
+
+        // Unsnooze the item
+        val dialogMethod = MainActivity::class.java.getDeclaredMethod("showSnoozeOptionsDialog", String::class.java)
+        dialogMethod.isAccessible = true
+        dialogMethod.invoke(activity, "Task to snooze")
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as AlertDialog
+        val listView = dialog.listView
+        shadowOf(listView).performItemClick(0) // Click Unsnooze
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Item moves back to position 1 as active task with txtStatus GONE
+        val holderUnsnoozed = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
+        assertEquals(View.GONE, holderUnsnoozed.txtStatus.visibility)
+    }
 }

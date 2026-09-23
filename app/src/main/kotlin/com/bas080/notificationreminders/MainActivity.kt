@@ -653,7 +653,18 @@ class MainActivity : AppCompatActivity() {
         }
         sorted.addAll(snoozedItems.map { it.first })
 
-        adapter.updateList(sorted)
+        val snoozeMap = mutableMapOf<String, Long>()
+        for (reminder in activeReminders) {
+            val trimmed = reminder.trim().lowercase()
+            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+            }
+            if (snoozeUntil > 0L) {
+                snoozeMap[trimmed] = snoozeUntil
+            }
+        }
+
+        adapter.updateList(sorted, snoozeMap)
         updateSummary()
     }
 
@@ -782,9 +793,13 @@ class RemindersAdapter(
         notifyItemChanged(0)
     }
 
+    private val currentSnoozeMap = mutableMapOf<String, Long>()
+
     private class RemindersDiffCallback(
         private val oldList: List<String>,
-        private val newList: List<String>
+        private val newList: List<String>,
+        private val oldSnoozeMap: Map<String, Long>,
+        private val newSnoozeMap: Map<String, Long>
     ) : androidx.recyclerview.widget.DiffUtil.Callback() {
         override fun getOldListSize(): Int = if (oldList.isEmpty()) 1 else oldList.size + 2
         override fun getNewListSize(): Int = if (newList.isEmpty()) 1 else newList.size + 2
@@ -825,16 +840,30 @@ class RemindersAdapter(
                 TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
                 TYPE_SNOOZED_HEADER -> true
-                else -> oldList.getOrNull(oldItemPosition - 1) == newList.getOrNull(newItemPosition - 1)
+                else -> {
+                    val oldItem = oldList.getOrNull(oldItemPosition - 1) ?: return true
+                    val newItem = newList.getOrNull(newItemPosition - 1) ?: return true
+                    if (oldItem != newItem) return false
+
+                    val oldTrimmed = oldItem.trim().lowercase()
+                    val newTrimmed = newItem.trim().lowercase()
+
+                    val oldSnooze = oldSnoozeMap[oldTrimmed] ?: 0L
+                    val newSnooze = newSnoozeMap[newTrimmed] ?: 0L
+
+                    oldSnooze == newSnooze
+                }
             }
         }
     }
 
-    fun updateList(newList: List<String>) {
-        val diffCallback = RemindersDiffCallback(displayedReminders, newList)
+    fun updateList(newList: List<String>, newSnoozeMap: Map<String, Long> = emptyMap()) {
+        val diffCallback = RemindersDiffCallback(displayedReminders, newList, currentSnoozeMap, newSnoozeMap)
         val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(diffCallback)
         displayedReminders.clear()
         displayedReminders.addAll(newList)
+        currentSnoozeMap.clear()
+        currentSnoozeMap.putAll(newSnoozeMap)
         diffResult.dispatchUpdatesTo(this)
     }
 
