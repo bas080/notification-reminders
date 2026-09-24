@@ -151,13 +151,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSearch.setOnClickListener {
-            val lastFocused = adapter.lastFocusedPosition
             binding.remindersList.scrollToPosition(0)
             binding.remindersList.post {
                 updateSummary()
                 val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-                if (lastFocused != 0 || holder?.reminderInput?.hasFocus() != true) {
-                    holder?.reminderInput?.requestFocus()
+                if (holder != null) {
+                    if (holder.reminderInput.text.toString() != currentSearchQuery) {
+                        holder.reminderInput.setText(currentSearchQuery)
+                    }
+                    holder.reminderInput.requestFocus()
+                    if (holder.reminderInput.text.isNotEmpty()) {
+                        holder.reminderInput.setSelection(holder.reminderInput.text.length)
+                    }
                 }
             }
         }
@@ -1016,8 +1021,11 @@ class RemindersAdapter(
             holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
             holder.btnAction.contentDescription = context.getString(R.string.add_reminder)
 
-            if (holder.reminderInput.text.toString() != currentSearchQueryText && !holder.reminderInput.hasFocus()) {
+            if (holder.reminderInput.text.toString() != currentSearchQueryText) {
                 holder.reminderInput.setText(currentSearchQueryText)
+                if (currentSearchQueryText.isNotEmpty()) {
+                    holder.reminderInput.setSelection(currentSearchQueryText.length)
+                }
             }
 
             val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
