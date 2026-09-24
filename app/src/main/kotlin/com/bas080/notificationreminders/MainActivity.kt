@@ -452,6 +452,17 @@ class MainActivity : AppCompatActivity() {
         binding.remindersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
+                val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+
+                if (firstVisible == 0) {
+                    binding.headerNavigation.visibility = View.VISIBLE
+                } else if (dy > 0) {
+                    binding.headerNavigation.visibility = View.GONE
+                } else if (dy < 0) {
+                    binding.headerNavigation.visibility = View.VISIBLE
+                }
+
                 updateSummary()
             }
         })
