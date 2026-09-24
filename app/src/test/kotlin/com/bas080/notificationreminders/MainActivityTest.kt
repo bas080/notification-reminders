@@ -519,6 +519,63 @@ class MainActivityTest {
     }
 
     @Test
+    fun testSearchButtonConvertsToSearchWhenInputScrolledOutOfView() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val items = (1..10).map { "Task $it" }.toSet()
+        prefs.edit().putStringSet("key_reminders_list", items).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+
+        // Initially search input is at position 0
+        assertEquals("Clear", btnClearSearch.text.toString())
+
+        // Scroll list so position 0 is out of view
+        recyclerView.scrollToPosition(5)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Button text should now be "Search" and enabled
+        assertEquals("Search", btnClearSearch.text.toString())
+        assertTrue("Search button should be enabled when search input is scrolled out", btnClearSearch.isEnabled)
+    }
+
+    @Test
+    fun testClickingSearchButtonScrollsToTopAndPutsFocusOnSearch() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val items = (1..10).map { "Task $it" }.toSet()
+        prefs.edit().putStringSet("key_reminders_list", items).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+
+        // Scroll down
+        recyclerView.scrollToPosition(5)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Search", btnClearSearch.text.toString())
+
+        // Click "Search" button
+        btnClearSearch.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Button converts back to "Clear"
+        assertEquals("Clear", btnClearSearch.text.toString())
+
+        // Position 0 input should be focused
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+        assertNotNull(holder)
+        assertTrue("Search input should gain focus when clicking Search button", holder!!.reminderInput.hasFocus())
+    }
+
+    @Test
     fun testSnoozeAndUnsnoozeUpdatesCardStatusView() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
