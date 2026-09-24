@@ -462,34 +462,12 @@ class MainActivity : AppCompatActivity() {
         binding.remindersList.layoutManager = LinearLayoutManager(this)
         binding.remindersList.adapter = adapter
         binding.remindersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            private var scrolledDistance = 0
-            private val hideThreshold = (24 * resources.displayMetrics.density).toInt()
-
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
                 val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
 
-                if (firstVisible == 0) {
-                    binding.headerNavigation.visibility = View.VISIBLE
-                    scrolledDistance = 0
-                } else {
-                    if (binding.headerNavigation.visibility == View.VISIBLE && dy > 0) {
-                        if (scrolledDistance < 0) scrolledDistance = 0
-                        scrolledDistance += dy
-                        if (scrolledDistance > hideThreshold) {
-                            binding.headerNavigation.visibility = View.GONE
-                            scrolledDistance = 0
-                        }
-                    } else if (binding.headerNavigation.visibility == View.GONE && dy < 0) {
-                        if (scrolledDistance > 0) scrolledDistance = 0
-                        scrolledDistance += dy
-                        if (scrolledDistance < -hideThreshold) {
-                            binding.headerNavigation.visibility = View.VISIBLE
-                            scrolledDistance = 0
-                        }
-                    }
-                }
+                binding.headerNavigation.visibility = if (firstVisible == 0) View.VISIBLE else View.GONE
 
                 updateSummary()
             }
