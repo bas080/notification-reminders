@@ -59,7 +59,7 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testSummaryNotificationDoesNotAutoCancel() {
+    fun testStatusNotificationUpdatesOnReminderMatch() {
         val context = RuntimeEnvironment.getApplication()
 
         // Set up saved reminder in SharedPreferences
@@ -96,27 +96,12 @@ class ReminderNotificationListenerServiceTest {
 
         service.onNotificationPosted(sbn)
 
-        val summaryNotif = shadowNM.getNotification(ReminderNotificationListenerService.SUMMARY_NOTIFICATION_ID)
-        assertNotNull("Summary notification should be posted", summaryNotif)
-        assertFalse(
-            "Summary notification should NOT have FLAG_AUTO_CANCEL set",
-            (summaryNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
-        )
-        org.junit.Assert.assertNull("Summary notification should not have a deleteIntent", summaryNotif.deleteIntent)
-
-        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
-        val matchedNotif = shadowNM.getNotification(matchedNotifId)
-        assertNotNull("Matched reminder notification should be posted", matchedNotif)
-        assertTrue(
-            "Individual match notification should have FLAG_AUTO_CANCEL set",
-            (matchedNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
-        )
-        org.junit.Assert.assertNull("Matched notification should not have a deleteIntent", matchedNotif.deleteIntent)
-        assertEquals("buy milk", matchedNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString())
-        assertTrue(
-            "Matched notification should not contain matched notification content in text",
-            matchedNotif.extras.getCharSequence(Notification.EXTRA_TEXT) == null
-        )
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Status notification should be updated on reminder match", statusNotif)
+        val textLines = statusNotif.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        assertNotNull("Status notification should contain text lines for active reminders", textLines)
+        assertEquals(1, textLines!!.size)
+        assertEquals("buy milk", textLines[0].toString())
     }
 
     @Test
@@ -169,68 +154,6 @@ class ReminderNotificationListenerServiceTest {
         assertEquals("From Notification", fromNotifAction.title.toString())
     }
 
-    @Test
-    fun testMatchedNotificationHasShareAction() {
-        ReminderNotificationListenerService.lastTriggeredMap.clear()
-        val context = RuntimeEnvironment.getApplication()
-
-        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("buy milk")).commit()
-
-        val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
-
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val shadowNM = Shadows.shadowOf(notificationManager)
-
-        val extras = Bundle().apply {
-            putCharSequence("android.title", "Shopping")
-            putCharSequence("android.text", "Need to buy milk today")
-        }
-        @Suppress("DEPRECATION")
-        val targetNotification = Notification.Builder(context, "test_channel")
-            .setExtras(extras)
-            .build()
-        @Suppress("DEPRECATION")
-        val sbn = StatusBarNotification(
-            "com.example.otherapp",
-            "com.example.otherapp",
-            1,
-            "tag",
-            1000,
-            1000,
-            1,
-            targetNotification,
-            android.os.Process.myUserHandle(),
-            System.currentTimeMillis()
-        )
-
-        service.onNotificationPosted(sbn)
-
-        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
-        val matchedNotif = shadowNM.getNotification(matchedNotifId)
-        assertNotNull("Matched reminder notification should be posted", matchedNotif)
-        assertNotNull("Matched notification actions should not be null", matchedNotif.actions)
-        assertEquals(2, matchedNotif.actions.size)
-
-        val doneAction = matchedNotif.actions[0]
-        assertEquals("Done", doneAction.title.toString())
-
-        val shareAction = matchedNotif.actions[1]
-        assertEquals("Share", shareAction.title.toString())
-        assertNotNull("Share action intent should not be null", shareAction.actionIntent)
-
-        val shadowPendingIntent = Shadows.shadowOf(shareAction.actionIntent)
-        val chooserIntent = shadowPendingIntent.savedIntent
-        assertNotNull("Chooser intent should not be null", chooserIntent)
-        assertEquals(Intent.ACTION_CHOOSER, chooserIntent.action)
-
-        @Suppress("DEPRECATION")
-        val shareIntent = chooserIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-        assertNotNull("Share intent inside chooser should not be null", shareIntent)
-        assertEquals(Intent.ACTION_SEND, shareIntent?.action)
-        assertEquals("text/plain", shareIntent?.type)
-        assertEquals("buy milk", shareIntent?.getStringExtra(Intent.EXTRA_TEXT))
-    }
 
     @Test
     fun testSelfNotificationIsProcessedForReminderMatch() {
@@ -270,9 +193,8 @@ class ReminderNotificationListenerServiceTest {
 
         service.onNotificationPosted(sbn)
 
-        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
-        val matchedNotif = shadowNM.getNotification(matchedNotifId)
-        assertNotNull("Notification from self package should still trigger reminder match", matchedNotif)
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Notification from self package should still trigger reminder match update on status notification", statusNotif)
     }
 
     @Test
@@ -375,11 +297,8 @@ class ReminderNotificationListenerServiceTest {
 
         service.onNotificationPosted(sbn)
 
-        val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
-        val matchedNotif = shadowNM.getNotification(matchedNotifId)
-        assertNotNull("Expired snoozed item should re-trigger when any notification arrives", matchedNotif)
-        @Suppress("DEPRECATION")
-        assertEquals(Notification.PRIORITY_DEFAULT, matchedNotif.priority)
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        assertNotNull("Expired snoozed item should update status notification when any notification arrives", statusNotif)
     }
 
     @Test
@@ -457,8 +376,11 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testPostMatchNotificationPostsReminderAndReAddsStatusNotification() {
+    fun testPostMatchNotificationUpdatesStatusNotification() {
         val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Buy grocers")).commit()
+
         val service = Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -466,11 +388,10 @@ class ReminderNotificationListenerServiceTest {
 
         service.postMatchNotification("Buy grocers")
 
-        val matchId = ReminderNotificationListenerService.getNotificationIdForReminder("Buy grocers")
-        val matchNotif = shadowNM.getNotification(matchId)
-        assertNotNull("Match notification should be posted directly", matchNotif)
-
         val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
-        assertNotNull("Status notification should be re-added when a reminder notification is posted", statusNotif)
+        assertNotNull("Status notification should be updated when postMatchNotification is called", statusNotif)
+        val textLines = statusNotif.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        assertNotNull("Status notification should contain active reminder lines", textLines)
+        assertEquals("Buy grocers", textLines!![0].toString())
     }
 }

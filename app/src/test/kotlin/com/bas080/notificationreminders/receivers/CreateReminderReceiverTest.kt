@@ -39,7 +39,7 @@ class CreateReminderReceiverTest {
     }
 
     @Test
-    fun testCreateReminderPostsNotificationDirectly() {
+    fun testCreateReminderUpdatesStatusNotificationDirectly() {
         val context = RuntimeEnvironment.getApplication()
         Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
@@ -58,9 +58,11 @@ class CreateReminderReceiverTest {
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val shadowNM = org.robolectric.Shadows.shadowOf(notificationManager)
-        val notifId = ReminderNotificationListenerService.getNotificationIdForReminder("Buy apples")
-        val postedNotif = shadowNM.getNotification(notifId)
-        org.junit.Assert.assertNotNull("Creating a reminder should directly post a notification for it", postedNotif)
+        val statusNotif = shadowNM.getNotification(ReminderNotificationListenerService.NOTIFICATION_ID)
+        org.junit.Assert.assertNotNull("Creating a reminder should directly update status notification", statusNotif)
+        val textLines = statusNotif.extras.getCharSequenceArray(android.app.Notification.EXTRA_TEXT_LINES)
+        assertEquals(1, textLines!!.size)
+        assertEquals("Buy apples", textLines[0].toString())
     }
 
     @Test

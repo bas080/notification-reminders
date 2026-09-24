@@ -183,76 +183,10 @@ class ReminderNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    fun postMatchNotification(matchedReminder: String, isHighPriority: Boolean = true) {
+    fun postMatchNotification(matchedReminder: String, @Suppress("UNUSED_PARAMETER") isHighPriority: Boolean = true) {
         try {
-            com.bas080.notificationreminders.utils.AppLogger.log(this, "NotificationListener", "Posting notification alert for reminder")
+            com.bas080.notificationreminders.utils.AppLogger.log(this, "NotificationListener", "Updating persistent status notification for reminder")
             activePostedReminders.add(matchedReminder)
-            val notificationId = getNotificationIdForReminder(matchedReminder)
-
-            val doneIntent = Intent(this, CreateReminderReceiver::class.java).apply {
-                action = ACTION_DONE_REMINDER
-                putExtra(EXTRA_REMINDER_TEXT, matchedReminder)
-            }
-            val donePendingIntent = PendingIntent.getBroadcast(
-                this,
-                notificationId,
-                doneIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val doneAction = NotificationCompat.Action.Builder(
-                R.drawable.ic_action_done,
-                "Done",
-                donePendingIntent
-            ).build()
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, matchedReminder)
-            }
-            val chooserIntent = Intent.createChooser(shareIntent, null).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            val sharePendingIntent = PendingIntent.getActivity(
-                this,
-                notificationId,
-                chooserIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val shareAction = NotificationCompat.Action.Builder(
-                R.drawable.ic_action_share,
-                getString(R.string.share),
-                sharePendingIntent
-            ).build()
-
-            val priorityVal = if (isHighPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT
-
-            val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_reminder)
-                .setContentTitle(matchedReminder)
-                .setAutoCancel(true)
-                .addAction(doneAction)
-                .addAction(shareAction)
-                .setGroup(GROUP_KEY_REMINDERS)
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
-                .setPriority(priorityVal)
-                .build()
-
-            val summaryNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_reminder)
-                .setContentTitle(getString(R.string.app_name))
-                .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
-                .setAutoCancel(false)
-                .setGroup(GROUP_KEY_REMINDERS)
-                .setGroupSummary(true)
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
-                .setPriority(priorityVal)
-                .build()
-
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(notificationId, matchNotification)
-            notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
             showStatusNotification()
         } catch (_: Exception) {
         }
@@ -292,6 +226,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
 
     fun showStatusNotification() {
         try {
+            if (baseContext == null) return
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
             val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
             val now = System.currentTimeMillis()
