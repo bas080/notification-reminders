@@ -3,6 +3,7 @@ package com.bas080.notificationreminders.jules
 import android.content.Context
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 import com.bas080.notificationreminders.utils.AppLogger
+import com.bas080.notificationreminders.utils.TagUtils
 import java.io.BufferedReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -19,7 +20,7 @@ object JulesManager {
 
     /**
      * Checks if a reminder contains all required AND tags (case-insensitive)
-     * and is not marked as #done.
+     * and is not marked as #done. Uses exact tag token matching to prevent substring mismatches.
      */
     fun matchesAndTags(reminderText: String, requiredAndTags: List<String>): Boolean {
         if (reminderText.contains("#done", ignoreCase = true)) {
@@ -28,9 +29,9 @@ object JulesManager {
         if (requiredAndTags.isEmpty()) {
             return false
         }
-        val lowerText = reminderText.lowercase()
-        return requiredAndTags.all { tag ->
-            lowerText.contains(tag.lowercase())
+        val reminderTags = TagUtils.extractTags(reminderText)
+        return requiredAndTags.all { requiredTag ->
+            reminderTags.contains(requiredTag.lowercase())
         }
     }
 
@@ -43,7 +44,7 @@ object JulesManager {
     }
 
     /**
-     * Applies tag replacements/removals to a reminder string.
+     * Applies tag replacements/removals to a reminder string using TagUtils.
      * Replaces tag with new string or removes tag if replacement is empty.
      * Any required AND tag not explicitly configured in replacements is removed by default.
      */
@@ -67,16 +68,10 @@ object JulesManager {
 
         var result = reminderText
         for ((tag, replacement) in effectiveReplacements) {
-            val tagPattern = Regex("(?i)(?<=^|\\s)${Regex.escape(tag)}(?=\\s|$)")
-            if (replacement.isNotBlank()) {
-                result = result.replace(tagPattern, replacement)
-            } else {
-                result = result.replace(tagPattern, "")
-            }
+            result = TagUtils.replaceTag(result, tag, replacement)
         }
 
-        // Clean up double spaces and trailing/leading whitespace
-        return result.replace(Regex("\\s+"), " ").trim()
+        return result
     }
 
     /**

@@ -37,6 +37,7 @@ import com.bas080.notificationreminders.jules.JulesSettings
 import com.bas080.notificationreminders.receivers.CreateReminderReceiver
 import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 import com.bas080.notificationreminders.utils.AppLogger
+import com.bas080.notificationreminders.utils.TagUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -178,6 +179,7 @@ class MainActivity : AppCompatActivity() {
         Thread {
             val codebases = JulesManager.fetchAvailableCodebases(settings)
             runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
                 if (codebases.isEmpty()) {
                     Toast.makeText(this, "No codebases retrieved. Check API key or enter manually.", Toast.LENGTH_SHORT).show()
                 } else {
@@ -245,12 +247,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun extractAllTags(): List<String> {
-        val tagRegex = Regex("#[a-zA-Z0-9_]+")
         val tagsSet = mutableSetOf<String>()
         for (reminder in activeReminders) {
-            tagRegex.findAll(reminder).forEach { match ->
-                tagsSet.add(match.value.lowercase())
-            }
+            tagsSet.addAll(TagUtils.extractTags(reminder))
         }
         return tagsSet.sorted()
     }
@@ -283,9 +282,7 @@ class MainActivity : AppCompatActivity() {
                     if (isChecked && !containsTag) {
                         updatedQuery = if (updatedQuery.isBlank()) tag else "$updatedQuery $tag"
                     } else if (!isChecked && containsTag) {
-                        updatedQuery = updatedQuery.replace(Regex("(?i)\\b${Regex.escape(tag)}\\b|${Regex.escape(tag)}"), "")
-                            .replace(Regex("\\s+"), " ")
-                            .trim()
+                        updatedQuery = TagUtils.removeTag(updatedQuery, tag)
                     }
                 }
 
@@ -771,7 +768,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSummary() {
-        val selectedTags = Regex("#[a-zA-Z0-9_]+").findAll(currentSearchQuery).map { it.value }.toList()
+        val selectedTags = TagUtils.extractTags(currentSearchQuery)
         if (selectedTags.isEmpty()) {
             binding.txtSelectedTags.text = "All"
         } else {
@@ -904,7 +901,7 @@ class RemindersAdapter(
         private val newSnoozeMap: Map<String, Long>
     ) : androidx.recyclerview.widget.DiffUtil.Callback() {
         override fun getOldListSize(): Int = if (oldList.isEmpty()) 1 else oldList.size + 2
-        override fun getNewListSize(): Int = if (oldList.isEmpty()) 1 else newList.size + 2
+        override fun getNewListSize(): Int = if (newList.isEmpty()) 1 else newList.size + 2
 
         private fun getOldType(position: Int): Int {
             if (position == 0) return TYPE_CREATE_INPUT
