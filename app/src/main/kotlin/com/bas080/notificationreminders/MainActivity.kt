@@ -88,7 +88,6 @@ class MainActivity : AppCompatActivity() {
     private var currentSearchQuery = ""
     private val recentlyDoneReminders = mutableSetOf<String>()
 
-
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
             checkAndRequestNotificationListenerPermission()
@@ -103,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         AppLogger.log(this, "MainActivity", "onCreate called")
 
         setupNavigation()
+        setupSearchInput()
         setupRecyclerView()
         setupSwipeRefresh()
         setupSwipeGestures()
@@ -130,9 +130,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
         binding.btnListExport.setColorFilter(ContextCompat.getColor(this, R.color.accent))
-        binding.btnSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
         markAsButtonAccessibility(binding.btnClearSearch)
-        markAsButtonAccessibility(binding.btnSearch)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -168,31 +166,68 @@ class MainActivity : AppCompatActivity() {
             showTagsSelectionDialog()
         }
 
-        binding.btnSearch.setOnClickListener {
-            binding.remindersList.scrollToPosition(0)
-            binding.remindersList.post {
-                updateSummary()
-                val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-                if (holder != null) {
-                    if (holder.reminderInput.text.toString() != currentSearchQuery) {
-                        holder.reminderInput.setText(currentSearchQuery)
-                    }
-                    holder.reminderInput.requestFocus()
-                    if (holder.reminderInput.text.isNotEmpty()) {
-                        holder.reminderInput.setSelection(holder.reminderInput.text.length)
-                    }
-                }
-            }
-        }
-
         binding.btnClearSearch.setOnClickListener {
             currentSearchQuery = ""
             recentlyDoneReminders.clear()
-            adapter.setSearchQueryText("")
-            val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-            holder?.reminderInput?.setText("")
+            binding.searchReminderInput.setText("")
             updateSummaryAndAdapter()
         }
+    }
+
+    private fun setupSearchInput() {
+        binding.searchReminderInput.setOnFocusChangeListener { _, hasFocus ->
+            binding.searchReminderInput.maxLines = if (hasFocus) Int.MAX_VALUE else 4
+        }
+
+        val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        var searchRunnable: Runnable? = null
+
+        val submitActionWithCancel = {
+            searchRunnable?.let { searchHandler.removeCallbacks(it) }
+            val text = binding.searchReminderInput.text.toString().trim()
+            if (text.isNotEmpty()) {
+                binding.searchReminderInput.setText("")
+                activeReminders.add(text)
+                currentSearchQuery = ""
+                recentlyDoneReminders.clear()
+                saveRemindersToPrefs()
+                ReminderNotificationListenerService.instance?.postMatchNotification(text)
+                updateSummaryAndAdapter()
+                Toast.makeText(this, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnAddReminder.setOnClickListener {
+            submitActionWithCancel()
+        }
+
+        binding.searchReminderInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                submitActionWithCancel()
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.searchReminderInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
+                val query = s?.toString() ?: ""
+                searchRunnable = Runnable {
+                    if (currentSearchQuery != query) {
+                        recentlyDoneReminders.clear()
+                    }
+                    currentSearchQuery = query
+                    updateSummaryAndAdapter()
+                }
+                searchHandler.postDelayed(searchRunnable!!, 200L)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
     }
 
     private fun sendFeedbackEmail() {
@@ -343,13 +378,12 @@ class MainActivity : AppCompatActivity() {
 
                 currentSearchQuery = updatedQuery
                 recentlyDoneReminders.clear()
-                adapter.setSearchQueryText(updatedQuery)
+                binding.searchReminderInput.setText(updatedQuery)
                 updateSummaryAndAdapter()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
-
 
     private fun exportRemindersToMarkdown() {
         val exportList = displayedReminders.filter { it != HEADER_SNOOZED_SECTION_MARKER }
@@ -366,7 +400,6 @@ class MainActivity : AppCompatActivity() {
         val chooserIntent = Intent.createChooser(shareIntent, "Export Reminders")
         startActivity(chooserIntent)
     }
-
 
     private fun showImportMarkdownDialog() {
         val padding = (16 * resources.displayMetrics.density).toInt()
@@ -449,15 +482,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         adapter = RemindersAdapter(
             displayedReminders,
-            onAddReminder = { newReminder ->
-                AppLogger.log(this, "MainActivity", "Created reminder")
-                activeReminders.add(newReminder)
-                currentSearchQuery = ""
-                recentlyDoneReminders.clear()
-                saveRemindersToPrefs()
-                ReminderNotificationListenerService.instance?.postMatchNotification(newReminder)
-                updateSummaryAndAdapter()
-            },
             onUpdateReminder = { index, updatedText ->
                 if (index in displayedReminders.indices) {
                     val oldText = displayedReminders[index]
@@ -465,12 +489,10 @@ class MainActivity : AppCompatActivity() {
                     if (masterIdx != -1) {
                         if (oldText != updatedText) {
                             AppLogger.log(this, "MainActivity", "Updated reminder text")
-                            // Cancel any active notification for old reminder text
                             val oldNotifId = ReminderNotificationListenerService.getNotificationIdForReminder(oldText)
                             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
                             notificationManager?.cancel(oldNotifId)
 
-                            // Migrate snooze timestamp if snoozed
                             val oldTrimmed = oldText.trim().lowercase()
                             val newTrimmed = updatedText.trim().lowercase()
                             if (oldTrimmed != newTrimmed) {
@@ -502,13 +524,6 @@ class MainActivity : AppCompatActivity() {
                     startActivity(chooserIntent)
                 }
             },
-            onSearchQueryChanged = { query ->
-                if (currentSearchQuery != query) {
-                    recentlyDoneReminders.clear()
-                }
-                currentSearchQuery = query
-                updateSummaryAndAdapter()
-            },
             onUndoReminderRequested = { index ->
                 if (index in displayedReminders.indices) {
                     undoMarkDone(displayedReminders[index])
@@ -522,12 +537,6 @@ class MainActivity : AppCompatActivity() {
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
         binding.remindersList.adapter = adapter
-        binding.remindersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                updateSummary()
-            }
-        })
     }
 
     private fun setupSwipeGestures() {
@@ -538,7 +547,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
                 if (viewHolder.itemViewType != RemindersAdapter.TYPE_ACTIVE_REMINDER) {
-                    return 0 // Disable swipe on Create Input Row, Snoozed Section Header, and Footer Instructions
+                    return 0
                 }
                 return super.getSwipeDirs(recyclerView, viewHolder)
             }
@@ -551,20 +560,16 @@ class MainActivity : AppCompatActivity() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
-                if (position in 1..displayedReminders.size) {
-                    val index = position - 1
-                    val reminderText = displayedReminders[index]
+                if (position in displayedReminders.indices) {
+                    val reminderText = displayedReminders[position]
                     val isDone = reminderText.contains("#done", ignoreCase = true)
 
                     if (isDone) {
-                        // Swiping an already done item permanently deletes it
                         deleteReminder(reminderText)
                     } else if (direction == ItemTouchHelper.LEFT) {
-                        // Swipe left -> Open Snooze options dialog (with Unsnooze option if snoozed)
                         adapter.notifyItemChanged(position)
                         showSnoozeOptionsDialog(reminderText)
                     } else if (direction == ItemTouchHelper.RIGHT) {
-                        // Swipe right -> Mark Done immediately without confirmation dialog
                         adapter.notifyItemChanged(position)
                         markReminderDone(reminderText)
                     }
@@ -582,8 +587,8 @@ class MainActivity : AppCompatActivity() {
             ) {
                 val itemView = viewHolder.itemView
                 val position = viewHolder.bindingAdapterPosition
-                val isDone = if (position in 1..displayedReminders.size) {
-                    displayedReminders[position - 1].contains("#done", ignoreCase = true)
+                val isDone = if (position in displayedReminders.indices) {
+                    displayedReminders[position].contains("#done", ignoreCase = true)
                 } else false
 
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE && dX != 0f) {
@@ -591,7 +596,6 @@ class MainActivity : AppCompatActivity() {
                     val icon: Drawable?
 
                     if (isDone) {
-                        // Swiping a done item -> Delete icon
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         if (dX > 0) {
                             background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
@@ -617,7 +621,6 @@ class MainActivity : AppCompatActivity() {
                             it.draw(c)
                         }
                     } else if (dX > 0) {
-                        // Swipe Right -> Mark Done (Checkmark icon)
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
                         background.draw(c)
@@ -633,7 +636,6 @@ class MainActivity : AppCompatActivity() {
                             it.draw(c)
                         }
                     } else if (dX < 0) {
-                        // Swipe Left -> Snooze (Clock icon)
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
                         background.draw(c)
@@ -822,10 +824,6 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
     }
 
-    private fun showMarkDoneConfirmationDialog(reminderText: String) {
-        markReminderDone(reminderText)
-    }
-
     private fun loadReminders() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
@@ -854,7 +852,6 @@ class MainActivity : AppCompatActivity() {
 
         val searchContainsDone = currentSearchQuery.contains("#done", ignoreCase = true)
 
-        // 1. Filter items by status tab and #done tag (#done items only shown if search query contains #done or if in recentlyDoneReminders)
         val filteredByStatus = when (currentFilter) {
             ReminderFilter.ALL -> activeReminders.filter { reminder ->
                 val isDone = reminder.contains("#done", ignoreCase = true)
@@ -880,10 +877,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Filter items by search query using tiered search matching
         val filtered = com.bas080.notificationreminders.utils.ReminderMatcher.filterSearchQueryTiered(filteredByStatus, currentSearchQuery)
 
-        // 3. Sort items: Active items sorted by creation (more recently added first), then snoozed items ordered ascendingly by snooze time
         val activeItems = mutableListOf<String>()
         val snoozedItems = mutableListOf<Pair<String, Long>>()
 
@@ -938,28 +933,16 @@ class MainActivity : AppCompatActivity() {
             binding.txtSelectedTags.text = "$stateText • ${selectedTags.joinToString(" ")}"
         }
 
-        val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager
-        val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
-        val isSearchInputScrolledOut = firstVisible > 0
-
-        if (isSearchInputScrolledOut) {
-            binding.btnSearch.visibility = View.VISIBLE
-            binding.btnClearSearch.visibility = View.GONE
+        val hasSearchText = currentSearchQuery.isNotBlank()
+        binding.btnClearSearch.isEnabled = hasSearchText
+        binding.btnClearSearch.isClickable = hasSearchText
+        binding.btnClearSearch.isFocusable = hasSearchText
+        if (hasSearchText) {
+            binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
+            binding.btnClearSearch.alpha = 1.0f
         } else {
-            binding.btnSearch.visibility = View.GONE
-            binding.btnClearSearch.visibility = View.VISIBLE
-
-            val hasSearchText = currentSearchQuery.isNotBlank()
-            binding.btnClearSearch.isEnabled = hasSearchText
-            binding.btnClearSearch.isClickable = hasSearchText
-            binding.btnClearSearch.isFocusable = hasSearchText
-            if (hasSearchText) {
-                binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
-                binding.btnClearSearch.alpha = 1.0f
-            } else {
-                binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.text_muted))
-                binding.btnClearSearch.alpha = 0.4f
-            }
+            binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.text_muted))
+            binding.btnClearSearch.alpha = 0.4f
         }
 
         if (displayedReminders.isEmpty()) {
@@ -1046,27 +1029,17 @@ class MainActivity : AppCompatActivity() {
 
 class RemindersAdapter(
     private val displayedReminders: MutableList<String>,
-    private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
     private val onShareReminderRequested: (Int) -> Unit,
-    private val onSearchQueryChanged: (String) -> Unit = {},
     private val onUndoReminderRequested: (Int) -> Unit = {},
     private val onUnpuntReminderRequested: (Int) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
-        const val TYPE_CREATE_INPUT = 0
         const val TYPE_ACTIVE_REMINDER = 1
         const val TYPE_FOOTER_INSTRUCTIONS = 2
         const val TYPE_SNOOZED_HEADER = 3
         private const val PREFS_REMINDERS = "reminders_prefs"
-    }
-
-    private var currentSearchQueryText: String = ""
-
-    fun setSearchQueryText(query: String) {
-        currentSearchQueryText = query
-        notifyItemChanged(0)
     }
 
     private val currentSnoozeMap = mutableMapOf<String, Long>()
@@ -1077,19 +1050,17 @@ class RemindersAdapter(
         private val oldSnoozeMap: Map<String, Long>,
         private val newSnoozeMap: Map<String, Long>
     ) : androidx.recyclerview.widget.DiffUtil.Callback() {
-        override fun getOldListSize(): Int = if (oldList.isEmpty()) 1 else oldList.size + 2
-        override fun getNewListSize(): Int = if (newList.isEmpty()) 1 else newList.size + 2
+        override fun getOldListSize(): Int = if (oldList.isEmpty()) 0 else oldList.size + 1
+        override fun getNewListSize(): Int = if (newList.isEmpty()) 0 else newList.size + 1
 
         private fun getOldType(position: Int): Int {
-            if (position == 0) return TYPE_CREATE_INPUT
-            if (oldList.isNotEmpty() && position == oldList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
-            return if (oldList.getOrNull(position - 1) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+            if (oldList.isNotEmpty() && position == oldList.size) return TYPE_FOOTER_INSTRUCTIONS
+            return if (oldList.getOrNull(position) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
         }
 
         private fun getNewType(position: Int): Int {
-            if (position == 0) return TYPE_CREATE_INPUT
-            if (newList.isNotEmpty() && position == newList.size + 1) return TYPE_FOOTER_INSTRUCTIONS
-            return if (newList.getOrNull(position - 1) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
+            if (newList.isNotEmpty() && position == newList.size) return TYPE_FOOTER_INSTRUCTIONS
+            return if (newList.getOrNull(position) == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
         }
 
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
@@ -1099,10 +1070,9 @@ class RemindersAdapter(
             if (oldType != newType) return false
 
             return when (oldType) {
-                TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
                 TYPE_SNOOZED_HEADER -> true
-                else -> oldList.getOrNull(oldItemPosition - 1) == newList.getOrNull(newItemPosition - 1)
+                else -> oldList.getOrNull(oldItemPosition) == newList.getOrNull(newItemPosition)
             }
         }
 
@@ -1113,12 +1083,11 @@ class RemindersAdapter(
             if (oldType != newType) return false
 
             return when (oldType) {
-                TYPE_CREATE_INPUT -> true
                 TYPE_FOOTER_INSTRUCTIONS -> true
                 TYPE_SNOOZED_HEADER -> true
                 else -> {
-                    val oldItem = oldList.getOrNull(oldItemPosition - 1) ?: return true
-                    val newItem = newList.getOrNull(newItemPosition - 1) ?: return true
+                    val oldItem = oldList.getOrNull(oldItemPosition) ?: return true
+                    val newItem = newList.getOrNull(newItemPosition) ?: return true
                     if (oldItem != newItem) return false
 
                     val oldTrimmed = oldItem.trim().lowercase()
@@ -1159,9 +1128,8 @@ class RemindersAdapter(
     class FooterViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
     override fun getItemViewType(position: Int): Int {
-        if (position == 0) return TYPE_CREATE_INPUT
-        if (displayedReminders.isNotEmpty() && position == displayedReminders.size + 1) return TYPE_FOOTER_INSTRUCTIONS
-        val item = displayedReminders[position - 1]
+        if (displayedReminders.isNotEmpty() && position == displayedReminders.size) return TYPE_FOOTER_INSTRUCTIONS
+        val item = displayedReminders[position]
         return if (item == HEADER_SNOOZED_SECTION_MARKER) TYPE_SNOOZED_HEADER else TYPE_ACTIVE_REMINDER
     }
 
@@ -1206,157 +1174,89 @@ class RemindersAdapter(
             }
         })
 
-        val viewType = getItemViewType(position)
         val context = holder.itemView.context
 
         holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
             holder.reminderInput.maxLines = if (hasFocus) Int.MAX_VALUE else 4
         }
 
-        if (viewType == TYPE_CREATE_INPUT) {
-            holder.reminderInput.hint = "Add or search reminders..."
-            holder.txtStatus.visibility = View.GONE
+        val reminderIndex = position
+        val reminderText = displayedReminders[reminderIndex]
+        val isDone = reminderText.contains("#done", ignoreCase = true)
+
+        holder.reminderInput.hint = "Reminder"
+        holder.reminderInput.setText(reminderText)
+
+        if (isDone) {
+            holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_muted))
+            holder.reminderInput.alpha = 0.5f
+            holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
             holder.btnShare.visibility = View.GONE
             holder.btnAction.visibility = View.VISIBLE
-            holder.btnAction.setImageResource(R.drawable.ic_action_add)
+            holder.btnAction.setImageResource(R.drawable.ic_action_undo)
             holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
-            holder.btnAction.contentDescription = context.getString(R.string.add_reminder)
-
-            if (holder.reminderInput.text.toString() != currentSearchQueryText) {
-                holder.reminderInput.setText(currentSearchQueryText)
-                if (currentSearchQueryText.isNotEmpty()) {
-                    holder.reminderInput.setSelection(currentSearchQueryText.length)
-                }
-            }
-
-            val searchHandler = android.os.Handler(android.os.Looper.getMainLooper())
-            var searchRunnable: Runnable? = null
-
-            val submitActionWithCancel = {
-                searchRunnable?.let { searchHandler.removeCallbacks(it) }
-                val text = holder.reminderInput.text.toString().trim()
-                if (text.isNotEmpty()) {
-                    holder.reminderInput.setText("")
-                    onAddReminder(text)
-                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(holder.itemView.context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
-                }
-            }
-
+            holder.btnAction.contentDescription = "Undo mark done"
             holder.btnAction.setOnClickListener {
-                submitActionWithCancel()
-            }
-
-            holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
-                    submitActionWithCancel()
-                    true
-                } else {
-                    false
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION && currentPos in displayedReminders.indices) {
+                    onUndoReminderRequested(currentPos)
                 }
             }
-
-            val searchWatcher = object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    searchRunnable?.let { searchHandler.removeCallbacks(it) }
-                    val query = s?.toString() ?: ""
-                    searchRunnable = Runnable { onSearchQueryChanged(query) }
-                    searchHandler.postDelayed(searchRunnable!!, 200L)
-                }
-                override fun afterTextChanged(s: Editable?) {}
-            }
-            holder.reminderInput.addTextChangedListener(searchWatcher)
-            holder.textWatcher = searchWatcher
         } else {
-            val reminderIndex = position - 1
-            val reminderText = displayedReminders[reminderIndex]
-            val isDone = reminderText.contains("#done", ignoreCase = true)
-
-            holder.reminderInput.hint = "Reminder"
-            holder.reminderInput.setText(reminderText)
-
-            if (isDone) {
-                holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_muted))
-                holder.reminderInput.alpha = 0.5f
-                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                holder.btnShare.visibility = View.GONE
-                holder.btnAction.visibility = View.VISIBLE
-                holder.btnAction.setImageResource(R.drawable.ic_action_undo)
-                holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
-                holder.btnAction.contentDescription = "Undo mark done"
-                holder.btnAction.setOnClickListener {
-                    val currentPos = holder.bindingAdapterPosition
-                    if (currentPos != RecyclerView.NO_POSITION) {
-                        val idx = currentPos - 1
-                        if (idx in displayedReminders.indices) {
-                            onUndoReminderRequested(idx)
-                        }
-                    }
-                }
-            } else {
-                holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-                holder.reminderInput.alpha = 1.0f
-                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                holder.btnAction.visibility = View.GONE
-                holder.btnShare.visibility = View.VISIBLE
-                holder.btnShare.setOnClickListener {
-                    val currentPos = holder.bindingAdapterPosition
-                    if (currentPos != RecyclerView.NO_POSITION) {
-                        val idx = currentPos - 1
-                        if (idx in displayedReminders.indices) {
-                            onShareReminderRequested(idx)
-                        }
-                    }
+            holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            holder.reminderInput.alpha = 1.0f
+            holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            holder.btnAction.visibility = View.GONE
+            holder.btnShare.visibility = View.VISIBLE
+            holder.btnShare.setOnClickListener {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION && currentPos in displayedReminders.indices) {
+                    onShareReminderRequested(currentPos)
                 }
             }
+        }
 
-            val trimmed = reminderText.trim().lowercase()
-            val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-            val now = System.currentTimeMillis()
-            val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-            }
+        val trimmed = reminderText.trim().lowercase()
+        val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+            if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+        }
 
-            if (!isDone && snoozeUntil > now) {
-                val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
-                holder.txtStatus.visibility = View.VISIBLE
-                holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
-            } else {
-                holder.txtStatus.visibility = View.GONE
-            }
+        if (!isDone && snoozeUntil > now) {
+            val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
+            holder.txtStatus.visibility = View.VISIBLE
+            holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
+        } else {
+            holder.txtStatus.visibility = View.GONE
+        }
 
-            val screenshotUriStr = prefs.getString("screenshot_$trimmed", null)
-            if (!screenshotUriStr.isNullOrEmpty()) {
-                holder.imgScreenshot.visibility = View.VISIBLE
-                try {
-                    holder.imgScreenshot.setImageURI(android.net.Uri.parse(screenshotUriStr))
-                } catch (_: Exception) {
-                    holder.imgScreenshot.visibility = View.GONE
-                }
-            } else {
+        val screenshotUriStr = prefs.getString("screenshot_$trimmed", null)
+        if (!screenshotUriStr.isNullOrEmpty()) {
+            holder.imgScreenshot.visibility = View.VISIBLE
+            try {
+                holder.imgScreenshot.setImageURI(android.net.Uri.parse(screenshotUriStr))
+            } catch (_: Exception) {
                 holder.imgScreenshot.visibility = View.GONE
             }
-
-            val watcher = object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    val currentPos = holder.bindingAdapterPosition
-                    if (currentPos != RecyclerView.NO_POSITION) {
-                        val idx = currentPos - 1
-                        if (idx in displayedReminders.indices) {
-                            onUpdateReminder(idx, s?.toString() ?: "")
-                        }
-                    }
-                }
-                override fun afterTextChanged(s: Editable?) {}
-            }
-
-            holder.reminderInput.addTextChangedListener(watcher)
-            holder.textWatcher = watcher
+        } else {
+            holder.imgScreenshot.visibility = View.GONE
         }
+
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION && currentPos in displayedReminders.indices) {
+                    onUpdateReminder(currentPos, s?.toString() ?: "")
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+
+        holder.reminderInput.addTextChangedListener(watcher)
+        holder.textWatcher = watcher
     }
 
-    override fun getItemCount(): Int = if (displayedReminders.isEmpty()) 1 else displayedReminders.size + 2
+    override fun getItemCount(): Int = if (displayedReminders.isEmpty()) 0 else displayedReminders.size + 1
 }
