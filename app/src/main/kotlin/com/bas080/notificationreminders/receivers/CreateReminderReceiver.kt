@@ -343,33 +343,86 @@ class CreateReminderReceiver : BroadcastReceiver() {
             val datePart = tokens[0]
             val timePart = if (tokens.size > 1) tokens.subList(1, tokens.size).joinToString(" ") else ""
 
-            val dateFormats = listOfNotNull(
-                java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("M/d/yyyy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("d/M/yyyy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("MM/dd/yy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault()),
-                java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault()),
-                java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT, java.util.Locale.getDefault()),
-                java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.getDefault())
-            )
+            val nowCal = java.util.Calendar.getInstance().apply { timeInMillis = nowMillis }
+            val currentYear = nowCal.get(java.util.Calendar.YEAR)
 
-            var parsedDate: java.util.Date? = null
-            for (df in dateFormats) {
-                try {
-                    df.isLenient = false
-                    parsedDate = df.parse(datePart)
-                    if (parsedDate != null) break
-                } catch (_: Exception) {}
+            var parsedYear: Int? = null
+            var parsedMonth: Int? = null
+            var parsedDay: Int? = null
+            var noYearSpecified = false
+
+            val flexibleDateMatch = Regex("^(\\d{1,4})[/.\\-](\\d{1,4})(?:[/.\\-](\\d{1,4}))?$").find(datePart)
+            if (flexibleDateMatch != null) {
+                val num1 = flexibleDateMatch.groupValues[1].toInt()
+                val num2 = flexibleDateMatch.groupValues[2].toInt()
+                val num3Str = flexibleDateMatch.groupValues[3]
+
+                if (num3Str.isNotEmpty()) {
+                    val num3 = num3Str.toInt()
+                    if (num1 > 31) {
+                        parsedYear = num1
+                        parsedMonth = num2
+                        parsedDay = num3
+                    } else {
+                        parsedYear = if (num3 < 100) 2000 + num3 else num3
+                        if (num2 > 12) {
+                            parsedMonth = num1
+                            parsedDay = num2
+                        } else if (num1 > 12) {
+                            parsedDay = num1
+                            parsedMonth = num2
+                        } else {
+                            parsedMonth = num1
+                            parsedDay = num2
+                        }
+                    }
+                } else {
+                    noYearSpecified = true
+                    parsedYear = currentYear
+                    if (num2 > 12) {
+                        parsedMonth = num1
+                        parsedDay = num2
+                    } else if (num1 > 12) {
+                        parsedDay = num1
+                        parsedMonth = num2
+                    } else {
+                        parsedMonth = num1
+                        parsedDay = num2
+                    }
+                }
+            } else {
+                val dateFormats = listOfNotNull(
+                    java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("M/d/yyyy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("d/M/yyyy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("MM/dd/yy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault()),
+                    java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault()),
+                    java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT, java.util.Locale.getDefault()),
+                    java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.getDefault())
+                )
+
+                var parsedDate: java.util.Date? = null
+                for (df in dateFormats) {
+                    try {
+                        df.isLenient = false
+                        parsedDate = df.parse(datePart)
+                        if (parsedDate != null) break
+                    } catch (_: Exception) {}
+                }
+
+                if (parsedDate != null) {
+                    val calTemp = java.util.Calendar.getInstance().apply { time = parsedDate }
+                    parsedYear = calTemp.get(java.util.Calendar.YEAR)
+                    parsedMonth = calTemp.get(java.util.Calendar.MONTH) + 1
+                    parsedDay = calTemp.get(java.util.Calendar.DAY_OF_MONTH)
+                }
             }
 
-            if (parsedDate == null) return null
-
-            val cal = java.util.Calendar.getInstance().apply {
-                time = parsedDate
-            }
+            if (parsedYear == null || parsedMonth == null || parsedDay == null) return null
+            if (parsedMonth !in 1..12 || parsedDay !in 1..31) return null
 
             var targetHour = 9
             var targetMin = 0
@@ -402,14 +455,30 @@ class CreateReminderReceiver : BroadcastReceiver() {
                             targetHour = hour
                             targetMin = min
                         } else return null
+                    } else if (timePart.all { it.isDigit() }) {
+                        val hour = timePart.toInt()
+                        if (hour in 0..23) {
+                            targetHour = hour
+                            targetMin = 0
+                        } else return null
                     } else return null
                 }
             }
 
-            cal.set(java.util.Calendar.HOUR_OF_DAY, targetHour)
-            cal.set(java.util.Calendar.MINUTE, targetMin)
-            cal.set(java.util.Calendar.SECOND, 0)
-            cal.set(java.util.Calendar.MILLISECOND, 0)
+            val cal = java.util.Calendar.getInstance().apply {
+                timeInMillis = nowMillis
+                set(java.util.Calendar.YEAR, parsedYear)
+                set(java.util.Calendar.MONTH, parsedMonth - 1)
+                set(java.util.Calendar.DAY_OF_MONTH, parsedDay)
+                set(java.util.Calendar.HOUR_OF_DAY, targetHour)
+                set(java.util.Calendar.MINUTE, targetMin)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+
+            if (noYearSpecified && cal.timeInMillis <= nowMillis) {
+                cal.add(java.util.Calendar.YEAR, 1)
+            }
 
             val snoozeMs = cal.timeInMillis - nowMillis
             if (snoozeMs <= 0) return null
