@@ -950,6 +950,7 @@ class RemindersAdapter(
     class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
         val txtStatus: TextView = view.findViewById(R.id.txt_status)
+        val imgScreenshot: ImageView = view.findViewById(R.id.img_screenshot)
         val btnShare: ImageView = view.findViewById(R.id.btn_share)
         val btnAction: ImageView = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
@@ -1099,6 +1100,18 @@ class RemindersAdapter(
                 holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
             } else {
                 holder.txtStatus.visibility = View.GONE
+            }
+
+            val screenshotUriStr = prefs.getString("screenshot_$trimmed", null)
+            if (!screenshotUriStr.isNullOrEmpty()) {
+                holder.imgScreenshot.visibility = View.VISIBLE
+                try {
+                    holder.imgScreenshot.setImageURI(android.net.Uri.parse(screenshotUriStr))
+                } catch (_: Exception) {
+                    holder.imgScreenshot.visibility = View.GONE
+                }
+            } else {
+                holder.imgScreenshot.visibility = View.GONE
             }
 
             val watcher = object : TextWatcher {
