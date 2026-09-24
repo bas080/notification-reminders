@@ -87,6 +87,24 @@ class MainActivity : AppCompatActivity() {
     private var currentFilter = ReminderFilter.ALL
     private var currentSearchQuery = ""
 
+    private var pendingScreenshotReminderText: String? = null
+
+    private val requestScreenshotPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val reminderText = pendingScreenshotReminderText
+            if (uri != null && !reminderText.isNullOrEmpty()) {
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) {
+                }
+                val trimmed = reminderText.trim().lowercase()
+                val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                prefs.edit().putString("screenshot_$trimmed", uri.toString()).apply()
+                updateSummaryAndAdapter()
+                Toast.makeText(this, "Screenshot attached", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
             checkAndRequestNotificationListenerPermission()
@@ -410,6 +428,16 @@ class MainActivity : AppCompatActivity() {
                     }
                     val chooserIntent = Intent.createChooser(shareIntent, getString(R.string.share))
                     startActivity(chooserIntent)
+                }
+            },
+            onAttachScreenshotRequested = { index ->
+                if (index in displayedReminders.indices) {
+                    pendingScreenshotReminderText = displayedReminders[index]
+                    try {
+                        requestScreenshotPickerLauncher.launch("image/*")
+                    } catch (_: Exception) {
+                        Toast.makeText(this, "Unable to launch image picker", Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
             onSearchQueryChanged = { query ->
@@ -855,6 +883,7 @@ class RemindersAdapter(
     private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
     private val onShareReminderRequested: (Int) -> Unit,
+    private val onAttachScreenshotRequested: (Int) -> Unit = {},
     private val onSearchQueryChanged: (String) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -951,6 +980,7 @@ class RemindersAdapter(
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
         val txtStatus: TextView = view.findViewById(R.id.txt_status)
         val imgScreenshot: ImageView = view.findViewById(R.id.img_screenshot)
+        val btnAttachScreenshot: ImageView = view.findViewById(R.id.btn_attach_screenshot)
         val btnShare: ImageView = view.findViewById(R.id.btn_share)
         val btnAction: ImageView = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
@@ -1003,6 +1033,13 @@ class RemindersAdapter(
             }
         })
 
+        ViewCompat.setAccessibilityDelegate(holder.btnAttachScreenshot, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        })
+
         ViewCompat.setAccessibilityDelegate(holder.btnShare, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
@@ -1016,6 +1053,8 @@ class RemindersAdapter(
         if (viewType == TYPE_CREATE_INPUT) {
             holder.reminderInput.hint = "Add or search reminders..."
             holder.txtStatus.visibility = View.GONE
+            holder.imgScreenshot.visibility = View.GONE
+            holder.btnAttachScreenshot.visibility = View.GONE
             holder.btnShare.visibility = View.GONE
             holder.btnAction.visibility = View.VISIBLE
             holder.btnAction.setImageResource(R.drawable.ic_action_add)
@@ -1076,7 +1115,19 @@ class RemindersAdapter(
             holder.reminderInput.setText(reminderText)
 
             holder.btnAction.visibility = View.GONE
+            holder.btnAttachScreenshot.visibility = View.VISIBLE
             holder.btnShare.visibility = View.VISIBLE
+
+            holder.btnAttachScreenshot.setOnClickListener {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION) {
+                    val idx = currentPos - 1
+                    if (idx in displayedReminders.indices) {
+                        onAttachScreenshotRequested(idx)
+                    }
+                }
+            }
+
             holder.btnShare.setOnClickListener {
                 val currentPos = holder.bindingAdapterPosition
                 if (currentPos != RecyclerView.NO_POSITION) {
