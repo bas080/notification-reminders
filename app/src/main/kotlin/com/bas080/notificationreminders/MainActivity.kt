@@ -450,6 +450,11 @@ class MainActivity : AppCompatActivity() {
                 if (index in displayedReminders.indices) {
                     undoMarkDone(displayedReminders[index])
                 }
+            },
+            onUnpuntReminderRequested = { index ->
+                if (index in displayedReminders.indices) {
+                    unpuntReminder(displayedReminders[index])
+                }
             }
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
@@ -691,6 +696,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun unpuntReminder(reminderText: String) {
+        val trimmed = reminderText.trim().lowercase()
+        ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+        val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        prefs.edit().remove("snooze_$trimmed").apply()
+
+        ReminderNotificationListenerService.instance?.showStatusNotification()
+        updateSummaryAndAdapter()
+        AppLogger.log(this, "MainActivity", "Unpunted reminder")
+        Toast.makeText(this, R.string.toast_snooze_cancelled, Toast.LENGTH_SHORT).show()
+    }
+
     private fun showMarkDoneConfirmationDialog(reminderText: String) {
         markReminderDone(reminderText)
     }
@@ -919,7 +936,8 @@ class RemindersAdapter(
     private val onUpdateReminder: (Int, String) -> Unit,
     private val onShareReminderRequested: (Int) -> Unit,
     private val onSearchQueryChanged: (String) -> Unit = {},
-    private val onUndoReminderRequested: (Int) -> Unit = {}
+    private val onUndoReminderRequested: (Int) -> Unit = {},
+    private val onUnpuntReminderRequested: (Int) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -1187,10 +1205,24 @@ class RemindersAdapter(
                 if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
             }
 
-            if (snoozeUntil > now) {
+            if (!isDone && snoozeUntil > now) {
                 val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
                 holder.txtStatus.visibility = View.VISIBLE
                 holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
+                holder.btnShare.visibility = View.GONE
+                holder.btnAction.visibility = View.VISIBLE
+                holder.btnAction.setImageResource(R.drawable.ic_action_undo)
+                holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
+                holder.btnAction.contentDescription = "Cancel punt"
+                holder.btnAction.setOnClickListener {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        val idx = currentPos - 1
+                        if (idx in displayedReminders.indices) {
+                            onUnpuntReminderRequested(idx)
+                        }
+                    }
+                }
             } else {
                 holder.txtStatus.visibility = View.GONE
             }

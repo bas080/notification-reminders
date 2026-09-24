@@ -315,7 +315,36 @@ class MainActivityTest {
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
         assertTrue(holder.txtStatus.text.toString().startsWith("Punted • until"))
-        assertEquals(View.VISIBLE, holder.btnShare.visibility)
+        assertEquals(View.VISIBLE, holder.btnAction.visibility)
+        assertEquals("Cancel punt", holder.btnAction.contentDescription)
+    }
+
+    @Test
+    fun testUnpuntReminderFromTileUndoButton() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Punted Task"))
+            .putLong("snooze_punted task", snoozeTime)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(2) as RemindersAdapter.ItemViewHolder
+
+        assertEquals(View.VISIBLE, holder.btnAction.visibility)
+        assertEquals("Cancel punt", holder.btnAction.contentDescription)
+
+        // Click Undo button on punted item card tile
+        holder.btnAction.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Punt cancelled", ShadowToast.getTextOfLatestToast())
+        val updatedSnooze = prefs.getLong("snooze_punted task", 0L)
+        assertEquals(0L, updatedSnooze)
     }
 
     @Test
