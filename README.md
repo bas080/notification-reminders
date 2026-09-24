@@ -1,4 +1,4 @@
-# notification-reminders
+# Punt
 
 [![Stand with Palestine](https://img.shields.io/badge/🇵🇸%20%20Stand%20With%20Palestine-007A3D?style=flat-square&color=brightgreen)](https://www.islamic-relief.org.uk/giving/appeals/palestine/)
 [![Donate via Liberapay](https://img.shields.io/badge/Donate-Liberapay-F6C915?style=flat-square&logo=liberapay&logoColor=black)](https://liberapay.com/bas080)
