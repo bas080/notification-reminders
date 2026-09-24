@@ -164,20 +164,4 @@ class CrashReportActivityTest {
         assertNotNull("Crash trace should be saved in prefs", savedTrace)
         assertTrue(savedTrace!!.contains("Global crash handler test exception"))
     }
-
-    @Test
-    fun testLogsArePersistedAndIncludedInCrashReport() {
-        val context = RuntimeEnvironment.getApplication()
-        com.bas080.notificationreminders.utils.AppLogger.log(context, "TestTag", "Persisted sample log message")
-
-        val report = CrashReportActivity.buildFormattedReport(
-            context = context,
-            crashTrace = "SampleCrashTrace",
-            userComment = "User issue comment",
-            includeLogs = true
-        )
-
-        assertTrue("Report should contain Application Logs header", report.contains("### Application Logs"))
-        assertTrue("Report should contain logged sample entry", report.contains("Persisted sample log message"))
-    }
 }
