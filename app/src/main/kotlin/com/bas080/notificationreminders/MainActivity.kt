@@ -571,7 +571,7 @@ class MainActivity : AppCompatActivity() {
 
                     if (isDone) {
                         // Swiping a done item -> Delete icon
-                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         if (dX > 0) {
                             background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
                         } else {
@@ -597,7 +597,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     } else if (dX > 0) {
                         // Swipe Right -> Mark Done (Checkmark icon)
-                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
                         background.draw(c)
 
@@ -613,7 +613,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     } else if (dX < 0) {
                         // Swipe Left -> Snooze (Clock icon)
-                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
                         background.draw(c)
 
