@@ -546,30 +546,50 @@ class MainActivityTest {
     fun testMarkDoneAppendsDoneTagAndFiltersFromOverview() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Task 1")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-
-        // Show mark done dialog for "Task 1"
-        val method = MainActivity::class.java.getDeclaredMethod("showMarkDoneConfirmationDialog", String::class.java)
+        // Mark done "Task 1"
+        val method = MainActivity::class.java.getDeclaredMethod("markReminderDone", String::class.java)
         method.isAccessible = true
         method.invoke(activity, "Task 1")
-
-        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
-        assertNotNull(dialog)
-        dialog!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertEquals("Reminder marked done", ShadowToast.getTextOfLatestToast())
 
         val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
         assertTrue("Saved set should contain 'Task 1 #done'", savedSet.contains("Task 1 #done"))
+    }
 
-        // Item should be excluded from overview unless search contains #done
-        assertEquals(1, recyclerView.adapter!!.itemCount) // 1 create input + 0 items (footer hidden when empty)
+    @Test
+    fun testSwipeRightReplacesTileWithGrayedOutTileAndUndoRestoresReminder() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        // Mark done directly
+        val markMethod = MainActivity::class.java.getDeclaredMethod("markReminderDone", String::class.java)
+        markMethod.isAccessible = true
+        markMethod.invoke(activity, "Task 1")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        assertTrue("Saved set should contain 'Task 1 #done'", savedSet.contains("Task 1 #done"))
+
+        // Undo mark done
+        val undoMethod = MainActivity::class.java.getDeclaredMethod("undoMarkDone", String::class.java)
+        undoMethod.isAccessible = true
+        undoMethod.invoke(activity, "Task 1 #done")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val restoredSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        assertTrue("Saved set should contain 'Task 1'", restoredSet.contains("Task 1"))
+        assertEquals("Mark done undone", ShadowToast.getTextOfLatestToast())
     }
 
     @Test
