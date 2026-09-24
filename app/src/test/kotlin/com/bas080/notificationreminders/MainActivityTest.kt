@@ -832,7 +832,7 @@ class MainActivityTest {
 
 
     @Test
-    fun testHeaderNavigationHidesWhenNotAtTopAndReappearsOnlyAtTop() {
+    fun testHeaderNavigationRemainsVisibleOnScroll() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val items = (1..15).map { "Task $it" }.toSet()
@@ -846,7 +846,7 @@ class MainActivityTest {
         assertNotNull(headerNav)
         assertNotNull(recyclerView)
 
-        // Initially at position 0 (top), header is VISIBLE
+        // Navigation is VISIBLE
         assertEquals(View.VISIBLE, headerNav.visibility)
 
         // Scroll down list to position 5
@@ -857,20 +857,6 @@ class MainActivityTest {
         recyclerView.scrollBy(0, 50)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        assertEquals("Header should hide when not at top position", View.GONE, headerNav.visibility)
-
-        // Scrolling up while still at position > 0 keeps header GONE
-        recyclerView.scrollBy(0, -20)
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-
-        assertEquals("Header should remain GONE when scrolling up if position is not top (0)", View.GONE, headerNav.visibility)
-
-        // Scroll back to top position 0
-        recyclerView.scrollToPosition(0)
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        recyclerView.scrollBy(0, -10)
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-
-        assertEquals("Header should reappear when scrolled back to top position (0)", View.VISIBLE, headerNav.visibility)
+        assertEquals("Bottom navigation bar should remain VISIBLE on scroll", View.VISIBLE, headerNav.visibility)
     }
 }

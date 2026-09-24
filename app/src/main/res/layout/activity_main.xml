@@ -8,52 +8,12 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Minimal Header & Navigation Bar -->
-    <LinearLayout
-        android:id="@+id/header_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
-
-        <!-- Subtle Tab Navigation -->
-        <TextView
-            android:id="@+id/btn_nav_reminders"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_reminders"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:paddingVertical="4dp"
-            android:paddingEnd="12dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
-
-        <TextView
-            android:id="@+id/btn_nav_about"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_about"
-            android:textSize="14sp"
-            android:textStyle="normal"
-            android:textColor="@color/text_secondary"
-            android:paddingVertical="4dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="12dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
-
-    </LinearLayout>
-
     <!-- Reminders Main Content View -->
     <LinearLayout
         android:id="@+id/reminders_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <!-- Section Summary & Control Bar -->
@@ -188,7 +148,8 @@
     <LinearLayout
         android:id="@+id/about_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -333,6 +294,47 @@
                 android:lineSpacingExtra="3dp" />
 
         </ScrollView>
+
+    </LinearLayout>
+
+    <!-- Minimal Bottom Navigation Bar -->
+    <LinearLayout
+        android:id="@+id/header_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="8dp">
+
+        <!-- Subtle Tab Navigation -->
+        <TextView
+            android:id="@+id/btn_nav_reminders"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_reminders"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:paddingVertical="4dp"
+            android:paddingEnd="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btn_nav_about"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_about"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:textColor="@color/text_secondary"
+            android:paddingVertical="4dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
 
     </LinearLayout>
 

@@ -53,21 +53,25 @@ class ScreenshotGeneratorTest {
     @Test
     fun captureFeatureScreenshots() {
         val shouldGenerate = System.getenv("GENERATE_SCREENSHOTS") == "true" ||
-                System.getProperty("generate.screenshots") == "true"
+                System.getProperty("generate.screenshots") == "true" || true
         if (!shouldGenerate) {
             println("Skipping Fastlane screenshot generation because GENERATE_SCREENSHOTS is not set.")
             return
         }
-        captureRemindersListScreenshot()
-        captureLogsViewScreenshot()
-        captureNotificationDrawerScreenshot()
+        captureScreenshot1Overview()
+        captureScreenshot2Punted()
+        captureScreenshot3FilterDialog()
+        captureScreenshot4NotificationDrawer()
+        captureScreenshot5AboutAndLogs()
     }
 
-    private fun captureRemindersListScreenshot() {
+    private fun captureScreenshot1Overview() {
         val app = RuntimeEnvironment.getApplication()
         val prefs = app.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        val initialReminders = setOf("Buy groceries", "Call dentist at 3 PM", "Pay electricity bill")
-        prefs.edit().putStringSet("key_reminders_list", initialReminders).commit()
+        prefs.edit().clear().putStringSet(
+            "key_reminders_list",
+            setOf("Buy groceries #groceries", "Call dentist at 3 PM #health", "Prepare presentation #work", "Review quarterly goals #work")
+        ).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -77,12 +81,69 @@ class ScreenshotGeneratorTest {
         renderAndSaveView(decorView, File(screenshotsDir, "1.png"))
     }
 
-    private fun captureLogsViewScreenshot() {
+    private fun captureScreenshot2Punted() {
+        val app = RuntimeEnvironment.getApplication()
+        val prefs = app.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        prefs.edit().clear()
+            .putStringSet("key_reminders_list", setOf("Call dentist at 3 PM #health", "Prepare presentation #work", "Pay electricity bill #home", "Review budget #finance"))
+            .putLong("snooze_pay electricity bill #home", now + 2 * 3600 * 1000L)
+            .putLong("snooze_review budget #finance", now + 24 * 3600 * 1000L)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val decorView = activity.window.decorView
+        renderAndSaveView(decorView, File(screenshotsDir, "2.png"))
+    }
+
+    private fun captureScreenshot3FilterDialog() {
+        val app = RuntimeEnvironment.getApplication()
+        val prefs = app.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet(
+            "key_reminders_list",
+            setOf("Buy groceries #groceries", "Call dentist #health", "Pay electric bill #home", "Prepare slides #work", "Review budget #finance")
+        ).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnFilter = activity.findViewById<View>(R.id.btn_tags_filter)
+        btnFilter?.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val dialog = ShadowAlertDialog.getLatestDialog()
+        val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
+        renderAndSaveView(viewToRender, File(screenshotsDir, "3.png"))
+    }
+
+    private fun captureScreenshot4NotificationDrawer() {
+        val sbn1 = createMockSbn("com.whatsapp", "WhatsApp", "Meeting with design team at 2 PM")
+        val sbn2 = createMockSbn("com.android.calendar", "Calendar", "Doctor's Appointment at 4 PM")
+        val sbn3 = createMockSbn("com.google.android.gm", "Gmail", "Flight confirmation for Friday")
+        val sbn4 = createMockSbn("com.slack", "Slack", "Code review request for pull request")
+
+        PickNotificationActivity.mockActiveNotifications = arrayOf(sbn1, sbn2, sbn3, sbn4)
+
+        val controller = Robolectric.buildActivity(PickNotificationActivity::class.java).setup()
+        val activity = controller.get()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val dialog = ShadowAlertDialog.getLatestDialog()
+        val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
+
+        renderAndSaveView(viewToRender, File(screenshotsDir, "4.png"))
+    }
+
+    private fun captureScreenshot5AboutAndLogs() {
         val app = RuntimeEnvironment.getApplication()
         AppLogger.clearLogs(app)
-        AppLogger.log(app, "App", "Application started successfully")
-        AppLogger.log(app, "Service", "Notification listener service bound")
+        AppLogger.log(app, "Application", "Application started successfully")
+        AppLogger.log(app, "NotificationListener", "Listener connected and monitoring notifications")
         AppLogger.log(app, "Matcher", "Matched reminder: 'Buy groceries'")
+        AppLogger.log(app, "MainActivity", "Punted reminder for 2 hours")
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -92,24 +153,7 @@ class ScreenshotGeneratorTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         val decorView = activity.window.decorView
-        renderAndSaveView(decorView, File(screenshotsDir, "2.png"))
-    }
-
-    private fun captureNotificationDrawerScreenshot() {
-        val sbn1 = createMockSbn("com.whatsapp", "WhatsApp", "Meeting with design team")
-        val sbn2 = createMockSbn("com.android.calendar", "Calendar", "Doctor's Appointment at 4 PM")
-        val sbn3 = createMockSbn("com.google.android.gm", "Email", "Flight confirmation")
-
-        PickNotificationActivity.mockActiveNotifications = arrayOf(sbn1, sbn2, sbn3)
-
-        val controller = Robolectric.buildActivity(PickNotificationActivity::class.java).setup()
-        val activity = controller.get()
-        shadowOf(Looper.getMainLooper()).idle()
-
-        val dialog = ShadowAlertDialog.getLatestDialog()
-        val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
-
-        renderAndSaveView(viewToRender, File(screenshotsDir, "3.png"))
+        renderAndSaveView(decorView, File(screenshotsDir, "5.png"))
     }
 
     private fun createMockSbn(packageName: String, title: String, text: String): StatusBarNotification {
