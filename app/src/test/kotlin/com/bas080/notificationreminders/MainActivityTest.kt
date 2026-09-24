@@ -577,11 +577,12 @@ class MainActivityTest {
         assertEquals(View.VISIBLE, btnClearSearch.visibility)
         assertEquals(View.GONE, btnSearch.visibility)
 
-        // Position 0 input should be focused and still contain "Task" (not cleared)
+        // Position 0 input should be focused, contain "Task", and selection cursor at position 4 (end)
         val holderTop = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
         assertNotNull(holderTop)
         assertEquals("Task", holderTop!!.reminderInput.text.toString())
         assertTrue("Search input should gain focus when clicking Search button", holderTop.reminderInput.hasFocus())
+        assertEquals(4, holderTop.reminderInput.selectionEnd)
     }
 
     @Test
