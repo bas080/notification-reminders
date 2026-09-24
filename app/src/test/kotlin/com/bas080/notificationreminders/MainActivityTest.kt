@@ -44,7 +44,7 @@ class MainActivityTest {
     fun testInputFiltersRemindersInRealTimeAndAddsOnButtonClick() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -154,7 +154,7 @@ class MainActivityTest {
     fun testExportMarkdownOnlyExportsFilteredReminders() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk #punt", "Clean garage #home", "Fix bike #punt")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Buy milk #punt", "Clean garage #home", "Fix bike #punt")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -190,7 +190,7 @@ class MainActivityTest {
     fun testExportMarkdownWhenFilteredListIsEmptyShowsToast() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk #punt")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Buy milk #punt")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -218,7 +218,7 @@ class MainActivityTest {
     fun testExportButtonOnRemindersListExportsFilteredReminders() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Task 1 #punt", "Task 2 #other")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1 #punt", "Task 2 #other")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -314,7 +314,7 @@ class MainActivityTest {
         assertNotNull(holder)
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
-        assertTrue(holder.txtStatus.text.toString().startsWith("Snoozed • until"))
+        assertTrue(holder.txtStatus.text.toString().startsWith("Punted • until"))
         assertEquals(View.VISIBLE, holder.btnShare.visibility)
     }
 
@@ -342,7 +342,7 @@ class MainActivityTest {
     fun testClearSearchButtonClearsQueryAndResetsList() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Buy milk", "Clean garage")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -531,13 +531,13 @@ class MainActivityTest {
 
         val listView = dialog!!.listView
         assertNotNull("Dialog list view should exist", listView)
-        assertEquals("First option should be Unsnooze", "Unsnooze", listView.adapter.getItem(0))
+        assertEquals("First option should be Unpunt", "Unpunt", listView.adapter.getItem(0))
 
-        // Click "Unsnooze" (index 0)
+        // Click "Unpunt" (index 0)
         shadowOf(listView).performItemClick(0)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        assertEquals("Snooze cancelled", ShadowToast.getTextOfLatestToast())
+        assertEquals("Punt cancelled", ShadowToast.getTextOfLatestToast())
         val updatedSnooze = prefs.getLong("snooze_snoozed item", 0L)
         assertEquals(0L, updatedSnooze)
     }
@@ -576,7 +576,7 @@ class MainActivityTest {
     fun testDoneItemsHiddenFromSearchUnlessSearchContainsHashDone() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Buy bread #done")).commit()
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Buy milk", "Buy bread #done")).commit()
 
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
@@ -708,7 +708,7 @@ class MainActivityTest {
         // Position 2 is now Snoozed Item (Position 1 is SNOOZED header)
         val holderSnoozed = recyclerView.findViewHolderForAdapterPosition(2) as RemindersAdapter.ItemViewHolder
         assertEquals(View.VISIBLE, holderSnoozed.txtStatus.visibility)
-        assertTrue(holderSnoozed.txtStatus.text.toString().startsWith("Snoozed • until"))
+        assertTrue(holderSnoozed.txtStatus.text.toString().startsWith("Punted • until"))
 
         // Unsnooze the item
         val dialogMethod = MainActivity::class.java.getDeclaredMethod("showSnoozeOptionsDialog", String::class.java)

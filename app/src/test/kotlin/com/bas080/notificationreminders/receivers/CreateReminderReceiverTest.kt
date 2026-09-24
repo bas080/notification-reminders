@@ -119,7 +119,7 @@ class CreateReminderReceiverTest {
 
         receiver.onReceive(context, intent)
 
-        assertEquals("Reminder snoozed for 1 hour", ShadowToast.getTextOfLatestToast())
+        assertEquals("Reminder punted for 1 hour", ShadowToast.getTextOfLatestToast())
         val snoozeUntil = ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] ?: 0L
         org.junit.Assert.assertTrue("Snooze timestamp should be in the future", snoozeUntil > System.currentTimeMillis())
     }
@@ -143,7 +143,7 @@ class CreateReminderReceiverTest {
 
         receiver.onReceive(context, intent)
 
-        assertEquals("Reminder snoozed for 15 minutes", ShadowToast.getTextOfLatestToast())
+        assertEquals("Reminder punted for 15 minutes", ShadowToast.getTextOfLatestToast())
 
         val freqPrefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
         val timestamp = freqPrefs.getLong("15m", 0L)
@@ -224,7 +224,7 @@ class CreateReminderReceiverTest {
 
         receiver.onReceive(context, intent)
 
-        assertEquals("Failed to snooze: Invalid duration entered", ShadowToast.getTextOfLatestToast())
+        assertEquals("Failed to punt: Invalid duration entered", ShadowToast.getTextOfLatestToast())
         val snoozeUntil = ReminderNotificationListenerService.lastTriggeredMap["snooze_buy milk"] ?: 0L
         assertEquals(0L, snoozeUntil)
     }

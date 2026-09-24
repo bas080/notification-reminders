@@ -42,7 +42,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
         val topChoices = ReminderNotificationListenerService.getTopSnoozeChoices(this).map { it.toString() }
         val durations = (topChoices + "Custom...").toTypedArray()
 
-        val title = if (targets.size > 1) "Snooze All Reminders" else "Snooze Reminder"
+        val title = if (targets.size > 1) "Punt All Reminders" else "Punt Reminder"
 
         AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(title)
@@ -72,7 +72,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
         }
 
         AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
-            .setTitle(if (targets.size > 1) "Snooze All Reminders" else "Snooze Reminder")
+            .setTitle(if (targets.size > 1) "Punt All Reminders" else "Punt Reminder")
             .setView(input)
             .setPositiveButton(R.string.snooze) { _, _ ->
                 val customInput = input.text.toString().trim()
@@ -117,7 +117,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
 
         ReminderNotificationListenerService.instance?.showStatusNotification()
 
-        com.bas080.notificationreminders.utils.AppLogger.log(this, "SnoozeDialogActivity", "Snoozed $durationLabel via notification swipe dialog")
+        com.bas080.notificationreminders.utils.AppLogger.log(this, "SnoozeDialogActivity", "Punted $durationLabel via notification swipe dialog")
         val toastText = getString(R.string.toast_reminder_snoozed_duration, durationLabel)
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
         finish()
