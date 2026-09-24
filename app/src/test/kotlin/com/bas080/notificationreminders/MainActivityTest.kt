@@ -631,6 +631,37 @@ class MainActivityTest {
     }
 
     @Test
+    fun testMarkedDoneItemRemainsVisibleUntilSearchOrFilterUpdated() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1", "Task 2")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        // Item count initially: 1 create input + 2 active reminders + 1 footer = 4
+        assertEquals(4, recyclerView.adapter!!.itemCount)
+
+        // Mark "Task 1" done
+        val markMethod = MainActivity::class.java.getDeclaredMethod("markReminderDone", String::class.java)
+        markMethod.isAccessible = true
+        markMethod.invoke(activity, "Task 1")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Item count remains 4 because "Task 1 #done" is in recentlyDoneReminders
+        assertEquals(4, recyclerView.adapter!!.itemCount)
+
+        // Updating search query clears recentlyDoneReminders and filters out "Task 1 #done"
+        val inputHolder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+        inputHolder.reminderInput.setText("Task")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+
+        // Item count becomes 3 (1 create input + 1 active "Task 2" + 1 footer)
+        assertEquals(3, recyclerView.adapter!!.itemCount)
+    }
+
+    @Test
     fun testDoneItemsHiddenFromSearchUnlessSearchContainsHashDone() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
