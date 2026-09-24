@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = android.net.Uri.parse("mailto:bas080@hotmail.com")
-            putExtra(Intent.EXTRA_SUBJECT, "Notification Reminders Feedback")
+            putExtra(Intent.EXTRA_SUBJECT, "Punt Feedback")
             putExtra(Intent.EXTRA_TEXT, feedbackBody)
         }
         val chooserIntent = Intent.createChooser(intent, getString(R.string.feedback))
@@ -833,7 +833,7 @@ class MainActivity : AppCompatActivity() {
     private fun showNotificationListenerDialog() {
         AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.app_name)
-            .setMessage("Notification Reminders requires Notification Listener Access to monitor notifications and trigger your reminders.")
+            .setMessage("Punt requires Notification Listener Access to monitor notifications and trigger your reminders.")
             .setPositiveButton("Enable") { _, _ ->
                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                 startActivity(intent)

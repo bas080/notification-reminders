@@ -104,7 +104,7 @@ class CrashReportActivityTest {
         assertNotNull("Target chooser intent should exist", targetIntent)
         assertEquals(Intent.ACTION_SENDTO, targetIntent!!.action)
         assertEquals("mailto:bas080@hotmail.com", targetIntent.data.toString())
-        assertEquals("Notification Reminders Crash Report", targetIntent.getStringExtra(Intent.EXTRA_SUBJECT))
+        assertEquals("Punt Crash Report", targetIntent.getStringExtra(Intent.EXTRA_SUBJECT))
 
         val body = targetIntent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
         assertTrue(body.contains("User comment for send report test"))

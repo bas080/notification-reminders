@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Notification Reminders</string>
+    <string name="app_name">Punt</string>
     <string name="add_reminder">Add Reminder</string>
     <string name="from_text">From Text</string>
     <string name="from_notification">From Notification</string>
@@ -26,7 +26,7 @@
     <string name="edit_reminder">Edit Reminder</string>
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
-    <string name="app_header_title">Notification Reminders</string>
+    <string name="app_header_title">Punt</string>
     <string name="nav_reminders">Reminders</string>
     <string name="nav_about">About</string>
     <string name="nav_logs">Logs</string>
