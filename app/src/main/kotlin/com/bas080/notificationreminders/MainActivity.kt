@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnNavAbout)
         markAsButtonAccessibility(binding.btnClearLogs)
         markAsButtonAccessibility(binding.btnExportMarkdown)
+        markAsButtonAccessibility(binding.btnListExport)
         markAsButtonAccessibility(binding.btnImportMarkdown)
         markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
@@ -139,6 +140,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnExportMarkdown.setOnClickListener {
+            exportRemindersToMarkdown()
+        }
+
+        binding.btnListExport.setOnClickListener {
             exportRemindersToMarkdown()
         }
 
