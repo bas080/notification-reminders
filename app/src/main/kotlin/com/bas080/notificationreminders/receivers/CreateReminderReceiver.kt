@@ -16,8 +16,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
         private const val KEY_REMINDERS = "key_reminders_list"
         private const val PREFS_SNOOZE_FREQ = "snooze_freq_prefs"
 
-        fun canonicalizeSnoozeChoice(input: String?): String? {
-            val raw = input?.trim()?.lowercase() ?: ""
+        fun canonicalizeSingleSnoozeChoice(raw: String): String? {
             if (raw.isEmpty()) return "1h"
 
             when {
@@ -73,7 +72,49 @@ class CreateReminderReceiver : BroadcastReceiver() {
             return null
         }
 
-        fun parseSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String>? {
+        fun canonicalizeSnoozeChoice(input: String?): String? {
+            val raw = input?.trim()?.lowercase() ?: ""
+            if (raw.isEmpty()) return "1h"
+
+            val single = canonicalizeSingleSnoozeChoice(raw)
+            if (single != null) return single
+
+            val rawTokens = raw.split("\\s+".toRegex())
+            if (rawTokens.size >= 2) {
+                val canonicalParts = mutableListOf<String>()
+                var currentMillis = System.currentTimeMillis()
+                var idx = 0
+                while (idx < rawTokens.size) {
+                    var parsed = false
+                    if (idx + 1 < rawTokens.size) {
+                        val combined = "${rawTokens[idx]} ${rawTokens[idx + 1]}"
+                        val res = parseSingleSnoozeDuration(combined, currentMillis)
+                        if (res != null) {
+                            canonicalParts.add(canonicalizeSingleSnoozeChoice(combined) ?: combined)
+                            currentMillis += res.first
+                            idx += 2
+                            parsed = true
+                        }
+                    }
+                    if (!parsed) {
+                        val token = rawTokens[idx]
+                        val res = parseSingleSnoozeDuration(token, currentMillis)
+                        if (res != null) {
+                            canonicalParts.add(canonicalizeSingleSnoozeChoice(token) ?: token)
+                            currentMillis += res.first
+                            idx += 1
+                        } else {
+                            return null
+                        }
+                    }
+                }
+                return canonicalParts.joinToString(" ")
+            }
+
+            return null
+        }
+
+        fun parseSingleSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String>? {
             val raw = input?.trim()?.lowercase() ?: ""
             if (raw.isEmpty()) {
                 return Pair(60 * 60 * 1000L, "1 hour")
@@ -138,6 +179,51 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     "w" -> Pair(num * 7 * 24 * 60 * 60 * 1000L, if (num == 1L) "1 week" else "$num weeks")
                     else -> Pair(num * 60 * 60 * 1000L, if (num == 1L) "1 hour" else "$num hours")
                 }
+            }
+
+            return null
+        }
+
+        fun parseSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String>? {
+            val raw = input?.trim()?.lowercase() ?: ""
+            if (raw.isEmpty()) {
+                return Pair(60 * 60 * 1000L, "1 hour")
+            }
+
+            val single = parseSingleSnoozeDuration(raw, nowMillis)
+            if (single != null) return single
+
+            val rawTokens = raw.split("\\s+".toRegex())
+            if (rawTokens.size >= 2) {
+                var currentMillis = nowMillis
+                var idx = 0
+                while (idx < rawTokens.size) {
+                    var parsed = false
+                    if (idx + 1 < rawTokens.size) {
+                        val combined = "${rawTokens[idx]} ${rawTokens[idx + 1]}"
+                        val res = parseSingleSnoozeDuration(combined, currentMillis)
+                        if (res != null) {
+                            currentMillis += res.first
+                            idx += 2
+                            parsed = true
+                        }
+                    }
+                    if (!parsed) {
+                        val token = rawTokens[idx]
+                        val res = parseSingleSnoozeDuration(token, currentMillis)
+                        if (res != null) {
+                            currentMillis += res.first
+                            idx += 1
+                        } else {
+                            return null
+                        }
+                    }
+                }
+
+                val totalSnoozeMs = currentMillis - nowMillis
+                if (totalSnoozeMs <= 0) return null
+                val durationLabel = com.bas080.notificationreminders.MainActivity.formatSnoozeUntil(currentMillis, nowMillis)
+                return Pair(totalSnoozeMs, durationLabel)
             }
 
             return null
