@@ -565,7 +565,7 @@ class MainActivity : AppCompatActivity() {
         val padding = (16 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             id = R.id.import_input
-            hint = getString(R.string.snooze_custom_hint)
+            hint = CreateReminderReceiver.getSnoozeCustomHint(this@MainActivity)
             setSingleLine(true)
             setPadding(padding, padding / 2, padding, padding / 2)
         }
