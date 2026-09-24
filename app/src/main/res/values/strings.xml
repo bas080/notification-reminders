@@ -51,7 +51,6 @@
     <string name="snooze_status_format">Snoozed • until %s</string>
     <string name="reminders_summary_combined">%1$d active • %2$d snoozed</string>
     <string name="share">Share</string>
-    <string name="attach_screenshot">Attach screenshot</string>
     <string name="active_reminders_count">%d active reminders</string>
     <string name="active_reminder_single">1 active reminder</string>
     <string name="no_active_reminders">No active reminders</string>
