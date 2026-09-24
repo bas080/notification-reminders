@@ -63,53 +63,44 @@
                 android:layout_weight="1" />
 
             <!-- Export Button (Reminders List) -->
-            <TextView
+            <ImageView
                 android:id="@+id/btn_list_export"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/export_markdown"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="6dp"
-                android:layout_marginEnd="4dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_action_share"
+                android:contentDescription="@string/export_markdown"
+                android:padding="3dp"
+                android:layout_marginEnd="6dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
             <!-- Search Focus Button (visible when search input is scrolled out of view) -->
-            <TextView
+            <ImageView
                 android:id="@+id/btn_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Search"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="6dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_action_search"
+                android:contentDescription="Search"
+                android:padding="3dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:visibility="gone"
-                android:background="?attr/selectableItemBackground" />
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
             <!-- Clear Search/Filter Button (visible when search input is in view) -->
-            <TextView
+            <ImageView
                 android:id="@+id/btn_clear_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Clear"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_muted"
-                android:paddingVertical="2dp"
-                android:paddingHorizontal="6dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_action_clear"
+                android:contentDescription="Clear search"
+                android:padding="3dp"
                 android:clickable="false"
                 android:focusable="false"
                 android:enabled="false"
                 android:alpha="0.4"
-                android:background="?attr/selectableItemBackground" />
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
         </LinearLayout>
 
