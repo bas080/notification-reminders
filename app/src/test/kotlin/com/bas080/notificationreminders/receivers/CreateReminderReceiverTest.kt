@@ -273,4 +273,29 @@ class CreateReminderReceiverTest {
         assertEquals("1h", CreateReminderReceiver.canonicalizeSnoozeChoice("1 hour"))
         org.junit.Assert.assertNull(CreateReminderReceiver.canonicalizeSnoozeChoice("5s"))
     }
+
+    @Test
+    fun testParseCompositeSnoozeDuration() {
+        // Fix base timestamp at Monday, October 12, 2026 at 10:00 AM
+        val cal = java.util.Calendar.getInstance().apply {
+            set(2026, java.util.Calendar.OCTOBER, 12, 10, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val nowMillis = cal.timeInMillis
+
+        // "2d 1800": Monday 10:00 AM + 2 days = Wednesday 10:00 AM; then until 18:00 = Wednesday 18:00 (56 hours total)
+        val (ms2d1800, _) = CreateReminderReceiver.parseSnoozeDuration("2d 1800", nowMillis)!!
+        assertEquals(56 * 60 * 60 * 1000L, ms2d1800)
+
+        // "1d 2h 15m": Monday 10:00 AM + 1d 2h 15m = Tuesday 12:15 PM (26 hours 15 mins = 94,500,000 ms)
+        val (msComposite1, _) = CreateReminderReceiver.parseSnoozeDuration("1d 2h 15m", nowMillis)!!
+        assertEquals((26 * 60 * 60 * 1000L) + (15 * 60 * 1000L), msComposite1)
+
+        // "2d 7pm": Monday 10:00 AM + 2d = Wednesday 10:00 AM; then 7pm (19:00) = Wednesday 19:00 (57 hours total)
+        val (ms2d7pm, _) = CreateReminderReceiver.parseSnoozeDuration("2d 7pm", nowMillis)!!
+        assertEquals(57 * 60 * 60 * 1000L, ms2d7pm)
+
+        assertEquals("2d 18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("2d 1800"))
+        assertEquals("1d 2h 15m", CreateReminderReceiver.canonicalizeSnoozeChoice("1d 2h 15m"))
+    }
 }
