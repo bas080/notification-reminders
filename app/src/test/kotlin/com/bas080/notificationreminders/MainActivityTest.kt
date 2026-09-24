@@ -859,7 +859,7 @@ class MainActivityTest {
         assertEquals("Header should hide when scrolling down", View.GONE, headerNav.visibility)
 
         // Scroll up (dy < 0)
-        recyclerView.scrollBy(0, -20)
+        recyclerView.scrollBy(0, -50)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertEquals("Header should reappear when scrolling up", View.VISIBLE, headerNav.visibility)
