@@ -6,6 +6,10 @@
 
 A simple Android application that keeps track of your reminders and alerts you whenever a relevant notification arrives on your device.
 
+## Why "Punt"?
+
+The app is named **Punt** after the verb *to punt*—meaning to defer, postpone, or kick something down the field for later. In Punt, when you are busy or focused on another task, you can easily "punt" (snooze) reminders until a convenient time or until a relevant notification arrives.
+
 ## How It Works
 
 1. **Add Your Reminders**: Easily add reminders directly in the app or quick-add them from your notification shade.

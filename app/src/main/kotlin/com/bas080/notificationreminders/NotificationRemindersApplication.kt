@@ -37,7 +37,19 @@ class NotificationRemindersApplication : Application() {
                     kotlin.system.exitProcess(10)
                 }
             } catch (_: Exception) {
-                defaultHandler?.uncaughtException(thread, throwable)
+                try {
+                    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = android.net.Uri.parse("mailto:bas080@hotmail.com")
+                        putExtra(Intent.EXTRA_SUBJECT, "Punt Crash Report")
+                        putExtra(Intent.EXTRA_TEXT, "Punt encountered an error:\n\n```\n$stackTrace\n```")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(Intent.createChooser(emailIntent, "Send Crash Report").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                } catch (_: Exception) {
+                    defaultHandler?.uncaughtException(thread, throwable)
+                }
             }
         }
     }
