@@ -498,8 +498,12 @@ class MainActivity : AppCompatActivity() {
                 if (position in 1..displayedReminders.size) {
                     val index = position - 1
                     val reminderText = displayedReminders[index]
+                    val isDone = reminderText.contains("#done", ignoreCase = true)
 
-                    if (direction == ItemTouchHelper.LEFT) {
+                    if (isDone) {
+                        // Swiping an already done item permanently deletes it
+                        deleteReminder(reminderText)
+                    } else if (direction == ItemTouchHelper.LEFT) {
                         // Swipe left -> Open Snooze options dialog (with Unsnooze option if snoozed)
                         adapter.notifyItemChanged(position)
                         showSnoozeOptionsDialog(reminderText)
@@ -521,11 +525,42 @@ class MainActivity : AppCompatActivity() {
                 isCurrentlyActive: Boolean
             ) {
                 val itemView = viewHolder.itemView
+                val position = viewHolder.bindingAdapterPosition
+                val isDone = if (position in 1..displayedReminders.size) {
+                    displayedReminders[position - 1].contains("#done", ignoreCase = true)
+                } else false
+
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE && dX != 0f) {
                     val background = ColorDrawable()
                     val icon: Drawable?
 
-                    if (dX > 0) {
+                    if (isDone) {
+                        // Swiping a done item -> Delete icon
+                        background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
+                        if (dX > 0) {
+                            background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
+                        } else {
+                            background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
+                        }
+                        background.draw(c)
+
+                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_delete)
+                        icon?.let {
+                            val margin = (itemView.height - it.intrinsicHeight) / 2
+                            val top = itemView.top + margin
+                            val bottom = top + it.intrinsicHeight
+                            if (dX > 0) {
+                                val left = itemView.left + margin
+                                val right = left + it.intrinsicWidth
+                                it.setBounds(left, top, right, bottom)
+                            } else {
+                                val right = itemView.right - margin
+                                val left = right - it.intrinsicWidth
+                                it.setBounds(left, top, right, bottom)
+                            }
+                            it.draw(c)
+                        }
+                    } else if (dX > 0) {
                         // Swipe Right -> Mark Done (Checkmark icon)
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_surface)
                         background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
@@ -693,6 +728,26 @@ class MainActivity : AppCompatActivity() {
             updateSummaryAndAdapter()
             AppLogger.log(this, "MainActivity", "Undid mark done")
             Toast.makeText(this, "Mark done undone", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun deleteReminder(reminderText: String) {
+        val idx = activeReminders.indexOf(reminderText)
+        if (idx != -1) {
+            activeReminders.removeAt(idx)
+            val trimmed = reminderText.trim().lowercase()
+            ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").remove("screenshot_$trimmed").apply()
+
+            val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            notificationManager?.cancel(notificationId)
+
+            ReminderNotificationListenerService.instance?.showStatusNotification()
+            updateSummaryAndAdapter()
+            AppLogger.log(this, "MainActivity", "Deleted reminder")
+            Toast.makeText(this, R.string.toast_reminder_deleted, Toast.LENGTH_SHORT).show()
         }
     }
 
