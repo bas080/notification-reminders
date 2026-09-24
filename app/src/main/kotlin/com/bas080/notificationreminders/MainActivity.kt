@@ -227,28 +227,52 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showTagsSelectionDialog() {
-        val allTags = extractAllTags()
-        if (allTags.isEmpty()) {
-            Toast.makeText(this, "No tags found in reminders.", Toast.LENGTH_SHORT).show()
-            return
+        val stateOptions = arrayOf("State: Both", "State: Active", "State: Punted")
+        val selectedStateIndex = when (currentFilter) {
+            ReminderFilter.ALL -> 0
+            ReminderFilter.ACTIVE -> 1
+            ReminderFilter.SNOOZED -> 2
         }
 
-        val checkedItems = BooleanArray(allTags.size) { i ->
+        val allTags = extractAllTags()
+
+        val dialogItems = mutableListOf<String>()
+        dialogItems.addAll(stateOptions)
+        dialogItems.addAll(allTags)
+
+        val checkedItems = BooleanArray(dialogItems.size)
+        checkedItems[selectedStateIndex] = true
+
+        for (i in allTags.indices) {
             val tag = allTags[i]
-            currentSearchQuery.contains(tag, ignoreCase = true)
+            checkedItems[stateOptions.size + i] = currentSearchQuery.contains(tag, ignoreCase = true)
         }
 
         AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
-            .setTitle("Filter by Tags")
-            .setMultiChoiceItems(allTags.toTypedArray(), checkedItems) { _, which, isChecked ->
-                checkedItems[which] = isChecked
+            .setTitle("Filter Reminders")
+            .setMultiChoiceItems(dialogItems.toTypedArray(), checkedItems) { _, which, isChecked ->
+                if (which < stateOptions.size) {
+                    if (isChecked) {
+                        for (s in 0 until stateOptions.size) {
+                            checkedItems[s] = (s == which)
+                        }
+                    }
+                } else {
+                    checkedItems[which] = isChecked
+                }
             }
             .setPositiveButton("Apply") { _, _ ->
-                var updatedQuery = currentSearchQuery
+                val stateIdx = (0 until stateOptions.size).firstOrNull { checkedItems[it] } ?: 0
+                currentFilter = when (stateIdx) {
+                    1 -> ReminderFilter.ACTIVE
+                    2 -> ReminderFilter.SNOOZED
+                    else -> ReminderFilter.ALL
+                }
 
+                var updatedQuery = currentSearchQuery
                 for (i in allTags.indices) {
                     val tag = allTags[i]
-                    val isChecked = checkedItems[i]
+                    val isChecked = checkedItems[stateOptions.size + i]
                     val containsTag = updatedQuery.contains(tag, ignoreCase = true)
 
                     if (isChecked && !containsTag) {
@@ -743,11 +767,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSummary() {
+        val stateText = when (currentFilter) {
+            ReminderFilter.ACTIVE -> "Active"
+            ReminderFilter.SNOOZED -> "Punted"
+            ReminderFilter.ALL -> "Both"
+        }
         val selectedTags = Regex("#[a-zA-Z0-9_]+").findAll(currentSearchQuery).map { it.value }.toList()
         if (selectedTags.isEmpty()) {
-            binding.txtSelectedTags.text = "All"
+            binding.txtSelectedTags.text = stateText
         } else {
-            binding.txtSelectedTags.text = selectedTags.joinToString(" ")
+            binding.txtSelectedTags.text = "$stateText • ${selectedTags.joinToString(" ")}"
         }
 
         val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager

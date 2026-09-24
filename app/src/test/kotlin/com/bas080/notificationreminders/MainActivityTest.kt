@@ -373,7 +373,7 @@ class MainActivityTest {
     fun testTagFilterSelectionDialog() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit()
+        prefs.edit().clear()
             .putStringSet("key_reminders_list", setOf("Buy milk #groceries", "Finish report #work"))
             .commit()
 
@@ -385,22 +385,22 @@ class MainActivityTest {
         assertNotNull(btnTagsFilter)
         assertNotNull(txtSelectedTags)
 
-        // Open tags selection dialog
+        // Open filter selection dialog
         btnTagsFilter.performClick()
 
         val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
-        assertNotNull("Tag selection dialog should be shown", dialog)
+        assertNotNull("Filter selection dialog should be shown", dialog)
 
         val listView = dialog!!.listView
         assertNotNull(listView)
-        assertEquals(2, listView.adapter.count)
+        assertEquals(5, listView.adapter.count) // 3 state options + 2 tags
 
-        // Select first tag (#groceries)
-        shadowOf(listView).performItemClick(0)
+        // Select first tag (#groceries at index 3)
+        shadowOf(listView).performItemClick(3)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        assertEquals("#groceries", txtSelectedTags.text.toString())
+        assertEquals("Both • #groceries", txtSelectedTags.text.toString())
     }
 
     @Test
