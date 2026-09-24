@@ -59,6 +59,20 @@
     </LinearLayout>
 
     <ImageView
+        android:id="@+id/btn_attach_screenshot"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_action_image"
+        app:tint="@color/accent"
+        android:contentDescription="@string/attach_screenshot"
+        android:scaleType="centerInside"
+        android:padding="6dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:visibility="gone" />
+
+    <ImageView
         android:id="@+id/btn_share"
         android:layout_width="32dp"
         android:layout_height="32dp"
