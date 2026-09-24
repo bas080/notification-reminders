@@ -150,11 +150,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnClearSearch.setOnClickListener {
-            currentSearchQuery = ""
-            adapter.setSearchQueryText("")
-            val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-            holder?.reminderInput?.setText("")
-            updateSummaryAndAdapter()
+            val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager
+            val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+            val isSearchInputScrolledOut = firstVisible > 0
+
+            if (isSearchInputScrolledOut) {
+                val lastFocused = adapter.lastFocusedPosition
+                binding.remindersList.scrollToPosition(0)
+                binding.remindersList.post {
+                    updateSummary()
+                    val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+                    if (lastFocused != 0 || holder?.reminderInput?.hasFocus() != true) {
+                        holder?.reminderInput?.requestFocus()
+                    }
+                }
+            } else {
+                currentSearchQuery = ""
+                adapter.setSearchQueryText("")
+                val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+                holder?.reminderInput?.setText("")
+                updateSummaryAndAdapter()
+            }
         }
     }
 
@@ -401,6 +417,12 @@ class MainActivity : AppCompatActivity() {
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
         binding.remindersList.adapter = adapter
+        binding.remindersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                updateSummary()
+            }
+        })
     }
 
     private fun setupSwipeGestures() {
@@ -719,16 +741,30 @@ class MainActivity : AppCompatActivity() {
             binding.txtSelectedTags.text = selectedTags.joinToString(" ")
         }
 
-        val hasSearchText = currentSearchQuery.isNotBlank()
-        binding.btnClearSearch.isEnabled = hasSearchText
-        binding.btnClearSearch.isClickable = hasSearchText
-        binding.btnClearSearch.isFocusable = hasSearchText
-        if (hasSearchText) {
+        val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager
+        val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+        val isSearchInputScrolledOut = firstVisible > 0
+
+        if (isSearchInputScrolledOut) {
+            binding.btnClearSearch.text = "Search"
+            binding.btnClearSearch.isEnabled = true
+            binding.btnClearSearch.isClickable = true
+            binding.btnClearSearch.isFocusable = true
             binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.accent))
             binding.btnClearSearch.alpha = 1.0f
         } else {
-            binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
-            binding.btnClearSearch.alpha = 0.4f
+            binding.btnClearSearch.text = "Clear"
+            val hasSearchText = currentSearchQuery.isNotBlank()
+            binding.btnClearSearch.isEnabled = hasSearchText
+            binding.btnClearSearch.isClickable = hasSearchText
+            binding.btnClearSearch.isFocusable = hasSearchText
+            if (hasSearchText) {
+                binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.accent))
+                binding.btnClearSearch.alpha = 1.0f
+            } else {
+                binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
+                binding.btnClearSearch.alpha = 0.4f
+            }
         }
 
         if (displayedReminders.isEmpty()) {
@@ -830,6 +866,7 @@ class RemindersAdapter(
     }
 
     private var currentSearchQueryText: String = ""
+    var lastFocusedPosition: Int = -1
 
     fun setSearchQueryText(query: String) {
         currentSearchQueryText = query
@@ -1007,7 +1044,11 @@ class RemindersAdapter(
                 submitActionWithCancel()
             }
 
-            holder.reminderInput.setOnFocusChangeListener(null)
+            holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    lastFocusedPosition = 0
+                }
+            }
 
             holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
@@ -1061,6 +1102,15 @@ class RemindersAdapter(
                 holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
             } else {
                 holder.txtStatus.visibility = View.GONE
+            }
+
+            holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        lastFocusedPosition = currentPos
+                    }
+                }
             }
 
             val watcher = object : TextWatcher {
