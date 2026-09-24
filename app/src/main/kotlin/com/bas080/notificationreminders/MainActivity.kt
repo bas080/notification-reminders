@@ -815,7 +815,7 @@ class MainActivity : AppCompatActivity() {
             val trimmed = reminderText.trim().lowercase()
             ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-            prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").remove("screenshot_$trimmed").apply()
+            prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
 
             val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
@@ -1137,7 +1137,6 @@ class RemindersAdapter(
     class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val reminderInput: EditText = view.findViewById(R.id.reminder_input)
         val txtStatus: TextView = view.findViewById(R.id.txt_status)
-        val imgScreenshot: ImageView = view.findViewById(R.id.img_screenshot)
         val btnShare: ImageView = view.findViewById(R.id.btn_share)
         val btnAction: ImageView = view.findViewById(R.id.btn_action)
         var textWatcher: TextWatcher? = null
@@ -1253,17 +1252,6 @@ class RemindersAdapter(
             holder.txtStatus.visibility = View.GONE
         }
 
-        val screenshotUriStr = prefs.getString("screenshot_$trimmed", null)
-        if (!screenshotUriStr.isNullOrEmpty()) {
-            holder.imgScreenshot.visibility = View.VISIBLE
-            try {
-                holder.imgScreenshot.setImageURI(android.net.Uri.parse(screenshotUriStr))
-            } catch (_: Exception) {
-                holder.imgScreenshot.visibility = View.GONE
-            }
-        } else {
-            holder.imgScreenshot.visibility = View.GONE
-        }
 
         val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
