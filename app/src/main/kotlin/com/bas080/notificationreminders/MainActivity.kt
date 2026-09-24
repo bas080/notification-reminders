@@ -118,6 +118,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
         markAsButtonAccessibility(binding.btnClearSearch)
+        markAsButtonAccessibility(binding.btnSearch)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -149,28 +150,24 @@ class MainActivity : AppCompatActivity() {
             showTagsSelectionDialog()
         }
 
-        binding.btnClearSearch.setOnClickListener {
-            val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager
-            val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
-            val isSearchInputScrolledOut = firstVisible > 0
-
-            if (isSearchInputScrolledOut) {
-                val lastFocused = adapter.lastFocusedPosition
-                binding.remindersList.scrollToPosition(0)
-                binding.remindersList.post {
-                    updateSummary()
-                    val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-                    if (lastFocused != 0 || holder?.reminderInput?.hasFocus() != true) {
-                        holder?.reminderInput?.requestFocus()
-                    }
-                }
-            } else {
-                currentSearchQuery = ""
-                adapter.setSearchQueryText("")
+        binding.btnSearch.setOnClickListener {
+            val lastFocused = adapter.lastFocusedPosition
+            binding.remindersList.scrollToPosition(0)
+            binding.remindersList.post {
+                updateSummary()
                 val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-                holder?.reminderInput?.setText("")
-                updateSummaryAndAdapter()
+                if (lastFocused != 0 || holder?.reminderInput?.hasFocus() != true) {
+                    holder?.reminderInput?.requestFocus()
+                }
             }
+        }
+
+        binding.btnClearSearch.setOnClickListener {
+            currentSearchQuery = ""
+            adapter.setSearchQueryText("")
+            val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+            holder?.reminderInput?.setText("")
+            updateSummaryAndAdapter()
         }
     }
 
@@ -746,14 +743,12 @@ class MainActivity : AppCompatActivity() {
         val isSearchInputScrolledOut = firstVisible > 0
 
         if (isSearchInputScrolledOut) {
-            binding.btnClearSearch.text = "Search"
-            binding.btnClearSearch.isEnabled = true
-            binding.btnClearSearch.isClickable = true
-            binding.btnClearSearch.isFocusable = true
-            binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.accent))
-            binding.btnClearSearch.alpha = 1.0f
+            binding.btnSearch.visibility = View.VISIBLE
+            binding.btnClearSearch.visibility = View.GONE
         } else {
-            binding.btnClearSearch.text = "Clear"
+            binding.btnSearch.visibility = View.GONE
+            binding.btnClearSearch.visibility = View.VISIBLE
+
             val hasSearchText = currentSearchQuery.isNotBlank()
             binding.btnClearSearch.isEnabled = hasSearchText
             binding.btnClearSearch.isClickable = hasSearchText

@@ -530,21 +530,23 @@ class MainActivityTest {
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+        val btnSearch = activity.findViewById<TextView>(R.id.btn_search)
 
-        // Initially search input is at position 0
-        assertEquals("Clear", btnClearSearch.text.toString())
+        // Initially search input is at position 0: btn_clear_search visible, btn_search gone
+        assertEquals(View.VISIBLE, btnClearSearch.visibility)
+        assertEquals(View.GONE, btnSearch.visibility)
 
         // Scroll list so position 0 is out of view
         recyclerView.scrollToPosition(5)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        // Button text should now be "Search" and enabled
-        assertEquals("Search", btnClearSearch.text.toString())
-        assertTrue("Search button should be enabled when search input is scrolled out", btnClearSearch.isEnabled)
+        // btn_search should now be visible and btn_clear_search gone
+        assertEquals(View.GONE, btnClearSearch.visibility)
+        assertEquals(View.VISIBLE, btnSearch.visibility)
     }
 
     @Test
-    fun testClickingSearchButtonScrollsToTopAndPutsFocusOnSearch() {
+    fun testClickingSearchButtonScrollsToTopAndPutsFocusOnSearchWithoutClearingSearch() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val items = (1..10).map { "Task $it" }.toSet()
@@ -555,24 +557,31 @@ class MainActivityTest {
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
         val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+        val btnSearch = activity.findViewById<TextView>(R.id.btn_search)
+
+        val holder0 = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+        holder0.reminderInput.setText("Task")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
 
         // Scroll down
         recyclerView.scrollToPosition(5)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        assertEquals("Search", btnClearSearch.text.toString())
+        assertEquals(View.VISIBLE, btnSearch.visibility)
 
         // Click "Search" button
-        btnClearSearch.performClick()
+        btnSearch.performClick()
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        // Button converts back to "Clear"
-        assertEquals("Clear", btnClearSearch.text.toString())
+        // btn_clear_search becomes visible again
+        assertEquals(View.VISIBLE, btnClearSearch.visibility)
+        assertEquals(View.GONE, btnSearch.visibility)
 
-        // Position 0 input should be focused
-        val holder = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
-        assertNotNull(holder)
-        assertTrue("Search input should gain focus when clicking Search button", holder!!.reminderInput.hasFocus())
+        // Position 0 input should be focused and still contain "Task" (not cleared)
+        val holderTop = recyclerView.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+        assertNotNull(holderTop)
+        assertEquals("Task", holderTop!!.reminderInput.text.toString())
+        assertTrue("Search input should gain focus when clicking Search button", holderTop.reminderInput.hasFocus())
     }
 
     @Test
