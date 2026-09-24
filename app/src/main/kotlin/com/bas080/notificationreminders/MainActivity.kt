@@ -1212,7 +1212,7 @@ class RemindersAdapter(
             if (isDone) {
                 holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_muted))
                 holder.reminderInput.alpha = 0.5f
-                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
                 holder.btnShare.visibility = View.GONE
                 holder.btnAction.visibility = View.VISIBLE
                 holder.btnAction.setImageResource(R.drawable.ic_action_undo)

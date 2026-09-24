@@ -662,6 +662,11 @@ class MainActivityTest {
         holder.reminderInput.setText("#done")
         shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
         assertEquals("Should show 1 match ('Buy bread #done') when searching '#done'", 3, recyclerView.adapter!!.itemCount) // 1 input + 1 match + 1 footer
+
+        // Verify done item does NOT have STRIKE_THRU_TEXT_FLAG set
+        val doneItemHolder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
+        val isStrikethrough = (doneItemHolder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG) != 0
+        org.junit.Assert.assertFalse("#done items should NOT have strikethrough flag set", isStrikethrough)
     }
 
     @Test
