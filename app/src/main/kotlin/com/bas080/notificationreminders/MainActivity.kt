@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity() {
 
     private var currentFilter = ReminderFilter.ALL
     private var currentSearchQuery = ""
+    private val recentlyDoneReminders = mutableSetOf<String>()
 
 
     private val requestNotificationPermissionLauncher =
@@ -175,6 +176,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnClearSearch.setOnClickListener {
             currentSearchQuery = ""
+            recentlyDoneReminders.clear()
             adapter.setSearchQueryText("")
             val holder = binding.remindersList.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
             holder?.reminderInput?.setText("")
@@ -326,6 +328,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 currentSearchQuery = updatedQuery
+                recentlyDoneReminders.clear()
                 adapter.setSearchQueryText(updatedQuery)
                 updateSummaryAndAdapter()
             }
@@ -436,6 +439,7 @@ class MainActivity : AppCompatActivity() {
                 AppLogger.log(this, "MainActivity", "Created reminder")
                 activeReminders.add(newReminder)
                 currentSearchQuery = ""
+                recentlyDoneReminders.clear()
                 saveRemindersToPrefs()
                 ReminderNotificationListenerService.instance?.postMatchNotification(newReminder)
                 updateSummaryAndAdapter()
@@ -485,6 +489,9 @@ class MainActivity : AppCompatActivity() {
                 }
             },
             onSearchQueryChanged = { query ->
+                if (currentSearchQuery != query) {
+                    recentlyDoneReminders.clear()
+                }
                 currentSearchQuery = query
                 updateSummaryAndAdapter()
             },
@@ -735,6 +742,7 @@ class MainActivity : AppCompatActivity() {
                 "$reminderText #done"
             }
             activeReminders[idx] = doneText
+            recentlyDoneReminders.add(doneText)
             val trimmed = reminderText.trim().lowercase()
             ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
@@ -756,6 +764,7 @@ class MainActivity : AppCompatActivity() {
         if (idx != -1) {
             val cleanText = doneReminderText.replace(Regex("(?i)\\s*#done\\b"), "").trim()
             activeReminders[idx] = cleanText
+            recentlyDoneReminders.remove(doneReminderText)
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
             prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
 
@@ -770,6 +779,7 @@ class MainActivity : AppCompatActivity() {
         val idx = activeReminders.indexOf(reminderText)
         if (idx != -1) {
             activeReminders.removeAt(idx)
+            recentlyDoneReminders.remove(reminderText)
             val trimmed = reminderText.trim().lowercase()
             ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
@@ -830,15 +840,15 @@ class MainActivity : AppCompatActivity() {
 
         val searchContainsDone = currentSearchQuery.contains("#done", ignoreCase = true)
 
-        // 1. Filter items by status tab and #done tag (#done items only shown if search query contains #done)
+        // 1. Filter items by status tab and #done tag (#done items only shown if search query contains #done or if in recentlyDoneReminders)
         val filteredByStatus = when (currentFilter) {
             ReminderFilter.ALL -> activeReminders.filter { reminder ->
                 val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) searchContainsDone else true
+                if (isDone) searchContainsDone || recentlyDoneReminders.contains(reminder) else true
             }
             ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
                 val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) return@filter searchContainsDone
+                if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
@@ -847,7 +857,7 @@ class MainActivity : AppCompatActivity() {
             }
             ReminderFilter.SNOOZED -> activeReminders.filter { reminder ->
                 val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) return@filter searchContainsDone
+                if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
                 val trimmed = reminder.trim().lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
                     if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
