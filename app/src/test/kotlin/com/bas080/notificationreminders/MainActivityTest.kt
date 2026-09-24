@@ -296,7 +296,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testSnoozedReminderDisplaysStatusLabel() {
+    fun testSnoozedReminderDisplaysStatusLabelAndShareButton() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -315,12 +315,12 @@ class MainActivityTest {
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
         assertTrue(holder.txtStatus.text.toString().startsWith("Punted • until"))
-        assertEquals(View.VISIBLE, holder.btnAction.visibility)
-        assertEquals("Cancel punt", holder.btnAction.contentDescription)
+        assertEquals(View.VISIBLE, holder.btnShare.visibility)
+        assertEquals(View.GONE, holder.btnAction.visibility)
     }
 
     @Test
-    fun testUnpuntReminderFromTileUndoButton() {
+    fun testUnpuntReminderMethod() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -332,14 +332,9 @@ class MainActivityTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()
 
-        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val holder = recyclerView.findViewHolderForAdapterPosition(2) as RemindersAdapter.ItemViewHolder
-
-        assertEquals(View.VISIBLE, holder.btnAction.visibility)
-        assertEquals("Cancel punt", holder.btnAction.contentDescription)
-
-        // Click Undo button on punted item card tile
-        holder.btnAction.performClick()
+        val unpuntMethod = MainActivity::class.java.getDeclaredMethod("unpuntReminder", String::class.java)
+        unpuntMethod.isAccessible = true
+        unpuntMethod.invoke(activity, "Punted Task")
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertEquals("Punt cancelled", ShadowToast.getTextOfLatestToast())
