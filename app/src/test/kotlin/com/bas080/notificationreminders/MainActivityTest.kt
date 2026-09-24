@@ -3,6 +3,7 @@ package com.bas080.notificationreminders
 import android.content.Context
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
@@ -230,7 +231,7 @@ class MainActivityTest {
         holder.reminderInput.setText("#punt")
         shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
 
-        val btnListExport = activity.findViewById<TextView>(R.id.btn_list_export)
+        val btnListExport = activity.findViewById<ImageView>(R.id.btn_list_export)
         assertNotNull(btnListExport)
         btnListExport.performClick()
 
@@ -372,7 +373,7 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
+        val btnClearSearch = activity.findViewById<ImageView>(R.id.btn_clear_search)
         assertNotNull(btnClearSearch)
 
         val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
@@ -746,8 +747,8 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
-        val btnSearch = activity.findViewById<TextView>(R.id.btn_search)
+        val btnClearSearch = activity.findViewById<ImageView>(R.id.btn_clear_search)
+        val btnSearch = activity.findViewById<ImageView>(R.id.btn_search)
 
         // Initially search input is at position 0: btn_clear_search visible, btn_search gone
         assertEquals(View.VISIBLE, btnClearSearch.visibility)
@@ -773,8 +774,8 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        val btnClearSearch = activity.findViewById<TextView>(R.id.btn_clear_search)
-        val btnSearch = activity.findViewById<TextView>(R.id.btn_search)
+        val btnClearSearch = activity.findViewById<ImageView>(R.id.btn_clear_search)
+        val btnSearch = activity.findViewById<ImageView>(R.id.btn_search)
 
         val holder0 = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
         holder0.reminderInput.setText("Task")

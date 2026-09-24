@@ -129,6 +129,8 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnImportMarkdown)
         markAsButtonAccessibility(binding.btnFeedback)
         markAsButtonAccessibility(binding.btnTagsFilter)
+        binding.btnListExport.setColorFilter(ContextCompat.getColor(this, R.color.accent))
+        binding.btnSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
         markAsButtonAccessibility(binding.btnClearSearch)
         markAsButtonAccessibility(binding.btnSearch)
 
@@ -952,10 +954,10 @@ class MainActivity : AppCompatActivity() {
             binding.btnClearSearch.isClickable = hasSearchText
             binding.btnClearSearch.isFocusable = hasSearchText
             if (hasSearchText) {
-                binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.accent))
+                binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
                 binding.btnClearSearch.alpha = 1.0f
             } else {
-                binding.btnClearSearch.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
+                binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.text_muted))
                 binding.btnClearSearch.alpha = 0.4f
             }
         }
