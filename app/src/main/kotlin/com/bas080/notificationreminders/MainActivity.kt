@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity() {
     private var currentFilter = ReminderFilter.ALL
     private var currentSearchQuery = ""
 
+
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
             checkAndRequestNotificationListenerPermission()
