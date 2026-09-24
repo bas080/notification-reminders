@@ -27,6 +27,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -109,8 +110,17 @@ class MainActivity : AppCompatActivity() {
         setupSwipeGestures()
         loadReminders()
 
+        setupKeyboardListener()
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
+    }
+
+    private fun setupKeyboardListener() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            binding.headerNavigation.visibility = if (isImeVisible) View.GONE else View.VISIBLE
+            insets
+        }
     }
 
     private fun setupSwipeRefresh() {
