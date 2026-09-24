@@ -760,4 +760,39 @@ class MainActivityTest {
 
         assertEquals("maxLines should expand to Int.MAX_VALUE on focus", Int.MAX_VALUE, holder.reminderInput.maxLines)
     }
+
+    @Test
+    fun testHeaderNavigationHidesOnScrollDownAndReappearsOnScrollUp() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val items = (1..15).map { "Task $it" }.toSet()
+        prefs.edit().clear().putStringSet("key_reminders_list", items).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val headerNav = activity.findViewById<View>(R.id.header_navigation)
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        assertNotNull(headerNav)
+        assertNotNull(recyclerView)
+
+        // Initially at position 0, header is VISIBLE
+        assertEquals(View.VISIBLE, headerNav.visibility)
+
+        // Scroll down list to position 5
+        recyclerView.scrollToPosition(5)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Trigger onScrolled down (dy > 0)
+        recyclerView.scrollBy(0, 50)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Header should hide when scrolling down", View.GONE, headerNav.visibility)
+
+        // Scroll up (dy < 0)
+        recyclerView.scrollBy(0, -20)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("Header should reappear when scrolling up", View.VISIBLE, headerNav.visibility)
+    }
 }
