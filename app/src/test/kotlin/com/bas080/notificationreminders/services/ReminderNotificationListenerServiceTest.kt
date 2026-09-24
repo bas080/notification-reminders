@@ -142,6 +142,11 @@ class ReminderNotificationListenerServiceTest {
         val statusText = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
         assertEquals("1 active • 1 punted", statusText)
 
+        val textLines = statusNotif.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        assertNotNull("Status notification should have text lines for active items", textLines)
+        assertEquals(1, textLines!!.size)
+        assertEquals("Buy milk", textLines[0].toString())
+
         assertNotNull("Content intent should be set on status notification", statusNotif.contentIntent)
         val shadowPendingIntent = Shadows.shadowOf(statusNotif.contentIntent)
         val targetIntent = shadowPendingIntent.savedIntent

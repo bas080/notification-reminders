@@ -295,6 +295,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
             val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
             val savedReminders = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
             val now = System.currentTimeMillis()
+            val activeRemindersList = mutableListOf<String>()
             var activeCount = 0
             var snoozedCount = 0
 
@@ -302,7 +303,8 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 if (reminder.contains("#done", ignoreCase = true)) {
                     continue
                 }
-                val lower = reminder.trim().lowercase()
+                val trimmed = reminder.trim()
+                val lower = trimmed.lowercase()
                 val snoozeUntil = prefs.getLong("snooze_$lower", 0L).let {
                     if (it > 0L) it else (lastTriggeredMap["snooze_$lower"] ?: 0L)
                 }
@@ -310,6 +312,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                     snoozedCount++
                 } else {
                     activeCount++
+                    activeRemindersList.add(trimmed)
                 }
             }
 
@@ -371,7 +374,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_status)
                 .setContentTitle(getString(R.string.add_reminder))
                 .setContentText(statusText)
@@ -382,7 +385,17 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build()
+
+            if (activeRemindersList.isNotEmpty()) {
+                val inboxStyle = NotificationCompat.InboxStyle()
+                for (item in activeRemindersList) {
+                    inboxStyle.addLine(item)
+                }
+                inboxStyle.setSummaryText(statusText)
+                builder.setStyle(inboxStyle)
+            }
+
+            val notification = builder.build()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(
