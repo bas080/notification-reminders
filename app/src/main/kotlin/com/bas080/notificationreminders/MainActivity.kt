@@ -229,13 +229,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun extractAllTags(): List<String> {
         val tagRegex = Regex("#[a-zA-Z0-9_]+")
-        val tagsSet = mutableSetOf<String>()
+        val tagCounts = mutableMapOf<String, Int>()
         for (reminder in activeReminders) {
             tagRegex.findAll(reminder).forEach { match ->
-                tagsSet.add(match.value.lowercase())
+                val tag = match.value.lowercase()
+                tagCounts[tag] = (tagCounts[tag] ?: 0) + 1
             }
         }
-        return tagsSet.sorted()
+        return tagCounts.entries
+            .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .map { it.key }
     }
 
     private fun showTagsSelectionDialog() {
