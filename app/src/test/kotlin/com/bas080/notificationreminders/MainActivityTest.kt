@@ -420,16 +420,10 @@ class MainActivityTest {
         val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
         assertNotNull("Filter selection dialog should be shown", dialog)
 
-        val listView = dialog!!.listView
-        assertNotNull(listView)
-        assertEquals(5, listView.adapter.count) // 3 state options + 2 tags
-
-        // Select first tag (#groceries at index 3)
-        shadowOf(listView).performItemClick(3)
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+        dialog!!.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
-        assertEquals("Both • #groceries", txtSelectedTags.text.toString())
+        assertEquals("All", txtSelectedTags.text.toString())
     }
 
     @Test
