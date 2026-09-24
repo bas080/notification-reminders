@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -75,20 +76,7 @@
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless" />
 
-            <!-- Search Focus Button (visible when search input is scrolled out of view) -->
-            <ImageView
-                android:id="@+id/btn_search"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_action_search"
-                android:contentDescription="Search"
-                android:padding="3dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone"
-                android:background="?attr/selectableItemBackgroundBorderless" />
-
-            <!-- Clear Search/Filter Button (visible when search input is in view) -->
+            <!-- Clear Search/Filter Button -->
             <ImageView
                 android:id="@+id/btn_clear_search"
                 android:layout_width="24dp"
@@ -100,6 +88,50 @@
                 android:focusable="false"
                 android:enabled="false"
                 android:alpha="0.4"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+        </LinearLayout>
+
+        <!-- Fixed Top Search/Add Input Card -->
+        <LinearLayout
+            android:id="@+id/card_search_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_card"
+            android:paddingVertical="10dp"
+            android:paddingHorizontal="12dp"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/search_reminder_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Add or search reminders..."
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="?android:attr/textColorHint"
+                android:textSize="15sp"
+                android:inputType="textMultiLine|textCapSentences"
+                android:scrollHorizontally="false"
+                android:maxLines="4"
+                android:imeOptions="actionDone"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="4dp"
+                android:background="@null" />
+
+            <ImageView
+                android:id="@+id/btn_add_reminder"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_action_add"
+                app:tint="@color/accent"
+                android:contentDescription="@string/add_reminder"
+                android:scaleType="centerInside"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless" />
 
         </LinearLayout>
