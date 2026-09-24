@@ -445,6 +445,11 @@ class MainActivity : AppCompatActivity() {
             onSearchQueryChanged = { query ->
                 currentSearchQuery = query
                 updateSummaryAndAdapter()
+            },
+            onUndoReminderRequested = { index ->
+                if (index in displayedReminders.indices) {
+                    undoMarkDone(displayedReminders[index])
+                }
             }
         )
         binding.remindersList.layoutManager = LinearLayoutManager(this)
@@ -494,9 +499,9 @@ class MainActivity : AppCompatActivity() {
                         adapter.notifyItemChanged(position)
                         showSnoozeOptionsDialog(reminderText)
                     } else if (direction == ItemTouchHelper.RIGHT) {
-                        // Swipe right -> Mark Done confirmation
+                        // Swipe right -> Mark Done immediately without confirmation dialog
                         adapter.notifyItemChanged(position)
-                        showMarkDoneConfirmationDialog(reminderText)
+                        markReminderDone(reminderText)
                     }
                 }
             }
@@ -646,36 +651,48 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
     }
 
-    private fun showMarkDoneConfirmationDialog(reminderText: String) {
-        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
-            .setTitle(R.string.mark_done)
-            .setMessage("Are you sure you want to mark \"$reminderText\" as done?")
-            .setPositiveButton(R.string.mark_done) { _, _ ->
-                val idx = activeReminders.indexOf(reminderText)
-                if (idx != -1) {
-                    val doneText = if (reminderText.contains("#done", ignoreCase = true)) {
-                        reminderText
-                    } else {
-                        "$reminderText #done"
-                    }
-                    activeReminders[idx] = doneText
-                    val trimmed = reminderText.trim().lowercase()
-                    ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
-                    val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-                    prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
-
-                    val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
-                    notificationManager?.cancel(notificationId)
-
-                    ReminderNotificationListenerService.instance?.showStatusNotification()
-                    updateSummaryAndAdapter()
-                    AppLogger.log(this, "MainActivity", "Marked reminder done")
-                    Toast.makeText(this, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
-                }
+    private fun markReminderDone(reminderText: String) {
+        val idx = activeReminders.indexOf(reminderText)
+        if (idx != -1) {
+            val doneText = if (reminderText.contains("#done", ignoreCase = true)) {
+                reminderText
+            } else {
+                "$reminderText #done"
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+            activeReminders[idx] = doneText
+            val trimmed = reminderText.trim().lowercase()
+            ReminderNotificationListenerService.lastTriggeredMap.remove("snooze_$trimmed")
+            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).remove("snooze_$trimmed").apply()
+
+            val notificationId = ReminderNotificationListenerService.getNotificationIdForReminder(reminderText)
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            notificationManager?.cancel(notificationId)
+
+            ReminderNotificationListenerService.instance?.showStatusNotification()
+            updateSummaryAndAdapter()
+            AppLogger.log(this, "MainActivity", "Marked reminder done")
+            Toast.makeText(this, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun undoMarkDone(doneReminderText: String) {
+        val idx = activeReminders.indexOf(doneReminderText)
+        if (idx != -1) {
+            val cleanText = doneReminderText.replace(Regex("(?i)\\s*#done\\b"), "").trim()
+            activeReminders[idx] = cleanText
+            val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+            prefs.edit().putStringSet(KEY_REMINDERS, activeReminders.toSet()).apply()
+
+            ReminderNotificationListenerService.instance?.showStatusNotification()
+            updateSummaryAndAdapter()
+            AppLogger.log(this, "MainActivity", "Undid mark done")
+            Toast.makeText(this, "Mark done undone", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showMarkDoneConfirmationDialog(reminderText: String) {
+        markReminderDone(reminderText)
     }
 
     private fun loadReminders() {
@@ -901,7 +918,8 @@ class RemindersAdapter(
     private val onAddReminder: (String) -> Unit,
     private val onUpdateReminder: (Int, String) -> Unit,
     private val onShareReminderRequested: (Int) -> Unit,
-    private val onSearchQueryChanged: (String) -> Unit = {}
+    private val onSearchQueryChanged: (String) -> Unit = {},
+    private val onUndoReminderRequested: (Int) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -1122,17 +1140,42 @@ class RemindersAdapter(
         } else {
             val reminderIndex = position - 1
             val reminderText = displayedReminders[reminderIndex]
+            val isDone = reminderText.contains("#done", ignoreCase = true)
+
             holder.reminderInput.hint = "Reminder"
             holder.reminderInput.setText(reminderText)
 
-            holder.btnAction.visibility = View.GONE
-            holder.btnShare.visibility = View.VISIBLE
-            holder.btnShare.setOnClickListener {
-                val currentPos = holder.bindingAdapterPosition
-                if (currentPos != RecyclerView.NO_POSITION) {
-                    val idx = currentPos - 1
-                    if (idx in displayedReminders.indices) {
-                        onShareReminderRequested(idx)
+            if (isDone) {
+                holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_muted))
+                holder.reminderInput.alpha = 0.5f
+                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                holder.btnShare.visibility = View.GONE
+                holder.btnAction.visibility = View.VISIBLE
+                holder.btnAction.setImageResource(R.drawable.ic_action_undo)
+                holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
+                holder.btnAction.contentDescription = "Undo mark done"
+                holder.btnAction.setOnClickListener {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        val idx = currentPos - 1
+                        if (idx in displayedReminders.indices) {
+                            onUndoReminderRequested(idx)
+                        }
+                    }
+                }
+            } else {
+                holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+                holder.reminderInput.alpha = 1.0f
+                holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                holder.btnAction.visibility = View.GONE
+                holder.btnShare.visibility = View.VISIBLE
+                holder.btnShare.setOnClickListener {
+                    val currentPos = holder.bindingAdapterPosition
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        val idx = currentPos - 1
+                        if (idx in displayedReminders.indices) {
+                            onShareReminderRequested(idx)
+                        }
                     }
                 }
             }
