@@ -830,6 +830,7 @@ class MainActivityTest {
         assertEquals("maxLines should expand to Int.MAX_VALUE on focus", Int.MAX_VALUE, holder.reminderInput.maxLines)
     }
 
+
     @Test
     fun testHeaderNavigationHidesOnScrollDownAndReappearsOnScrollUp() {
         val context = RuntimeEnvironment.getApplication()

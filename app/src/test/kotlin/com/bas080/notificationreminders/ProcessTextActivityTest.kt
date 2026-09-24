@@ -61,6 +61,7 @@ class ProcessTextActivityTest {
         assertTrue("Activity should be finishing", controller.get().isFinishing)
     }
 
+
     @Test
     fun testProcessTextEmptyShowsFailureToast() {
         val intent = Intent(Intent.ACTION_PROCESS_TEXT).apply {

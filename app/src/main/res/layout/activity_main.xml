@@ -239,6 +239,7 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackground" />
 
+
                 <TextView
                     android:id="@+id/btn_import_markdown"
                     android:layout_width="wrap_content"

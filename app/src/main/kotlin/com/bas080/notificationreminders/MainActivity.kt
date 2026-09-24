@@ -310,6 +310,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(chooserIntent)
     }
 
+
     private fun showImportMarkdownDialog() {
         val padding = (16 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
