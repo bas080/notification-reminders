@@ -120,10 +120,13 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testStatusNotificationTitleTextAndNoContentIntent() {
+    fun testStatusNotificationTitleTextAndContentIntent() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("key_reminders_list", setOf("Buy milk", "Call mom")).commit()
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Buy milk", "Call mom"))
+            .putLong("snooze_call mom", System.currentTimeMillis() + 3600000L)
+            .commit()
 
         Robolectric.buildService(ReminderNotificationListenerService::class.java).create().get()
 
@@ -137,7 +140,13 @@ class ReminderNotificationListenerServiceTest {
         assertEquals("Add Reminder", title)
 
         val statusText = statusNotif.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        assertEquals("2 active reminders", statusText)
+        assertEquals("1 active • 1 punted", statusText)
+
+        assertNotNull("Content intent should be set on status notification", statusNotif.contentIntent)
+        val shadowPendingIntent = Shadows.shadowOf(statusNotif.contentIntent)
+        val targetIntent = shadowPendingIntent.savedIntent
+        assertNotNull("Target intent should not be null", targetIntent)
+        assertEquals("com.bas080.notificationreminders.MainActivity", targetIntent.component?.className)
 
         assertNotNull("Status notification should have actions", statusNotif.actions)
         assertEquals(2, statusNotif.actions.size)
