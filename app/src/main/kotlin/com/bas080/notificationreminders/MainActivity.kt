@@ -1205,6 +1205,14 @@ class RemindersAdapter(
         val reminderText = displayedReminders[reminderIndex]
         val isDone = reminderText.contains("#done", ignoreCase = true)
 
+        val trimmed = reminderText.trim().lowercase()
+        val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+            if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+        }
+        val isSnoozed = !isDone && snoozeUntil > now
+
         holder.reminderInput.hint = "Reminder"
         holder.reminderInput.setText(reminderText)
 
@@ -1223,6 +1231,21 @@ class RemindersAdapter(
                     onUndoReminderRequested(currentPos)
                 }
             }
+        } else if (isSnoozed) {
+            holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            holder.reminderInput.alpha = 1.0f
+            holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            holder.btnShare.visibility = View.GONE
+            holder.btnAction.visibility = View.VISIBLE
+            holder.btnAction.setImageResource(R.drawable.ic_action_undo)
+            holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
+            holder.btnAction.contentDescription = "Undo punt"
+            holder.btnAction.setOnClickListener {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION && currentPos in displayedReminders.indices) {
+                    onUnpuntReminderRequested(currentPos)
+                }
+            }
         } else {
             holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
             holder.reminderInput.alpha = 1.0f
@@ -1237,14 +1260,7 @@ class RemindersAdapter(
             }
         }
 
-        val trimmed = reminderText.trim().lowercase()
-        val prefs = context.getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-        val now = System.currentTimeMillis()
-        val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-            if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
-        }
-
-        if (!isDone && snoozeUntil > now) {
+        if (isSnoozed) {
             val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
             holder.txtStatus.visibility = View.VISIBLE
             holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
