@@ -394,6 +394,30 @@ class MainActivityTest {
     }
 
     @Test
+    fun testTagFilterSelectionDialogSortsMoreCommonTagsFirst() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear()
+            .putStringSet("key_reminders_list", setOf(
+                "Task 1 #zebra",
+                "Task 2 #apple",
+                "Task 3 #zebra",
+                "Task 4 #banana"
+            ))
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val extractMethod = MainActivity::class.java.getDeclaredMethod("extractAllTags")
+        extractMethod.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val tags = extractMethod.invoke(activity) as List<String>
+
+        assertEquals(listOf("#zebra", "#apple", "#banana"), tags)
+    }
+
+    @Test
     fun testTagFilterSelectionDialog() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
