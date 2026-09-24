@@ -273,6 +273,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                         ReminderNotificationListenerService.instance?.postMatchNotification(reminderText)
                         ReminderNotificationListenerService.instance?.showStatusNotification()
                             ?: ReminderNotificationListenerService.startService(context)
+                        com.bas080.notificationreminders.providers.RemindersContentProvider.notifyChange(context)
                         Toast.makeText(context, R.string.toast_reminder_created, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, R.string.toast_reminder_create_failed_empty, Toast.LENGTH_SHORT).show()
@@ -307,6 +308,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     ReminderNotificationListenerService.instance?.showStatusNotification()
                         ?: ReminderNotificationListenerService.startService(context)
 
+                    com.bas080.notificationreminders.providers.RemindersContentProvider.notifyChange(context)
                     Toast.makeText(context, R.string.toast_reminder_done, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -341,6 +343,7 @@ class CreateReminderReceiver : BroadcastReceiver() {
                     notificationManager.cancel(notificationId)
 
                     val toastText = context.getString(R.string.toast_reminder_snoozed_duration, durationLabel)
+                    com.bas080.notificationreminders.providers.RemindersContentProvider.notifyChange(context)
                     Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
                 }
             }
