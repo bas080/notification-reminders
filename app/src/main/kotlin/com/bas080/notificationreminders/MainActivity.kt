@@ -121,6 +121,7 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnTagsFilter)
         markAsButtonAccessibility(binding.btnClearSearch)
         markAsButtonAccessibility(binding.btnSaveJules)
+        markAsButtonAccessibility(binding.btnPickCodebase)
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -163,13 +164,41 @@ class MainActivity : AppCompatActivity() {
         binding.btnSaveJules.setOnClickListener {
             saveJulesSettings()
         }
+
+        binding.btnPickCodebase.setOnClickListener {
+            showPickCodebaseDialog()
+        }
+    }
+
+    private fun showPickCodebaseDialog() {
+        val settings = JulesSettings(this).apply {
+            apiKey = binding.inputJulesApiKey.text.toString()
+        }
+
+        Thread {
+            val codebases = JulesManager.fetchAvailableCodebases(settings)
+            runOnUiThread {
+                if (codebases.isEmpty()) {
+                    Toast.makeText(this, "No codebases retrieved. Check API key or enter manually.", Toast.LENGTH_SHORT).show()
+                } else {
+                    AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
+                        .setTitle("Select Target Codebase")
+                        .setItems(codebases.toTypedArray()) { _, which ->
+                            val chosen = codebases[which]
+                            binding.inputJulesCodebase.setText(chosen)
+                        }
+                        .setNegativeButton(R.string.cancel, null)
+                        .show()
+                }
+            }
+        }.start()
     }
 
     private fun saveJulesSettings() {
         val settings = JulesSettings(this)
         settings.enabled = binding.chkJulesEnable.isChecked
-        settings.baseUrl = binding.inputJulesUrl.text.toString()
         settings.apiKey = binding.inputJulesApiKey.text.toString()
+        settings.selectedCodebase = binding.inputJulesCodebase.text.toString()
         settings.andTags = binding.inputJulesAndTags.text.toString()
         settings.tagReplacements = binding.inputJulesTagReplacements.text.toString()
 
@@ -356,8 +385,8 @@ class MainActivity : AppCompatActivity() {
 
         val julesSettings = JulesSettings(this)
         binding.chkJulesEnable.isChecked = julesSettings.enabled
-        binding.inputJulesUrl.setText(julesSettings.baseUrl)
         binding.inputJulesApiKey.setText(julesSettings.apiKey)
+        binding.inputJulesCodebase.setText(julesSettings.selectedCodebase)
         binding.inputJulesAndTags.setText(julesSettings.andTags)
         binding.inputJulesTagReplacements.setText(julesSettings.tagReplacements)
 
@@ -875,7 +904,7 @@ class RemindersAdapter(
         private val newSnoozeMap: Map<String, Long>
     ) : androidx.recyclerview.widget.DiffUtil.Callback() {
         override fun getOldListSize(): Int = if (oldList.isEmpty()) 1 else oldList.size + 2
-        override fun getNewListSize(): Int = if (newList.isEmpty()) 1 else newList.size + 2
+        override fun getNewListSize(): Int = if (oldList.isEmpty()) 1 else newList.size + 2
 
         private fun getOldType(position: Int): Int {
             if (position == 0) return TYPE_CREATE_INPUT

@@ -8,10 +8,11 @@ class JulesSettings(context: Context) {
     companion object {
         private const val PREFS_NAME = "jules_prefs"
         private const val KEY_ENABLED = "jules_enabled"
-        private const val KEY_BASE_URL = "jules_base_url"
         private const val KEY_API_KEY = "jules_api_key"
         private const val KEY_AND_TAGS = "jules_and_tags"
         private const val KEY_TAG_REPLACEMENTS = "jules_tag_replacements"
+        private const val KEY_SELECTED_CODEBASE = "jules_selected_codebase"
+        const val DEFAULT_BASE_URL = "https://api.jules.ai"
     }
 
     private val prefs: SharedPreferences =
@@ -21,9 +22,8 @@ class JulesSettings(context: Context) {
         get() = prefs.getBoolean(KEY_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_ENABLED, value).apply()
 
-    var baseUrl: String
-        get() = prefs.getString(KEY_BASE_URL, null)?.takeIf { it.isNotBlank() } ?: "https://api.jules.ai"
-        set(value) = prefs.edit().putString(KEY_BASE_URL, value.trim()).apply()
+    val baseUrl: String
+        get() = DEFAULT_BASE_URL
 
     var apiKey: String
         get() = prefs.getString(KEY_API_KEY, "") ?: ""
@@ -36,6 +36,10 @@ class JulesSettings(context: Context) {
     var tagReplacements: String
         get() = prefs.getString(KEY_TAG_REPLACEMENTS, "") ?: ""
         set(value) = prefs.edit().putString(KEY_TAG_REPLACEMENTS, value.trim()).apply()
+
+    var selectedCodebase: String
+        get() = prefs.getString(KEY_SELECTED_CODEBASE, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_SELECTED_CODEBASE, value.trim()).apply()
 
     /**
      * Parses andTags string into a list of lowercase tag tokens (e.g. ["#jules", "#todo"]).

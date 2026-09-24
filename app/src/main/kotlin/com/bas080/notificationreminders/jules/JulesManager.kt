@@ -1,12 +1,14 @@
 package com.bas080.notificationreminders.jules
 
 import android.content.Context
+import com.bas080.notificationreminders.services.ReminderNotificationListenerService
 import com.bas080.notificationreminders.utils.AppLogger
 import java.io.BufferedReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
+import org.json.JSONArray
 import org.json.JSONObject
 
 object JulesManager {
@@ -65,7 +67,7 @@ object JulesManager {
 
         var result = reminderText
         for ((tag, replacement) in effectiveReplacements) {
-            val tagPattern = Regex("(?i)\\b${Regex.escape(tag)}\\b|${Regex.escape(tag)}")
+            val tagPattern = Regex("(?i)(?<=^|\\s)${Regex.escape(tag)}(?=\\s|$)")
             if (replacement.isNotBlank()) {
                 result = result.replace(tagPattern, replacement)
             } else {
@@ -120,6 +122,7 @@ object JulesManager {
                                     latestSavedList.removeAt(idx)
                                 }
                                 prefs.edit().putStringSet(KEY_REMINDERS, latestSavedList.toSet()).apply()
+                                ReminderNotificationListenerService.instance?.showStatusNotification()
                             }
 
                             AppLogger.log(context, "JulesManager", "Task sent to Jules: '$targetReminder' -> '$updatedReminder'")
@@ -167,6 +170,62 @@ object JulesManager {
     }
 
     /**
+     * Fetches available codebases from Jules API endpoint.
+     */
+    fun fetchAvailableCodebases(settings: JulesSettings): List<String> {
+        val urlStr = "${settings.baseUrl.trimEnd('/')}/v1/codebases"
+        val url = URL(urlStr)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "GET"
+        conn.connectTimeout = 5000
+        conn.readTimeout = 5000
+        if (settings.apiKey.isNotBlank()) {
+            conn.setRequestProperty("Authorization", "Bearer ${settings.apiKey}")
+        }
+
+        return try {
+            val responseCode = conn.responseCode
+            if (responseCode in 200..299) {
+                val responseText = conn.inputStream.bufferedReader().use(BufferedReader::readText)
+                val codebases = mutableListOf<String>()
+                if (responseText.trim().startsWith("[")) {
+                    val array = JSONArray(responseText)
+                    for (i in 0 until array.length()) {
+                        val item = array.opt(i)
+                        if (item is JSONObject) {
+                            val name = item.optString("name", item.optString("id", ""))
+                            if (name.isNotBlank()) codebases.add(name)
+                        } else if (item is String && item.isNotBlank()) {
+                            codebases.add(item)
+                        }
+                    }
+                } else if (responseText.trim().startsWith("{")) {
+                    val obj = JSONObject(responseText)
+                    val array = obj.optJSONArray("codebases") ?: obj.optJSONArray("sources") ?: obj.optJSONArray("projects")
+                    if (array != null) {
+                        for (i in 0 until array.length()) {
+                            val item = array.opt(i)
+                            if (item is JSONObject) {
+                                val name = item.optString("name", item.optString("id", ""))
+                                if (name.isNotBlank()) codebases.add(name)
+                            } else if (item is String && item.isNotBlank()) {
+                                codebases.add(item)
+                            }
+                        }
+                    }
+                }
+                codebases.distinct()
+            } else {
+                emptyList()
+            }
+        } catch (_: Exception) {
+            emptyList()
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /**
      * Sends a reminder task to the latest Jules session via HTTP POST request.
      */
     fun sendTaskToSession(settings: JulesSettings, taskText: String): Boolean {
@@ -185,6 +244,9 @@ object JulesManager {
         val jsonBody = JSONObject().apply {
             put("task", taskText)
             put("content", taskText)
+            if (settings.selectedCodebase.isNotBlank()) {
+                put("codebase", settings.selectedCodebase)
+            }
         }
 
         return try {

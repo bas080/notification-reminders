@@ -81,11 +81,15 @@ class JulesManagerTest {
     }
 
     @Test
-    fun testJulesSettingsParsing() {
+    fun testJulesSettingsParsingAndSelectedCodebase() {
         val settings = JulesSettings(context).apply {
             andTags = "#jules #todo #backend"
             tagReplacements = "#jules -> #in-progress\n#todo -> \n#backend -> #done"
+            selectedCodebase = "my-repo"
         }
+
+        assertEquals(JulesSettings.DEFAULT_BASE_URL, settings.baseUrl)
+        assertEquals("my-repo", settings.selectedCodebase)
 
         val parsedAndTags = settings.getParsedAndTags()
         assertEquals(listOf("#jules", "#todo", "#backend"), parsedAndTags)
