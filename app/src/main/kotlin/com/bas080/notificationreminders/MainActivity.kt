@@ -606,7 +606,7 @@ class MainActivity : AppCompatActivity() {
         ReminderNotificationListenerService.instance?.showStatusNotification()
         updateSummaryAndAdapter()
 
-        AppLogger.log(this, "MainActivity", "Snoozed reminder for $durationLabel")
+        AppLogger.log(this, "MainActivity", "Punted reminder for $durationLabel")
         val toastText = getString(R.string.toast_reminder_snoozed_duration, durationLabel)
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
     }
@@ -995,7 +995,7 @@ class RemindersAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is HeaderViewHolder) {
-            holder.txtHeaderTitle.text = "SNOOZED"
+            holder.txtHeaderTitle.text = "PUNTED"
             return
         }
         if (holder !is ItemViewHolder) return

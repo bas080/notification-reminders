@@ -41,7 +41,7 @@ class SnoozeDialogActivityTest {
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertTrue("Activity should be finishing after snooze choice", activity.isFinishing)
-        assertTrue("Toast should indicate reminder snoozed", ShadowToast.getTextOfLatestToast().startsWith("Reminder snoozed for"))
+        assertTrue("Toast should indicate reminder punted", ShadowToast.getTextOfLatestToast().startsWith("Reminder punted for"))
 
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = prefs.getLong("snooze_buy milk", 0L)
