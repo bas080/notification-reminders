@@ -11,8 +11,8 @@ android {
         applicationId = "com.bas080.notificationreminders"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.0.2"
+        versionCode = 5
+        versionName = "0.0.3"
         resourceConfigurations.addAll(listOf("en"))
     }
 
