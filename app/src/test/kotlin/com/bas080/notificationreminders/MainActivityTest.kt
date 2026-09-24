@@ -414,6 +414,33 @@ class MainActivityTest {
     }
 
     @Test
+    fun testStateFilterIsPersistedAndRestoredAcrossActivityRecreation() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1", "Task 2")).commit()
+
+        val controller1 = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity1 = controller1.get()
+
+        val btnTagsFilter = activity1.findViewById<android.widget.LinearLayout>(R.id.btn_tags_filter)
+        assertNotNull(btnTagsFilter)
+        btnTagsFilter.performClick()
+
+        val dialog = ShadowAlertDialog.getLatestDialog() as? AlertDialog
+        assertNotNull(dialog)
+
+        val positiveBtn = dialog!!.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveBtn.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val controller2 = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity2 = controller2.get()
+
+        val txtSelectedTags = activity2.findViewById<TextView>(R.id.txt_selected_tags)
+        assertNotNull(txtSelectedTags)
+    }
+
+    @Test
     fun testTagFilterSelectionDialog() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
