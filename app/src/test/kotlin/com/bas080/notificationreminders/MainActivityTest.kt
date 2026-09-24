@@ -897,4 +897,56 @@ class MainActivityTest {
         // Verify setup executes cleanly
         method.invoke(activity)
     }
+
+    @Test
+    fun testTagFrequencySortingInExtractAllTags() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1 #rare", "Task 2 #common", "Task 3 #common")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val extractMethod = MainActivity::class.java.getDeclaredMethod("extractAllTags")
+        extractMethod.isAccessible = true
+
+        @Suppress("UNCHECKED_CAST")
+        val tags = extractMethod.invoke(activity) as List<String>
+
+        assertEquals(2, tags.size)
+        assertEquals("#common", tags[0])
+        assertEquals("#rare", tags[1])
+    }
+
+    @Test
+    fun testSwipeRefreshClearsRecentlyDoneReminders() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val swipeRefresh = activity.findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipe_refresh_layout)
+        assertNotNull(swipeRefresh)
+
+        // Mark "Task 1" done -> remains in list
+        val markMethod = MainActivity::class.java.getDeclaredMethod("markReminderDone", String::class.java)
+        markMethod.isAccessible = true
+        markMethod.invoke(activity, "Task 1")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals(3, recyclerView.adapter!!.itemCount) // 1 input + 1 done + 1 footer
+
+        // Pull down to refresh -> clears recentlyDoneReminders
+        val listenerField = androidx.swiperefreshlayout.widget.SwipeRefreshLayout::class.java.getDeclaredField("mListener")
+        listenerField.isAccessible = true
+        val onRefreshListener = listenerField.get(swipeRefresh) as? androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+        assertNotNull(onRefreshListener)
+        onRefreshListener!!.onRefresh()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals(1, recyclerView.adapter!!.itemCount) // 1 input (done task hidden, empty state view VISIBLE)
+    }
 }
