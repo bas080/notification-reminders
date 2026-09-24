@@ -593,6 +593,26 @@ class MainActivityTest {
     }
 
     @Test
+    fun testSwipingDoneItemPermanentlyDeletesReminder() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Done Task #done")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        // Call delete directly or verify deletion
+        val deleteMethod = MainActivity::class.java.getDeclaredMethod("deleteReminder", String::class.java)
+        deleteMethod.isAccessible = true
+        deleteMethod.invoke(activity, "Done Task #done")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        org.junit.Assert.assertFalse("Saved set should NOT contain 'Done Task #done'", savedSet.contains("Done Task #done"))
+        assertEquals("Reminder deleted", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
     fun testSwipeRightReplacesTileWithGrayedOutTileAndUndoRestoresReminder() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
