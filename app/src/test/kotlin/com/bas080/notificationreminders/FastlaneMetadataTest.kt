@@ -54,8 +54,8 @@ class FastlaneMetadataTest {
 
     @Test
     fun testChangelogExistsForVersionCode() {
-        val changelogFile = File(metadataDir, "changelogs/3.txt")
-        assertTrue("changelogs/3.txt should exist for versionCode = 3", changelogFile.exists())
+        val changelogFile = File(metadataDir, "changelogs/5.txt")
+        assertTrue("changelogs/5.txt should exist for versionCode = 5", changelogFile.exists())
         val text = changelogFile.readText().trim()
         assertTrue("Changelog should not be empty", text.isNotEmpty())
         assertTrue("Changelog size should be under 500 bytes", changelogFile.length() < 500)
