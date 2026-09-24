@@ -27,7 +27,7 @@
     <string name="delete_reminder">Delete</string>
     <string name="mark_done">Mark Done</string>
     <string name="app_header_title">Punt</string>
-    <string name="nav_reminders">Reminders</string>
+    <string name="nav_reminders">Edit reminders</string>
     <string name="nav_about">About</string>
     <string name="nav_logs">Logs</string>
     <string name="clear_logs">Clear Logs</string>
