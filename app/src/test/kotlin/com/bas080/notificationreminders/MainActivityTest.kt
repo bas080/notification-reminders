@@ -625,4 +625,22 @@ class MainActivityTest {
         val holderUnsnoozed = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
         assertEquals(View.GONE, holderUnsnoozed.txtStatus.visibility)
     }
+
+    @Test
+    fun testAttachedScreenshotIsDisplayedOnReminderCard() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putStringSet("key_reminders_list", setOf("Task with image"))
+            .putString("screenshot_task with image", "file:///tmp/screenshot.png")
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
+
+        assertEquals(View.VISIBLE, holder.imgScreenshot.visibility)
+    }
 }
