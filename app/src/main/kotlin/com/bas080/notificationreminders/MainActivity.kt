@@ -1048,6 +1048,10 @@ class RemindersAdapter(
         val viewType = getItemViewType(position)
         val context = holder.itemView.context
 
+        holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
+            holder.reminderInput.maxLines = if (hasFocus) Int.MAX_VALUE else 4
+        }
+
         if (viewType == TYPE_CREATE_INPUT) {
             holder.reminderInput.hint = "Add or search reminders..."
             holder.txtStatus.visibility = View.GONE
