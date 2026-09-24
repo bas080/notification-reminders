@@ -511,6 +511,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSwipeGestures() {
         val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float = 0.75f
+
+            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 3f
+
             override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
                 if (viewHolder.itemViewType != RemindersAdapter.TYPE_ACTIVE_REMINDER) {
                     return 0 // Disable swipe on Create Input Row, Snoozed Section Header, and Footer Instructions
