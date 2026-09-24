@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_REMINDERS = "reminders_prefs"
         private const val KEY_REMINDERS = "key_reminders_list"
+        private const val KEY_REMINDER_FILTER = "key_reminder_filter"
         private const val PREFS_SNOOZE_FREQ = "snooze_freq_prefs"
 
         fun formatSnoozeUntil(snoozeUntil: Long, now: Long = System.currentTimeMillis()): String {
@@ -360,6 +361,11 @@ class MainActivity : AppCompatActivity() {
                     rbPunted.isChecked -> ReminderFilter.SNOOZED
                     else -> ReminderFilter.ALL
                 }
+
+                getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_REMINDER_FILTER, currentFilter.name)
+                    .apply()
 
                 var updatedQuery = currentSearchQuery
                 for (i in allTags.indices) {
@@ -827,6 +833,12 @@ class MainActivity : AppCompatActivity() {
     private fun loadReminders() {
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val savedSet = prefs.getStringSet(KEY_REMINDERS, emptySet()) ?: emptySet()
+        val savedFilterName = prefs.getString(KEY_REMINDER_FILTER, ReminderFilter.ALL.name)
+        currentFilter = try {
+            ReminderFilter.valueOf(savedFilterName ?: ReminderFilter.ALL.name)
+        } catch (_: Exception) {
+            ReminderFilter.ALL
+        }
         activeReminders.clear()
         activeReminders.addAll(savedSet)
         updateSummaryAndAdapter()
