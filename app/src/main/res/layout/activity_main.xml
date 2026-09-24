@@ -101,7 +101,23 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
-            <!-- Clear Search/Filter Button -->
+            <!-- Search Focus Button (visible when search input is scrolled out of view) -->
+            <TextView
+                android:id="@+id/btn_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Search"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone"
+                android:background="?attr/selectableItemBackground" />
+
+            <!-- Clear Search/Filter Button (visible when search input is in view) -->
             <TextView
                 android:id="@+id/btn_clear_search"
                 android:layout_width="wrap_content"
