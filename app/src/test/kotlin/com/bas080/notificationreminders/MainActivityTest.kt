@@ -742,4 +742,22 @@ class MainActivityTest {
 
         assertEquals(View.VISIBLE, holder.imgScreenshot.visibility)
     }
+
+    @Test
+    fun testReminderInputExpandsMaxLinesOnFocus() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Multi-line task")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(1) as RemindersAdapter.ItemViewHolder
+
+        holder.reminderInput.requestFocus()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals("maxLines should expand to Int.MAX_VALUE on focus", Int.MAX_VALUE, holder.reminderInput.maxLines)
+    }
 }
