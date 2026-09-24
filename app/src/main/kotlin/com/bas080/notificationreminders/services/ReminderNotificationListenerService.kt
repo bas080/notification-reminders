@@ -226,28 +226,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 sharePendingIntent
             ).build()
 
-            val singleSwipeIntent = Intent(this, com.bas080.notificationreminders.SnoozeDialogActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(com.bas080.notificationreminders.SnoozeDialogActivity.EXTRA_REMINDER_TEXT, matchedReminder)
-            }
-            val singleSwipePendingIntent = PendingIntent.getActivity(
-                this,
-                notificationId + 10000,
-                singleSwipeIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val groupSwipeIntent = Intent(this, com.bas080.notificationreminders.SnoozeDialogActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(com.bas080.notificationreminders.SnoozeDialogActivity.EXTRA_REMINDER_LIST, activePostedReminders.toTypedArray())
-            }
-            val groupSwipePendingIntent = PendingIntent.getActivity(
-                this,
-                SUMMARY_NOTIFICATION_ID + 10000,
-                groupSwipeIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
             val priorityVal = if (isHighPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT
 
             val matchNotification = NotificationCompat.Builder(this, MATCH_CHANNEL_ID)
@@ -256,7 +234,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setAutoCancel(true)
                 .addAction(doneAction)
                 .addAction(shareAction)
-                .setDeleteIntent(singleSwipePendingIntent)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setPriority(priorityVal)
@@ -267,7 +244,6 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 .setContentTitle(getString(R.string.app_name))
                 .setStyle(NotificationCompat.InboxStyle().setSummaryText("Matched Reminders"))
                 .setAutoCancel(false)
-                .setDeleteIntent(groupSwipePendingIntent)
                 .setGroup(GROUP_KEY_REMINDERS)
                 .setGroupSummary(true)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)

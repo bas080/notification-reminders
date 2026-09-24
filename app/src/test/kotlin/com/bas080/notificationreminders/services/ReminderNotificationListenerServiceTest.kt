@@ -102,6 +102,7 @@ class ReminderNotificationListenerServiceTest {
             "Summary notification should NOT have FLAG_AUTO_CANCEL set",
             (summaryNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
         )
+        org.junit.Assert.assertNull("Summary notification should not have a deleteIntent", summaryNotif.deleteIntent)
 
         val matchedNotifId = ReminderNotificationListenerService.getNotificationIdForReminder("buy milk")
         val matchedNotif = shadowNM.getNotification(matchedNotifId)
@@ -110,6 +111,7 @@ class ReminderNotificationListenerServiceTest {
             "Individual match notification should have FLAG_AUTO_CANCEL set",
             (matchedNotif.flags and Notification.FLAG_AUTO_CANCEL) != 0
         )
+        org.junit.Assert.assertNull("Matched notification should not have a deleteIntent", matchedNotif.deleteIntent)
         assertEquals("buy milk", matchedNotif.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString())
         assertTrue(
             "Matched notification should not contain matched notification content in text",
