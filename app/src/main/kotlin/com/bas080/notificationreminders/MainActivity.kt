@@ -651,6 +651,7 @@ class MainActivity : AppCompatActivity() {
         if (updateStatusNotification) {
             ReminderNotificationListenerService.instance?.showStatusNotification()
         }
+        com.bas080.notificationreminders.providers.RemindersContentProvider.notifyChange(this)
     }
 
     private fun updateSummaryAndAdapter() {
@@ -866,7 +867,6 @@ class RemindersAdapter(
     }
 
     private var currentSearchQueryText: String = ""
-    var lastFocusedPosition: Int = -1
 
     fun setSearchQueryText(query: String) {
         currentSearchQueryText = query
@@ -1047,12 +1047,6 @@ class RemindersAdapter(
                 submitActionWithCancel()
             }
 
-            holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    lastFocusedPosition = 0
-                }
-            }
-
             holder.reminderInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
                     submitActionWithCancel()
@@ -1105,15 +1099,6 @@ class RemindersAdapter(
                 holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
             } else {
                 holder.txtStatus.visibility = View.GONE
-            }
-
-            holder.reminderInput.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    val currentPos = holder.bindingAdapterPosition
-                    if (currentPos != RecyclerView.NO_POSITION) {
-                        lastFocusedPosition = currentPos
-                    }
-                }
             }
 
             val watcher = object : TextWatcher {
