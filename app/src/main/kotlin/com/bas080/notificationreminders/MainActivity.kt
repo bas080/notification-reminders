@@ -1299,20 +1299,6 @@ class RemindersAdapter(
                 val formattedTime = MainActivity.formatSnoozeUntil(snoozeUntil, now)
                 holder.txtStatus.visibility = View.VISIBLE
                 holder.txtStatus.text = context.getString(R.string.snooze_status_format, formattedTime)
-                holder.btnShare.visibility = View.GONE
-                holder.btnAction.visibility = View.VISIBLE
-                holder.btnAction.setImageResource(R.drawable.ic_action_undo)
-                holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
-                holder.btnAction.contentDescription = "Cancel punt"
-                holder.btnAction.setOnClickListener {
-                    val currentPos = holder.bindingAdapterPosition
-                    if (currentPos != RecyclerView.NO_POSITION) {
-                        val idx = currentPos - 1
-                        if (idx in displayedReminders.indices) {
-                            onUnpuntReminderRequested(idx)
-                        }
-                    }
-                }
             } else {
                 holder.txtStatus.visibility = View.GONE
             }
