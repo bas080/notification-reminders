@@ -261,7 +261,7 @@ class ReminderNotificationListenerService : NotificationListenerService() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = getString(R.string.app_name)
-            val descriptionText = "Status notification for Notification Reminders"
+            val descriptionText = "Status notification for Punt"
             val statusChannel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW).apply {
                 description = descriptionText
             }

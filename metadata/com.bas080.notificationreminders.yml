@@ -6,10 +6,10 @@ AuthorWebSite: https://github.com/bas080
 SourceCode: https://github.com/bas080/notification-reminders
 IssueTracker: https://github.com/bas080/notification-reminders/issues
 
-AutoName: Notification Reminders
+AutoName: Punt
 Summary: Smart Android notification monitor and reminder alerts
 Description: |-
-  Notification Reminders is a lightweight, open-source Android application that monitors incoming device notifications and intelligently matches them against your custom active reminders.
+  Punt is a lightweight, open-source Android application that monitors incoming device notifications and intelligently matches them against your custom active reminders.
 
 RepoType: git
 Repo: https://github.com/bas080/notification-reminders.git

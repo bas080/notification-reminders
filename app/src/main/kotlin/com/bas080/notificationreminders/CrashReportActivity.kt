@@ -119,7 +119,7 @@ class CrashReportActivity : AppCompatActivity() {
     private fun sendEmail(reportText: String) {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:$REPORT_EMAIL")
-            putExtra(Intent.EXTRA_SUBJECT, "Notification Reminders Crash Report")
+            putExtra(Intent.EXTRA_SUBJECT, "Punt Crash Report")
             putExtra(Intent.EXTRA_TEXT, reportText)
         }
         try {
