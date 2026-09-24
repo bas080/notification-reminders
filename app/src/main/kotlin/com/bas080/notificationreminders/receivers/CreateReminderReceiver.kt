@@ -114,6 +114,15 @@ class CreateReminderReceiver : BroadcastReceiver() {
             return null
         }
 
+        fun getSnoozeCustomHint(context: Context): String {
+            val df = android.text.format.DateFormat.getDateFormat(context)
+            val sampleCal = java.util.Calendar.getInstance().apply {
+                set(2026, java.util.Calendar.OCTOBER, 25)
+            }
+            val dateSample = try { df.format(sampleCal.time) } catch (_: Exception) { "10/25/2026" }
+            return "e.g. 15m, 18:00, Mon, or $dateSample"
+        }
+
         fun parseSingleSnoozeDuration(input: String?, nowMillis: Long = System.currentTimeMillis()): Pair<Long, String>? {
             val raw = input?.trim()?.lowercase() ?: ""
             if (raw.isEmpty()) {
@@ -136,6 +145,11 @@ class CreateReminderReceiver : BroadcastReceiver() {
             val weekdayResult = parseWeekdaySnooze(raw, nowMillis)
             if (weekdayResult != null) {
                 return weekdayResult.first
+            }
+
+            val dateResult = parseDateSnooze(raw, nowMillis)
+            if (dateResult != null) {
+                return dateResult
             }
 
             val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(raw)
@@ -320,6 +334,88 @@ class CreateReminderReceiver : BroadcastReceiver() {
             val canonicalChoice = if (timeSpecified) "$shortAbbr $timeFormatted" else shortAbbr
 
             return Pair(Pair(snoozeMs, durationLabel), canonicalChoice)
+        }
+
+        private fun parseDateSnooze(raw: String, nowMillis: Long): Pair<Long, String>? {
+            val tokens = raw.trim().split("\\s+".toRegex())
+            if (tokens.isEmpty()) return null
+
+            val datePart = tokens[0]
+            val timePart = if (tokens.size > 1) tokens.subList(1, tokens.size).joinToString(" ") else ""
+
+            val dateFormats = listOfNotNull(
+                java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("M/d/yyyy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("d/M/yyyy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("MM/dd/yy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault()),
+                java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault()),
+                java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT, java.util.Locale.getDefault()),
+                java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.getDefault())
+            )
+
+            var parsedDate: java.util.Date? = null
+            for (df in dateFormats) {
+                try {
+                    df.isLenient = false
+                    parsedDate = df.parse(datePart)
+                    if (parsedDate != null) break
+                } catch (_: Exception) {}
+            }
+
+            if (parsedDate == null) return null
+
+            val cal = java.util.Calendar.getInstance().apply {
+                time = parsedDate
+            }
+
+            var targetHour = 9
+            var targetMin = 0
+
+            if (timePart.isNotEmpty()) {
+                val amPmMatch = Regex("^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$").find(timePart)
+                if (amPmMatch != null) {
+                    var hour = amPmMatch.groupValues[1].toInt()
+                    val min = amPmMatch.groupValues[2].let { if (it.isEmpty()) 0 else it.toInt() }
+                    val amPm = amPmMatch.groupValues[3]
+                    if (hour in 1..12 && min in 0..59) {
+                        if (amPm == "pm" && hour < 12) hour += 12
+                        if (amPm == "am" && hour == 12) hour = 0
+                        targetHour = hour
+                        targetMin = min
+                    } else return null
+                } else {
+                    val timeColonMatch = Regex("^(\\d{1,2}):(\\d{2})$").find(timePart)
+                    if (timeColonMatch != null) {
+                        val hour = timeColonMatch.groupValues[1].toInt()
+                        val min = timeColonMatch.groupValues[2].toInt()
+                        if (hour in 0..23 && min in 0..59) {
+                            targetHour = hour
+                            targetMin = min
+                        } else return null
+                    } else if (timePart.length in 3..4 && timePart.all { it.isDigit() }) {
+                        val hour = if (timePart.length == 4) timePart.substring(0, 2).toInt() else timePart.substring(0, 1).toInt()
+                        val min = if (timePart.length == 4) timePart.substring(2, 4).toInt() else timePart.substring(1, 3).toInt()
+                        if (hour in 0..23 && min in 0..59) {
+                            targetHour = hour
+                            targetMin = min
+                        } else return null
+                    } else return null
+                }
+            }
+
+            cal.set(java.util.Calendar.HOUR_OF_DAY, targetHour)
+            cal.set(java.util.Calendar.MINUTE, targetMin)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+
+            val snoozeMs = cal.timeInMillis - nowMillis
+            if (snoozeMs <= 0) return null
+
+            val durationLabel = com.bas080.notificationreminders.MainActivity.formatSnoozeUntil(cal.timeInMillis, nowMillis)
+            return Pair(snoozeMs, durationLabel)
         }
 
         private fun calculateAbsoluteTimeSnooze(targetHour: Int, targetMin: Int, nowMillis: Long): Pair<Long, String> {

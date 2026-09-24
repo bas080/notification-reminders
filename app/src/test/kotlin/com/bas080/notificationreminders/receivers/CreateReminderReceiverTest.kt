@@ -298,4 +298,31 @@ class CreateReminderReceiverTest {
         assertEquals("2d 18:00", CreateReminderReceiver.canonicalizeSnoozeChoice("2d 1800"))
         assertEquals("1d 2h 15m", CreateReminderReceiver.canonicalizeSnoozeChoice("1d 2h 15m"))
     }
+
+    @Test
+    fun testParseDateSnoozeDuration() {
+        // Fix base timestamp at Monday, October 12, 2026 at 10:00 AM
+        val cal = java.util.Calendar.getInstance().apply {
+            set(2026, java.util.Calendar.OCTOBER, 12, 10, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val nowMillis = cal.timeInMillis
+
+        // "10/25/2026": October 25, 2026 at 09:00 AM
+        val targetCal = java.util.Calendar.getInstance().apply {
+            set(2026, java.util.Calendar.OCTOBER, 25, 9, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val expectedMs = targetCal.timeInMillis - nowMillis
+
+        val (msDate, _) = CreateReminderReceiver.parseSnoozeDuration("10/25/2026", nowMillis)!!
+        assertEquals(expectedMs, msDate)
+    }
+
+    @Test
+    fun testCustomSnoozeHintFormat() {
+        val context = RuntimeEnvironment.getApplication()
+        val hint = CreateReminderReceiver.getSnoozeCustomHint(context)
+        org.junit.Assert.assertTrue("Custom hint should start with 'e.g. 15m, 18:00, Mon, or '", hint.startsWith("e.g. 15m, 18:00, Mon, or "))
+    }
 }
