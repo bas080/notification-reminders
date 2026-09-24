@@ -265,11 +265,12 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun exportRemindersToMarkdown() {
-        if (activeReminders.isEmpty()) {
+        val exportList = displayedReminders.filter { it != HEADER_SNOOZED_SECTION_MARKER }
+        if (exportList.isEmpty()) {
             Toast.makeText(this, R.string.toast_no_reminders_to_export, Toast.LENGTH_SHORT).show()
             return
         }
-        val markdownText = com.bas080.notificationreminders.utils.MarkdownRemindersUtil.exportToMarkdown(activeReminders)
+        val markdownText = com.bas080.notificationreminders.utils.MarkdownRemindersUtil.exportToMarkdown(exportList)
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, markdownText)
