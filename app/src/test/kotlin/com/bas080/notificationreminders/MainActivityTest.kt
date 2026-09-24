@@ -215,6 +215,41 @@ class MainActivityTest {
     }
 
     @Test
+    fun testExportButtonOnRemindersListExportsFilteredReminders() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putStringSet("key_reminders_list", setOf("Task 1 #punt", "Task 2 #other")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        val holder = recyclerView.findViewHolderForAdapterPosition(0) as RemindersAdapter.ItemViewHolder
+
+        // Filter by "#punt"
+        holder.reminderInput.setText("#punt")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+
+        val btnListExport = activity.findViewById<TextView>(R.id.btn_list_export)
+        assertNotNull(btnListExport)
+        btnListExport.performClick()
+
+        var chooserIntent: android.content.Intent? = shadowOf(activity).nextStartedActivity
+        while (chooserIntent != null && chooserIntent.action != android.content.Intent.ACTION_CHOOSER) {
+            chooserIntent = shadowOf(activity).nextStartedActivity
+        }
+        assertNotNull("Share chooser intent should be launched when clicking list export button", chooserIntent)
+
+        @Suppress("DEPRECATION")
+        val targetIntent = chooserIntent!!.getParcelableExtra<android.content.Intent>(android.content.Intent.EXTRA_INTENT)
+        assertNotNull(targetIntent)
+        val exportedText = targetIntent!!.getStringExtra(android.content.Intent.EXTRA_TEXT) ?: ""
+
+        assertTrue("Export should contain 'Task 1 #punt'", exportedText.contains("Task 1 #punt"))
+        org.junit.Assert.assertFalse("Export should NOT contain 'Task 2 #other'", exportedText.contains("Task 2 #other"))
+    }
+
+    @Test
     fun testImportMarkdownDialogParsesAndAddsReminders() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()

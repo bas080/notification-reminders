@@ -101,6 +101,22 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
+            <!-- Export Button (Reminders List) -->
+            <TextView
+                android:id="@+id/btn_list_export"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/export_markdown"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent"
+                android:paddingVertical="2dp"
+                android:paddingHorizontal="6dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+
             <!-- Search Focus Button (visible when search input is scrolled out of view) -->
             <TextView
                 android:id="@+id/btn_search"
