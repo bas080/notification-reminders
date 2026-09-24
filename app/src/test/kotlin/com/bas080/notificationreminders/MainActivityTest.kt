@@ -886,6 +886,44 @@ class MainActivityTest {
     }
 
     @Test
+    fun testPullToRefreshClearsRecentlyDoneRemindersAndRefreshesList() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1", "Task 2")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        assertEquals(4, recyclerView.adapter!!.itemCount)
+
+        // Mark "Task 1" done
+        val markMethod = MainActivity::class.java.getDeclaredMethod("markReminderDone", String::class.java)
+        markMethod.isAccessible = true
+        markMethod.invoke(activity, "Task 1")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Item count remains 4 because "Task 1 #done" is in recentlyDoneReminders
+        assertEquals(4, recyclerView.adapter!!.itemCount)
+
+        // Pull down to refresh
+        val swipeRefreshLayout = activity.findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipe_refresh_layout)
+        assertNotNull(swipeRefreshLayout)
+
+        swipeRefreshLayout.isRefreshing = true
+        val listenerField = androidx.swiperefreshlayout.widget.SwipeRefreshLayout::class.java.getDeclaredField("mListener")
+        listenerField.isAccessible = true
+        val refreshListener = listenerField.get(swipeRefreshLayout) as? androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+        assertNotNull("OnRefreshListener should be attached to SwipeRefreshLayout", refreshListener)
+        refreshListener!!.onRefresh()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        // Done item is now cleared from recentlyDoneReminders and hidden from list (1 input + 1 active Task 2 + 1 footer = 3 items)
+        assertEquals(3, recyclerView.adapter!!.itemCount)
+        org.junit.Assert.assertFalse(swipeRefreshLayout.isRefreshing)
+    }
+
+    @Test
     fun testSwipeThresholdAndEscapeVelocity() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         val activity = controller.get()

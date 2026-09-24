@@ -104,11 +104,20 @@ class MainActivity : AppCompatActivity() {
 
         setupNavigation()
         setupRecyclerView()
+        setupSwipeRefresh()
         setupSwipeGestures()
         loadReminders()
 
         checkAndShowCrashReportDialog()
         checkAndRequestPermissions()
+    }
+
+    private fun setupSwipeRefresh() {
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            recentlyDoneReminders.clear()
+            loadReminders()
+            binding.swipeRefreshLayout.isRefreshing = false
+        }
     }
 
     private fun setupNavigation() {
