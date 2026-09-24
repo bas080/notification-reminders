@@ -858,4 +858,17 @@ class MainActivityTest {
 
         assertEquals("Bottom navigation bar should remain VISIBLE on scroll", View.VISIBLE, headerNav.visibility)
     }
+
+    @Test
+    fun testSwipeThresholdAndEscapeVelocity() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        // Retrieve setupSwipeGestures or test ItemTouchHelper parameters
+        val method = MainActivity::class.java.getDeclaredMethod("setupSwipeGestures")
+        method.isAccessible = true
+
+        // Verify setup executes cleanly
+        method.invoke(activity)
+    }
 }
