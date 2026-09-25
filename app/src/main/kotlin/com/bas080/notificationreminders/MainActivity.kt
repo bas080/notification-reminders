@@ -325,19 +325,29 @@ class MainActivity : AppCompatActivity() {
             orientation = android.widget.LinearLayout.HORIZONTAL
         }
 
+        val accentColor = ContextCompat.getColor(this, R.color.accent)
+        val textPrimaryColor = ContextCompat.getColor(this, R.color.text_primary)
+        val colorStateList = android.content.res.ColorStateList.valueOf(accentColor)
+
         val rbAll = android.widget.RadioButton(this).apply {
             id = View.generateViewId()
             text = "All"
+            setTextColor(textPrimaryColor)
+            buttonTintList = colorStateList
             isChecked = currentFilter == ReminderFilter.ALL
         }
         val rbActive = android.widget.RadioButton(this).apply {
             id = View.generateViewId()
             text = "Active"
+            setTextColor(textPrimaryColor)
+            buttonTintList = colorStateList
             isChecked = currentFilter == ReminderFilter.ACTIVE
         }
         val rbPunted = android.widget.RadioButton(this).apply {
             id = View.generateViewId()
             text = "Punted"
+            setTextColor(textPrimaryColor)
+            buttonTintList = colorStateList
             isChecked = currentFilter == ReminderFilter.SNOOZED
         }
 
@@ -362,11 +372,20 @@ class MainActivity : AppCompatActivity() {
 
             val tagsListView = android.widget.ListView(this).apply {
                 choiceMode = android.widget.ListView.CHOICE_MODE_MULTIPLE
-                adapter = android.widget.ArrayAdapter(
+                adapter = object : android.widget.ArrayAdapter<String>(
                     this@MainActivity,
                     android.R.layout.simple_list_item_multiple_choice,
                     allTags.toTypedArray()
-                )
+                ) {
+                    override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
+                        val view = super.getView(position, convertView, parent)
+                        if (view is android.widget.CheckedTextView) {
+                            view.setTextColor(textPrimaryColor)
+                            view.checkMarkTintList = colorStateList
+                        }
+                        return view
+                    }
+                }
                 for (i in allTags.indices) {
                     setItemChecked(i, checkedTagStates[i])
                 }
