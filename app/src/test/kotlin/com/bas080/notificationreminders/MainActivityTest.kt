@@ -293,7 +293,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testSnoozedReminderDisplaysStatusLabelAndUndoButtonToUnpunt() {
+    fun testSnoozedReminderDisplaysStatusLabelAndShareButton() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -312,15 +312,8 @@ class MainActivityTest {
 
         assertEquals(View.VISIBLE, holder!!.txtStatus.visibility)
         assertTrue(holder.txtStatus.text.toString().startsWith("Punted • until"))
-        assertEquals(View.VISIBLE, holder.btnAction.visibility)
-        assertEquals("Undo punt", holder.btnAction.contentDescription)
-
-        // Click Undo button on punted card
-        holder.btnAction.performClick()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-
-        assertEquals("Punt cancelled", ShadowToast.getTextOfLatestToast())
-        assertEquals(0L, prefs.getLong("snooze_snoozed task", 0L))
+        assertEquals(View.VISIBLE, holder.btnShare.visibility)
+        assertEquals(View.GONE, holder.btnAction.visibility)
     }
 
     @Test
