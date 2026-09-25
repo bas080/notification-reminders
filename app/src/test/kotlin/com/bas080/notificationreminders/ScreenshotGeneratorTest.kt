@@ -72,6 +72,7 @@ class ScreenshotGeneratorTest {
         captureScreenshot3FilterDialog()
         captureScreenshot4NotificationDrawer()
         captureScreenshot5AboutAndLogs()
+        captureScreenshot6KeyboardEditing()
     }
 
     private fun captureScreenshot1Overview() {
@@ -168,6 +169,30 @@ class ScreenshotGeneratorTest {
         val decorView = activity.window.decorView
         renderAndSaveView(decorView, File(phoneScreenshotsDir, "5.png"), 375, 667)
         renderAndSaveView(decorView, File(tabletScreenshotsDir, "5.png"), 1024, 768)
+    }
+
+    private fun captureScreenshot6KeyboardEditing() {
+        val app = RuntimeEnvironment.getApplication()
+        val prefs = app.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet(
+            "key_reminders_list",
+            setOf("Buy groceries #groceries", "Call dentist at 3 PM #health", "Prepare presentation #work")
+        ).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.reminders_list)
+        val viewHolder = recyclerView?.findViewHolderForAdapterPosition(0) as? RemindersAdapter.ItemViewHolder
+        viewHolder?.reminderInput?.requestFocus()
+        viewHolder?.reminderInput?.setText("Buy groceries and milk #groceries")
+        viewHolder?.reminderInput?.setSelection(13)
+
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val decorView = activity.window.decorView
+        renderAndSaveView(decorView, File(phoneScreenshotsDir, "6.png"), 375, 667)
+        renderAndSaveView(decorView, File(tabletScreenshotsDir, "6.png"), 1024, 768)
     }
 
 
