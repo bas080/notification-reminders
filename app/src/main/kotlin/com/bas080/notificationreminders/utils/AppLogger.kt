@@ -9,18 +9,34 @@ import java.util.Locale
 object AppLogger {
     private const val LOG_FILE_NAME = "app_logs.txt"
     private const val MAX_FILE_SIZE_BYTES = 100 * 1024 // 100 KB max log size
+    private const val MAX_BREADCRUMBS = 50
 
+    private val breadcrumbs = java.util.ArrayDeque<String>()
+
+    @Synchronized
     fun log(context: Context, tag: String, message: String) {
+        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
+        val logEntry = "$timestamp [$tag]: $message"
+
+        if (breadcrumbs.size >= MAX_BREADCRUMBS) {
+            breadcrumbs.removeFirst()
+        }
+        breadcrumbs.addLast(logEntry)
+
         try {
             val file = getLogFile(context)
             if (file.exists() && file.length() > MAX_FILE_SIZE_BYTES) {
                 file.delete()
             }
-            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
-            val logEntry = "$timestamp [$tag]: $message\n"
-            file.appendText(logEntry)
+            file.appendText("$logEntry\n")
         } catch (_: Exception) {
         }
+    }
+
+    @Synchronized
+    fun getBreadcrumbs(maxCount: Int = MAX_BREADCRUMBS): List<String> {
+        val count = maxCount.coerceAtMost(breadcrumbs.size)
+        return breadcrumbs.toList().takeLast(count)
     }
 
     fun getLogs(context: Context, maxLines: Int = 50): String {
@@ -38,7 +54,9 @@ object AppLogger {
         }
     }
 
+    @Synchronized
     fun clearLogs(context: Context) {
+        breadcrumbs.clear()
         try {
             val file = getLogFile(context)
             if (file.exists()) {

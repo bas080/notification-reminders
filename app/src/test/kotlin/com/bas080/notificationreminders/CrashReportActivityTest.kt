@@ -193,6 +193,8 @@ class CrashReportActivityTest {
     @Test
     fun testBuildFormattedReportHelper() {
         val context = RuntimeEnvironment.getApplication()
+        com.bas080.notificationreminders.utils.AppLogger.log(context, "TestTag", "User navigated to Tasks view")
+
         val report = CrashReportActivity.buildFormattedReport(
             context = context,
             crashTrace = "SampleTraceException",
@@ -206,6 +208,8 @@ class CrashReportActivityTest {
         assertTrue(report.contains("### Device Info"))
         assertTrue(report.contains("Free Memory:"))
         assertTrue(report.contains("Available Storage:"))
+        assertTrue(report.contains("### Breadcrumbs (Recent User Actions)"))
+        assertTrue(report.contains("User navigated to Tasks view"))
     }
 
     @Test
