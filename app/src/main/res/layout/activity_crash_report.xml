@@ -75,6 +75,20 @@
         android:gravity="end">
 
         <TextView
+            android:id="@+id/btn_dont_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_dont_send"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:textColor="@color/accent_danger"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
             android:id="@+id/btn_copy_report"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

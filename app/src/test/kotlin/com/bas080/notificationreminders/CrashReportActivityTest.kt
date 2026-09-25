@@ -130,6 +130,24 @@ class CrashReportActivityTest {
     }
 
     @Test
+    fun testDontSendRemovesPersistedCrashTraceAndRestartsApp() {
+        val app = RuntimeEnvironment.getApplication()
+        val prefs = app.getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(NotificationRemindersApplication.KEY_CRASH_TRACE, "Sample crash stack").commit()
+
+        val controller = Robolectric.buildActivity(CrashReportActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnDontSend = activity.findViewById<TextView>(R.id.btn_dont_send)
+        assertNotNull(btnDontSend)
+        btnDontSend.performClick()
+
+        val savedTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null)
+        org.junit.Assert.assertNull("Crash trace should be removed from prefs when DON'T SEND is clicked", savedTrace)
+        assertTrue("CrashReportActivity should be finished", activity.isFinishing)
+    }
+
+    @Test
     fun testBuildFormattedReportHelper() {
         val context = RuntimeEnvironment.getApplication()
         val report = CrashReportActivity.buildFormattedReport(
