@@ -116,9 +116,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupKeyboardListener() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+        val rootView = binding.root
+        rootView.viewTreeObserver.addOnGlobalLayoutListener {
+            val rect = android.graphics.Rect()
+            rootView.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = rootView.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+            val isKeyboardOpen = keypadHeight > screenHeight * 0.15
+            binding.headerNavigation.visibility = if (isKeyboardOpen) View.GONE else View.VISIBLE
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
             val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-            binding.headerNavigation.visibility = if (isImeVisible) View.GONE else View.VISIBLE
+            if (isImeVisible) {
+                binding.headerNavigation.visibility = View.GONE
+            }
             insets
         }
     }
