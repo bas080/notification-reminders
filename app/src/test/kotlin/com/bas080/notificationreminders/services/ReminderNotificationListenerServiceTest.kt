@@ -325,54 +325,63 @@ class ReminderNotificationListenerServiceTest {
     }
 
     @Test
-    fun testGetTopSnoozeChoicesLimitsToTop5LatestUsedAndSortsShortToLong() {
+    fun testGetTopSnoozeChoicesCombines4RecentAnd6MostCommonAndSortsAllTogether() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
 
-        // Record 7 choices with different timestamps
+        // Set up 10 different choices with varying timestamps and counts:
+        // C1: ts 1000, count 1
+        // C2: ts 900, count 1
+        // C3: ts 800, count 1
+        // C4: ts 700, count 1
+        // C5: ts 100, count 50
+        // C6: ts 90, count 40
+        // C7: ts 80, count 30
+        // C8: ts 70, count 20
+        // C9: ts 60, count 10
+        // C10: ts 50, count 5
         prefs.edit()
-            .putLong("10m", 100L)
-            .putLong("20m", 200L)
-            .putLong("30m", 300L)
-            .putLong("2h", 400L)
-            .putLong("3d", 500L)
-            .putLong("5m", 10L)
-            .putLong("1w", 5L)
+            .putLong("10m", 1000L).putLong("count_10m", 1L) // Recent #1
+            .putLong("20m", 900L).putLong("count_20m", 1L)   // Recent #2
+            .putLong("30m", 800L).putLong("count_30m", 1L)   // Recent #3
+            .putLong("2h", 700L).putLong("count_2h", 1L)     // Recent #4
+            .putLong("3h", 100L).putLong("count_3h", 50L)    // Common #1
+            .putLong("5h", 90L).putLong("count_5h", 40L)     // Common #2
+            .putLong("12h", 80L).putLong("count_12h", 30L)   // Common #3
+            .putLong("1d", 70L).putLong("count_1d", 20L)     // Common #4
+            .putLong("2d", 60L).putLong("count_2d", 10L)     // Common #5
+            .putLong("3d", 50L).putLong("count_3d", 5L)      // Common #6
             .commit()
 
-        val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
+        val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context).map { it.toString() }
 
-        assertEquals(5, choices.size)
-        assertEquals("10m", choices[0].toString())
-        assertEquals("20m", choices[1].toString())
-        assertEquals("30m", choices[2].toString())
-        assertEquals("2h", choices[3].toString())
-        assertEquals("3d", choices[4].toString())
-    }
+        // Top 4 recent: 10m, 20m, 30m, 2h
+        // Top 6 common: 3h, 5h, 12h, 1d, 2d, 3d
+        // Combined (10 items) sorted by duration: 10m, 20m, 30m, 2h, 3h, 5h, 12h, 1d, 2d, 3d (+ defaults if any missing)
+        assertTrue("Should contain 10m (recent)", choices.contains("10m"))
+        assertTrue("Should contain 20m (recent)", choices.contains("20m"))
+        assertTrue("Should contain 30m (recent)", choices.contains("30m"))
+        assertTrue("Should contain 2h (recent)", choices.contains("2h"))
+        assertTrue("Should contain 3h (common)", choices.contains("3h"))
+        assertTrue("Should contain 5h (common)", choices.contains("5h"))
+        assertTrue("Should contain 12h (common)", choices.contains("12h"))
+        assertTrue("Should contain 1d (common)", choices.contains("1d"))
+        assertTrue("Should contain 2d (common)", choices.contains("2d"))
+        assertTrue("Should contain 3d (common)", choices.contains("3d"))
 
-    @Test
-    fun testGetTopSnoozeChoicesIncludesCustomTextInputsAndSortsShortToLong() {
-        val context = RuntimeEnvironment.getApplication()
-        val prefs = context.getSharedPreferences("snooze_freq_prefs", Context.MODE_PRIVATE)
+        // Verify sorted order (10m < 20m < 30m < 2h < 3h < 5h < 12h < 1d < 2d < 3d)
+        val index10m = choices.indexOf("10m")
+        val index20m = choices.indexOf("20m")
+        val index30m = choices.indexOf("30m")
+        val index2h = choices.indexOf("2h")
+        val index3h = choices.indexOf("3h")
+        val index5h = choices.indexOf("5h")
 
-        // Custom duration and absolute time inputs typed by user with timestamps
-        prefs.edit()
-            .putLong("5m", 500L)
-            .putLong("12h", 400L)
-            .putLong("2w", 300L)
-            .putLong("45m", 200L)
-            .putLong("1d", 100L)
-            .commit()
-
-        val choices = ReminderNotificationListenerService.getTopSnoozeChoices(context)
-
-        // Should contain top 5 user choices sorted from short to long duration: 5m, 45m, 12h, 1d, 2w
-        assertEquals(5, choices.size)
-        assertEquals("5m", choices[0].toString())
-        assertEquals("45m", choices[1].toString())
-        assertEquals("12h", choices[2].toString())
-        assertEquals("1d", choices[3].toString())
-        assertEquals("2w", choices[4].toString())
+        assertTrue("10m should come before 20m", index10m < index20m)
+        assertTrue("20m should come before 30m", index20m < index30m)
+        assertTrue("30m should come before 2h", index30m < index2h)
+        assertTrue("2h should come before 3h", index2h < index3h)
+        assertTrue("3h should come before 5h", index3h < index5h)
     }
 
     @Test

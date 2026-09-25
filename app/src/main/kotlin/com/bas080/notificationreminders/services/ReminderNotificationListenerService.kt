@@ -65,17 +65,40 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 return defaultChoices.toTypedArray()
             }
 
-            val sortedUserChoices = allEntries.entries
+            val userChoices = allEntries.entries
+                .filter { !it.key.startsWith("count_") }
                 .mapNotNull { entry ->
                     val timestamp = (entry.value as? Number)?.toLong() ?: 0L
-                    if (timestamp > 0L) entry.key to timestamp else null
+                    if (timestamp > 0L) {
+                        val choice = entry.key
+                        val rawCount = prefs.getLong("count_$choice", 0L)
+                        val count = if (rawCount > 0L) rawCount else 1L
+                        Triple(choice, timestamp, count)
+                    } else null
                 }
+
+            if (userChoices.isEmpty()) {
+                return defaultChoices.toTypedArray()
+            }
+
+            val topRecent = userChoices
                 .sortedByDescending { it.second }
+                .take(4)
+                .map { it.first }
+
+            val topCommon = userChoices
+                .sortedWith(compareByDescending<Triple<String, Long, Long>> { it.third }.thenByDescending { it.second })
+                .take(6)
                 .map { it.first }
 
             val combined = mutableListOf<String>()
-            for (choice in sortedUserChoices) {
-                if (!combined.contains(choice) && combined.size < 5) {
+            for (choice in topRecent) {
+                if (!combined.contains(choice)) {
+                    combined.add(choice)
+                }
+            }
+            for (choice in topCommon) {
+                if (!combined.contains(choice)) {
                     combined.add(choice)
                 }
             }
@@ -84,9 +107,11 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                     combined.add(defaultChoice)
                 }
             }
+
             combined.sortBy { choice ->
                 CreateReminderReceiver.parseSnoozeDuration(choice)?.first ?: Long.MAX_VALUE
             }
+
             return Array(combined.size) { combined[it] }
         }
     }
