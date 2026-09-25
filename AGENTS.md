@@ -150,6 +150,12 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs test
 
 ---
 
+## Screenshot Generation & Workflow
+
+- **Release Workflow Handling**: Do not manually regenerate store screenshots locally. Screenshot regeneration and fastlane metadata updates are handled automatically as part of the release workflow in GitHub Actions CI.
+
+---
+
 ## Agent Self-Update Guidelines
 
 - **Maintain AGENTS.md**: Whenever the user gives instructions or mentions changes regarding the workflow, procedures, coding standards, or ways of working for this project, update `AGENTS.md` accordingly to preserve project conventions for future tasks.
