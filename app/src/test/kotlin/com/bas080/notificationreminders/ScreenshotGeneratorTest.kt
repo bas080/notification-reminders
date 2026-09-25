@@ -182,8 +182,8 @@ class ScreenshotGeneratorTest {
     }
 
     private fun renderAndSaveView(view: View, outputFile: File) {
-        val width = 1080
-        val height = 2160
+        val width = 375
+        val height = 667
 
         view.measure(
             View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
