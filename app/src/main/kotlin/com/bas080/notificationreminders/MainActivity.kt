@@ -154,6 +154,27 @@ class MainActivity : AppCompatActivity() {
         markAsButtonAccessibility(binding.btnTagsFilter)
         binding.btnListExport.setColorFilter(ContextCompat.getColor(this, R.color.accent))
         markAsButtonAccessibility(binding.btnClearSearch)
+        markAsButtonAccessibility(binding.btnEmptyClearFilter)
+
+        val clearFilterAndSearchAction = {
+            currentSearchQuery = ""
+            currentFilter = ReminderFilter.ALL
+            getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_REMINDER_FILTER, currentFilter.name)
+                .apply()
+            recentlyDoneReminders.clear()
+            binding.searchReminderInput.setText("")
+            updateSummaryAndAdapter()
+        }
+
+        binding.btnClearSearch.setOnClickListener {
+            clearFilterAndSearchAction()
+        }
+
+        binding.btnEmptyClearFilter.setOnClickListener {
+            clearFilterAndSearchAction()
+        }
 
         binding.btnNavReminders.setOnClickListener {
             showRemindersView()
@@ -192,17 +213,6 @@ class MainActivity : AppCompatActivity() {
             showTagsSelectionDialog()
         }
 
-        binding.btnClearSearch.setOnClickListener {
-            currentSearchQuery = ""
-            currentFilter = ReminderFilter.ALL
-            getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
-                .edit()
-                .putString(KEY_REMINDER_FILTER, currentFilter.name)
-                .apply()
-            recentlyDoneReminders.clear()
-            binding.searchReminderInput.setText("")
-            updateSummaryAndAdapter()
-        }
     }
 
     private fun setupSearchInput() {
@@ -310,7 +320,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showTagsSelectionDialog() {
         val density = resources.displayMetrics.density
-        val padding = (16 * density).toInt()
+        val padding = (24 * density).toInt()
 
         val layout = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
@@ -456,7 +466,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showImportMarkdownDialog() {
-        val padding = (16 * resources.displayMetrics.density).toInt()
+        val padding = (24 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             id = R.id.import_input
             hint = getString(R.string.import_dialog_hint)
@@ -619,7 +629,12 @@ class MainActivity : AppCompatActivity() {
                     val isDone = reminderText.contains("#done", ignoreCase = true)
 
                     if (isDone) {
-                        deleteReminder(reminderText)
+                        if (direction == ItemTouchHelper.LEFT) {
+                            adapter.notifyItemChanged(position)
+                            undoMarkDone(reminderText)
+                        } else if (direction == ItemTouchHelper.RIGHT) {
+                            deleteReminder(reminderText)
+                        }
                     } else if (direction == ItemTouchHelper.LEFT) {
                         adapter.notifyItemChanged(position)
                         showSnoozeOptionsDialog(reminderText)
@@ -653,26 +668,32 @@ class MainActivity : AppCompatActivity() {
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
                         if (dX > 0) {
                             background.setBounds(itemView.left, itemView.top, itemView.left + dX.toInt(), itemView.bottom)
-                        } else {
-                            background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
-                        }
-                        background.draw(c)
+                            background.draw(c)
 
-                        icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_delete)
-                        icon?.let {
-                            val margin = (itemView.height - it.intrinsicHeight) / 2
-                            val top = itemView.top + margin
-                            val bottom = top + it.intrinsicHeight
-                            if (dX > 0) {
+                            icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_delete)
+                            icon?.let {
+                                val margin = (itemView.height - it.intrinsicHeight) / 2
+                                val top = itemView.top + margin
+                                val bottom = top + it.intrinsicHeight
                                 val left = itemView.left + margin
                                 val right = left + it.intrinsicWidth
                                 it.setBounds(left, top, right, bottom)
-                            } else {
+                                it.draw(c)
+                            }
+                        } else {
+                            background.setBounds(itemView.right + dX.toInt(), itemView.top, itemView.right, itemView.bottom)
+                            background.draw(c)
+
+                            icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_action_undo)
+                            icon?.let {
+                                val margin = (itemView.height - it.intrinsicHeight) / 2
+                                val top = itemView.top + margin
+                                val bottom = top + it.intrinsicHeight
                                 val right = itemView.right - margin
                                 val left = right - it.intrinsicWidth
                                 it.setBounds(left, top, right, bottom)
+                                it.draw(c)
                             }
-                            it.draw(c)
                         }
                     } else if (dX > 0) {
                         background.color = ContextCompat.getColor(this@MainActivity, R.color.bg_dark)
@@ -754,7 +775,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCustomSnoozeInputDialog(reminderText: String) {
-        val padding = (16 * resources.displayMetrics.density).toInt()
+        val padding = (24 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             id = R.id.import_input
             hint = CreateReminderReceiver.getSnoozeCustomHint(this@MainActivity)
@@ -762,7 +783,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(padding, padding / 2, padding, padding / 2)
         }
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
             .setTitle(R.string.snooze_dialog_title)
             .setView(input)
             .setPositiveButton(R.string.snooze) { _, _ ->
@@ -956,16 +977,7 @@ class MainActivity : AppCompatActivity() {
             com.bas080.notificationreminders.utils.ReminderMatcher.filterSearchQueryTiered(statusFiltered, currentSearchQuery)
         }
 
-        var filtered = filterByFilterType(currentFilter)
-
-        if (filtered.isEmpty() && currentFilter != ReminderFilter.ALL) {
-            val allFiltered = filterByFilterType(ReminderFilter.ALL)
-            if (allFiltered.isNotEmpty()) {
-                currentFilter = ReminderFilter.ALL
-                prefs.edit().putString(KEY_REMINDER_FILTER, currentFilter.name).apply()
-                filtered = allFiltered
-            }
-        }
+        val filtered = filterByFilterType(currentFilter)
 
         val activeItems = mutableListOf<String>()
         val snoozedItems = mutableListOf<Pair<String, Long>>()
@@ -1038,9 +1050,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (displayedReminders.isEmpty()) {
-            binding.txtEmptyReminders.visibility = View.VISIBLE
+            binding.layoutEmptyReminders.visibility = View.VISIBLE
+            if (hasFilterOrSearch) {
+                binding.txtEmptyReminders.text = "No matching reminders found."
+                binding.btnEmptyClearFilter.visibility = View.VISIBLE
+            } else {
+                binding.txtEmptyReminders.setText(R.string.no_reminders)
+                binding.btnEmptyClearFilter.visibility = View.GONE
+            }
         } else {
-            binding.txtEmptyReminders.visibility = View.GONE
+            binding.layoutEmptyReminders.visibility = View.GONE
         }
     }
 

@@ -156,19 +156,42 @@
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            <TextView
-                android:id="@+id/txt_empty_reminders"
+            <LinearLayout
+                android:id="@+id/layout_empty_reminders"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="120dp"
+                android:orientation="vertical"
                 android:gravity="center"
-                android:text="@string/no_reminders"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp"
-                android:focusable="false"
-                android:clickable="false"
-                android:visibility="gone" />
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/txt_empty_reminders"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/no_reminders"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/btn_empty_clear_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Clear filter &amp; show all"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="gone" />
+
+            </LinearLayout>
 
         </FrameLayout>
 
