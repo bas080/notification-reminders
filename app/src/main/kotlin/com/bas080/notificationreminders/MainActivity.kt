@@ -282,7 +282,11 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TEXT, feedbackBody)
         }
         val chooserIntent = Intent.createChooser(intent, getString(R.string.feedback))
-        startActivity(chooserIntent)
+        try {
+            startActivity(chooserIntent)
+        } catch (_: Exception) {
+            Toast.makeText(this, R.string.toast_no_email_app, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun extractAllTags(): List<String> {

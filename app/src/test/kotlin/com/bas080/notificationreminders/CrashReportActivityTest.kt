@@ -213,6 +213,20 @@ class CrashReportActivityTest {
     }
 
     @Test
+    fun testSendEmailFallbackWhenNoHandlerAvailable() {
+        val controller = Robolectric.buildActivity(CrashReportActivity::class.java).setup()
+        val activity = controller.get()
+
+        shadowOf(RuntimeEnvironment.getApplication()).checkActivities(true)
+
+        val btnSendReport = activity.findViewById<TextView>(R.id.btn_send_report)
+        btnSendReport.performClick()
+
+        val toastText = ShadowToast.getTextOfLatestToast()
+        assertTrue("Fallback toast should be shown when no mail app available", toastText == "No email app found to send report" || toastText == "Report copied to clipboard")
+    }
+
+    @Test
     fun testGlobalUncaughtExceptionHandlerSavesCrashTraceToPrefs() {
         val app = RuntimeEnvironment.getApplication() as NotificationRemindersApplication
         val handler = Thread.getDefaultUncaughtExceptionHandler()
