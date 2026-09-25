@@ -63,6 +63,12 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    lint {
+        abortOnError = true
+        checkAllWarnings = true
+        disable += "ProtectedPermissions"
+    }
 }
 
 dependencies {
