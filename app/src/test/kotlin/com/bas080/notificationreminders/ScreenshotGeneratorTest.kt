@@ -30,19 +30,28 @@ import java.io.FileOutputStream
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ScreenshotGeneratorTest {
 
-    private lateinit var screenshotsDir: File
+    private lateinit var phoneScreenshotsDir: File
+    private lateinit var tabletScreenshotsDir: File
 
     @Before
     fun setUp() {
-        var dir = File("fastlane/metadata/android/en-US/images/phoneScreenshots")
-        if (!dir.exists()) {
-            dir = File("../fastlane/metadata/android/en-US/images/phoneScreenshots")
+        var baseDir = File("fastlane/metadata/android/en-US/images")
+        if (!baseDir.exists()) {
+            baseDir = File("../fastlane/metadata/android/en-US/images")
         }
-        if (!dir.exists()) {
-            dir.mkdirs()
+
+        phoneScreenshotsDir = File(baseDir, "phoneScreenshots")
+        if (!phoneScreenshotsDir.exists()) {
+            phoneScreenshotsDir.mkdirs()
         }
-        assertTrue("phoneScreenshots directory must exist", dir.exists() && dir.isDirectory)
-        screenshotsDir = dir
+
+        tabletScreenshotsDir = File(baseDir, "tenInchScreenshots")
+        if (!tabletScreenshotsDir.exists()) {
+            tabletScreenshotsDir.mkdirs()
+        }
+
+        assertTrue("phoneScreenshots directory must exist", phoneScreenshotsDir.exists() && phoneScreenshotsDir.isDirectory)
+        assertTrue("tenInchScreenshots directory must exist", tabletScreenshotsDir.exists() && tabletScreenshotsDir.isDirectory)
     }
 
     @After
@@ -78,7 +87,8 @@ class ScreenshotGeneratorTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         val decorView = activity.window.decorView
-        renderAndSaveView(decorView, File(screenshotsDir, "1.png"))
+        renderAndSaveView(decorView, File(phoneScreenshotsDir, "1.png"), 375, 667)
+        renderAndSaveView(decorView, File(tabletScreenshotsDir, "1.png"), 1024, 768)
     }
 
     private fun captureScreenshot2Punted() {
@@ -96,7 +106,8 @@ class ScreenshotGeneratorTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         val decorView = activity.window.decorView
-        renderAndSaveView(decorView, File(screenshotsDir, "2.png"))
+        renderAndSaveView(decorView, File(phoneScreenshotsDir, "2.png"), 375, 667)
+        renderAndSaveView(decorView, File(tabletScreenshotsDir, "2.png"), 1024, 768)
     }
 
     private fun captureScreenshot3FilterDialog() {
@@ -116,7 +127,8 @@ class ScreenshotGeneratorTest {
 
         val dialog = ShadowAlertDialog.getLatestDialog()
         val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
-        renderAndSaveView(viewToRender, File(screenshotsDir, "3.png"))
+        renderAndSaveView(viewToRender, File(phoneScreenshotsDir, "3.png"), 375, 667)
+        renderAndSaveView(viewToRender, File(tabletScreenshotsDir, "3.png"), 1024, 768)
     }
 
     private fun captureScreenshot4NotificationDrawer() {
@@ -134,7 +146,8 @@ class ScreenshotGeneratorTest {
         val dialog = ShadowAlertDialog.getLatestDialog()
         val viewToRender = dialog?.window?.decorView ?: activity.window.decorView
 
-        renderAndSaveView(viewToRender, File(screenshotsDir, "4.png"))
+        renderAndSaveView(viewToRender, File(phoneScreenshotsDir, "4.png"), 375, 667)
+        renderAndSaveView(viewToRender, File(tabletScreenshotsDir, "4.png"), 1024, 768)
     }
 
     private fun captureScreenshot5AboutAndLogs() {
@@ -153,7 +166,8 @@ class ScreenshotGeneratorTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         val decorView = activity.window.decorView
-        renderAndSaveView(decorView, File(screenshotsDir, "5.png"))
+        renderAndSaveView(decorView, File(phoneScreenshotsDir, "5.png"), 375, 667)
+        renderAndSaveView(decorView, File(tabletScreenshotsDir, "5.png"), 1024, 768)
     }
 
     private fun createMockSbn(packageName: String, title: String, text: String): StatusBarNotification {
@@ -181,10 +195,7 @@ class ScreenshotGeneratorTest {
         )
     }
 
-    private fun renderAndSaveView(view: View, outputFile: File) {
-        val width = 375
-        val height = 667
-
+    private fun renderAndSaveView(view: View, outputFile: File, width: Int, height: Int) {
         view.measure(
             View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)

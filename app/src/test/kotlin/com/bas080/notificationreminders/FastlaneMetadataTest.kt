@@ -96,6 +96,27 @@ class FastlaneMetadataTest {
     }
 
     @Test
+    fun testTabletScreenshotsExistAndHaveValidAspectRatios() {
+        val screenshotsDir = File(metadataDir, "images/tenInchScreenshots")
+        assertTrue("tenInchScreenshots directory should exist", screenshotsDir.exists() && screenshotsDir.isDirectory)
+        val screenshots = screenshotsDir.listFiles { _, name -> name.endsWith(".png") }
+        assertTrue("There should be at least one tablet screenshot", screenshots != null && screenshots.isNotEmpty())
+
+        for (screenshot in screenshots!!) {
+            val dimensions = getPngDimensions(screenshot)
+            assertNotNull("Tablet screenshot ${screenshot.name} should be a valid PNG file", dimensions)
+            val (width, height) = dimensions!!
+            val maxEdge = maxOf(width, height).toDouble()
+            val minEdge = minOf(width, height).toDouble()
+            val ratio = maxEdge / minEdge
+            assertTrue(
+                "Tablet screenshot ${screenshot.name} aspect ratio ($ratio) should not exceed 2.1",
+                ratio <= 2.1
+            )
+        }
+    }
+
+    @Test
     fun testPhoneScreenshotsExistAndHaveValidAspectRatios() {
         val screenshotsDir = File(metadataDir, "images/phoneScreenshots")
         assertTrue("phoneScreenshots directory should exist", screenshotsDir.exists() && screenshotsDir.isDirectory)
