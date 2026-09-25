@@ -919,7 +919,9 @@ class MainActivity : AppCompatActivity() {
             layoutManager?.findViewByPosition(firstVisiblePos)?.top ?: 0
         } else 0
 
-        currentFocus?.clearFocus()
+        if (currentFocus != binding.searchReminderInput) {
+            currentFocus?.clearFocus()
+        }
 
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
