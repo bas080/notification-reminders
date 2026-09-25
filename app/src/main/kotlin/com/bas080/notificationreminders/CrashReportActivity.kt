@@ -77,6 +77,15 @@ class CrashReportActivity : AppCompatActivity() {
         val etUserComment = findViewById<EditText>(R.id.et_user_comment)
         val cbIncludeLogs = findViewById<CheckBox>(R.id.cb_include_logs)
 
+        val btnDontSend = findViewById<TextView>(R.id.btn_dont_send)
+        if (btnDontSend != null) {
+            markAsButtonAccessibility(btnDontSend)
+            btnDontSend.setOnClickListener {
+                prefs.edit().remove(NotificationRemindersApplication.KEY_CRASH_TRACE).apply()
+                restartApp()
+            }
+        }
+
         val btnCopyReport = findViewById<TextView>(R.id.btn_copy_report)
         markAsButtonAccessibility(btnCopyReport)
         btnCopyReport.setOnClickListener {

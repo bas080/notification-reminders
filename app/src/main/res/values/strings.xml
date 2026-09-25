@@ -64,6 +64,7 @@
     <string name="crash_report_description">The application encountered an unexpected error. You can describe what happened, copy the crash report, or send it to bas080@hotmail.com:</string>
     <string name="crash_user_comment_hint">What were you doing when the crash occurred? (optional)</string>
     <string name="crash_include_logs">Include application log file</string>
+    <string name="btn_dont_send">DON\'T SEND</string>
     <string name="btn_copy_report">COPY REPORT</string>
     <string name="btn_send_report">SEND REPORT</string>
     <string name="btn_restart_app">RESTART APP</string>

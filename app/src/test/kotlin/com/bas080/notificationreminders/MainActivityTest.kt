@@ -824,4 +824,26 @@ class MainActivityTest {
 
         method.invoke(activity)
     }
+
+    @Test
+    fun testCheckAndShowCrashReportDialogPreservesCrashTraceInPrefs() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
+        val crashTrace = "java.lang.RuntimeException: Persistent crash test"
+        prefs.edit().putString(NotificationRemindersApplication.KEY_CRASH_TRACE, crashTrace).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).create().get()
+
+        val checkMethod = MainActivity::class.java.getDeclaredMethod("checkAndShowCrashReportDialog")
+        checkMethod.isAccessible = true
+        checkMethod.invoke(controller)
+
+        val nextStartedActivity = shadowOf(controller).nextStartedActivity
+        assertNotNull("CrashReportActivity intent should be started", nextStartedActivity)
+        assertEquals(CrashReportActivity::class.java.name, nextStartedActivity.component?.className)
+
+        val savedTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null)
+        assertNotNull("KEY_CRASH_TRACE must remain persisted in prefs", savedTrace)
+        assertEquals(crashTrace, savedTrace)
+    }
 }

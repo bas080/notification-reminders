@@ -1001,8 +1001,6 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
         val crashTrace = prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null) ?: return
 
-        clearCrashTrace()
-
         val intent = Intent(this, CrashReportActivity::class.java).apply {
             putExtra(CrashReportActivity.EXTRA_CRASH_TRACE, crashTrace)
         }
