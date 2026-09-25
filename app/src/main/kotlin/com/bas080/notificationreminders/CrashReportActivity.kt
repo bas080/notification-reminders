@@ -21,34 +21,53 @@ class CrashReportActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_CRASH_TRACE = "extra_crash_trace"
+        const val EXTRA_IS_FEEDBACK = "extra_is_feedback"
         private const val REPORT_EMAIL = "bas080@hotmail.com"
 
         fun buildFormattedReport(
             context: Context,
             crashTrace: String,
             userComment: String,
-            includeLogs: Boolean
+            includeLogs: Boolean,
+            isFeedback: Boolean = false
         ): String {
             return StringBuilder().apply {
-                append("## Crash Report\n\n")
-                append("### User Comment\n")
-                val commentText = userComment.trim()
-                if (commentText.isNotEmpty()) {
-                    append(commentText)
+                if (isFeedback) {
+                    append("## Feedback\n\n")
+                    append("### User Comment\n")
+                    val commentText = userComment.trim()
+                    if (commentText.isNotEmpty()) {
+                        append(commentText)
+                    } else {
+                        append("None provided.")
+                    }
+                    append("\n\n")
+
+                    append("### Device Info\n")
+                    append("- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
+                    append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
+                    append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
                 } else {
-                    append("None provided.")
+                    append("## Crash Report\n\n")
+                    append("### User Comment\n")
+                    val commentText = userComment.trim()
+                    if (commentText.isNotEmpty()) {
+                        append(commentText)
+                    } else {
+                        append("None provided.")
+                    }
+                    append("\n\n")
+
+                    append("### Device Info\n")
+                    append("- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
+                    append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
+                    append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
+
+                    append("### Stack Trace\n")
+                    append("```\n")
+                    append(crashTrace)
+                    append("\n```\n")
                 }
-                append("\n\n")
-
-                append("### Device Info\n")
-                append("- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
-                append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
-                append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
-
-                append("### Stack Trace\n")
-                append("```\n")
-                append(crashTrace)
-                append("\n```\n")
 
                 if (includeLogs) {
                     val logs = AppLogger.getLogs(context)
@@ -67,17 +86,33 @@ class CrashReportActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_crash_report)
 
+        val isFeedback = intent.getBooleanExtra(EXTRA_IS_FEEDBACK, false)
+
         val prefs = getSharedPreferences(NotificationRemindersApplication.PREFS_NAME, Context.MODE_PRIVATE)
         val crashTrace = intent.getStringExtra(EXTRA_CRASH_TRACE)
             ?: prefs.getString(NotificationRemindersApplication.KEY_CRASH_TRACE, null)
             ?: "No stack trace available."
 
+        val txtTitle = findViewById<TextView>(R.id.crash_title)
+        val txtMessage = findViewById<TextView>(R.id.crash_message)
+        val etUserComment = findViewById<EditText>(R.id.et_user_comment)
+        val scrollStackTrace = findViewById<android.view.View>(R.id.scroll_stack_trace)
+        val btnDontSend = findViewById<TextView>(R.id.btn_dont_send)
+        val btnRestartApp = findViewById<TextView>(R.id.btn_restart_app)
+
         findViewById<TextView>(R.id.crash_stack_trace).text = crashTrace
 
-        val etUserComment = findViewById<EditText>(R.id.et_user_comment)
+        if (isFeedback) {
+            txtTitle.setText(R.string.feedback_report_title)
+            txtMessage.setText(R.string.feedback_report_description)
+            etUserComment.setHint(R.string.feedback_user_comment_hint)
+            scrollStackTrace.visibility = android.view.View.GONE
+            btnDontSend?.visibility = android.view.View.GONE
+            btnRestartApp?.visibility = android.view.View.GONE
+        }
+
         val cbIncludeLogs = findViewById<CheckBox>(R.id.cb_include_logs)
 
-        val btnDontSend = findViewById<TextView>(R.id.btn_dont_send)
         if (btnDontSend != null) {
             markAsButtonAccessibility(btnDontSend)
             btnDontSend.setOnClickListener {
@@ -91,10 +126,10 @@ class CrashReportActivity : AppCompatActivity() {
         btnCopyReport.setOnClickListener {
             val comment = etUserComment.text.toString()
             val includeLogs = cbIncludeLogs.isChecked
-            val report = buildFormattedReport(this, crashTrace, comment, includeLogs)
+            val report = buildFormattedReport(this, crashTrace, comment, includeLogs, isFeedback)
 
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Crash Report", report)
+            val clip = ClipData.newPlainText(if (isFeedback) "Feedback" else "Crash Report", report)
             clipboard.setPrimaryClip(clip)
 
             Toast.makeText(this, R.string.toast_report_copied, Toast.LENGTH_SHORT).show()
@@ -105,14 +140,16 @@ class CrashReportActivity : AppCompatActivity() {
         btnSendReport.setOnClickListener {
             val comment = etUserComment.text.toString()
             val includeLogs = cbIncludeLogs.isChecked
-            val report = buildFormattedReport(this, crashTrace, comment, includeLogs)
-            sendEmail(report)
+            val report = buildFormattedReport(this, crashTrace, comment, includeLogs, isFeedback)
+            val subject = if (isFeedback) "Punt Feedback" else "Punt Crash Report"
+            sendEmail(report, subject)
         }
 
-        val btnRestartApp = findViewById<TextView>(R.id.btn_restart_app)
-        markAsButtonAccessibility(btnRestartApp)
-        btnRestartApp.setOnClickListener {
-            restartApp()
+        if (btnRestartApp != null) {
+            markAsButtonAccessibility(btnRestartApp)
+            btnRestartApp.setOnClickListener {
+                restartApp()
+            }
         }
     }
 
@@ -125,14 +162,14 @@ class CrashReportActivity : AppCompatActivity() {
         })
     }
 
-    private fun sendEmail(reportText: String) {
+    private fun sendEmail(reportText: String, subject: String = "Punt Crash Report") {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:$REPORT_EMAIL")
-            putExtra(Intent.EXTRA_SUBJECT, "Punt Crash Report")
+            putExtra(Intent.EXTRA_SUBJECT, subject)
             putExtra(Intent.EXTRA_TEXT, reportText)
         }
         try {
-            startActivity(Intent.createChooser(intent, "Send Crash Report"))
+            startActivity(Intent.createChooser(intent, subject))
         } catch (_: Exception) {
         }
     }

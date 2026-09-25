@@ -164,7 +164,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnFeedback.setOnClickListener {
-            sendFeedbackEmail()
+            val intent = Intent(this, CrashReportActivity::class.java).apply {
+                putExtra(CrashReportActivity.EXTRA_IS_FEEDBACK, true)
+            }
+            startActivity(intent)
         }
 
         binding.btnClearLogs.setOnClickListener {
