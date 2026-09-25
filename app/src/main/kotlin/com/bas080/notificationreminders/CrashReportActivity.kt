@@ -85,6 +85,14 @@ class CrashReportActivity : AppCompatActivity() {
                     append("\n```\n")
                 }
 
+                val breadcrumbs = AppLogger.getBreadcrumbs()
+                if (breadcrumbs.isNotEmpty()) {
+                    append("\n### Breadcrumbs (Recent User Actions)\n")
+                    append("```\n")
+                    append(breadcrumbs.joinToString("\n"))
+                    append("\n```\n")
+                }
+
                 if (includeLogs) {
                     val logs = AppLogger.getLogs(context)
                     if (logs.isNotBlank()) {
