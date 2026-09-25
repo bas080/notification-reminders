@@ -281,9 +281,11 @@ class MainActivity : AppCompatActivity() {
             }
         }.toString()
 
+        val feedbackSubject = "Punt Feedback"
+        val mailtoUri = "mailto:bas080@hotmail.com?subject=${android.net.Uri.encode(feedbackSubject)}&body=${android.net.Uri.encode(feedbackBody)}"
         val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = android.net.Uri.parse("mailto:bas080@hotmail.com")
-            putExtra(Intent.EXTRA_SUBJECT, "Punt Feedback")
+            data = android.net.Uri.parse(mailtoUri)
+            putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
             putExtra(Intent.EXTRA_TEXT, feedbackBody)
         }
         val chooserIntent = Intent.createChooser(intent, getString(R.string.feedback))
