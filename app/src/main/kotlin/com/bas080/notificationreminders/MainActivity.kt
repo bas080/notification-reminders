@@ -781,6 +781,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        currentFocus?.clearFocus()
+
         val canonicalChoice = CreateReminderReceiver.canonicalizeSnoozeChoice(durationChoice)
         if (canonicalChoice != null) {
             val freqPrefs = getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
@@ -911,6 +913,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        val layoutManager = binding.remindersList.layoutManager as? LinearLayoutManager
+        val firstVisiblePos = layoutManager?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION
+        val topOffset = if (firstVisiblePos != RecyclerView.NO_POSITION) {
+            layoutManager?.findViewByPosition(firstVisiblePos)?.top ?: 0
+        } else 0
+
+        currentFocus?.clearFocus()
+
         val prefs = getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
 
@@ -994,6 +1004,10 @@ class MainActivity : AppCompatActivity() {
 
         adapter.updateList(sorted, snoozeMap)
         updateSummary()
+
+        if (firstVisiblePos != RecyclerView.NO_POSITION && firstVisiblePos < sorted.size) {
+            layoutManager?.scrollToPositionWithOffset(firstVisiblePos, topOffset)
+        }
     }
 
     private fun updateSummary() {

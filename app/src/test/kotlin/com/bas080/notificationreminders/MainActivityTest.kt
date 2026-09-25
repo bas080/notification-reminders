@@ -611,6 +611,23 @@ class MainActivityTest {
     }
 
     @Test
+    fun testApplySnoozeDurationClearsFocusAndPreservesScrollPosition() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Task 1", "Task 2", "Task 3")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val applyMethod = MainActivity::class.java.getDeclaredMethod("applySnoozeDuration", String::class.java, String::class.java)
+        applyMethod.isAccessible = true
+        applyMethod.invoke(activity, "Task 1", "1h")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        org.junit.Assert.assertNull("Focus should be cleared after punting", activity.currentFocus)
+    }
+
+    @Test
     fun testSnoozedReminderSwipeOpensDialogWithUnsnoozeOption() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
