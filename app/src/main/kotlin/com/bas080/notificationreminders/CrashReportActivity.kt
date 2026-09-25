@@ -24,6 +24,23 @@ class CrashReportActivity : AppCompatActivity() {
         const val EXTRA_IS_FEEDBACK = "extra_is_feedback"
         private const val REPORT_EMAIL = "bas080@hotmail.com"
 
+        fun getDiagnosticMetadata(context: Context): String {
+            val mi = android.app.ActivityManager.MemoryInfo()
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+            activityManager?.getMemoryInfo(mi)
+            val availMemMB = mi.availMem / (1024 * 1024)
+            val totalMemMB = mi.totalMem / (1024 * 1024)
+
+            val stat = android.os.StatFs(android.os.Environment.getDataDirectory().path)
+            val availStorageMB = (stat.availableBlocksLong * stat.blockSizeLong) / (1024 * 1024)
+
+            return "- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n" +
+                   "- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n" +
+                   "- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n" +
+                   "- Free Memory: ${availMemMB} MB / ${totalMemMB} MB\n" +
+                   "- Available Storage: ${availStorageMB} MB\n"
+        }
+
         fun buildFormattedReport(
             context: Context,
             crashTrace: String,
@@ -31,6 +48,7 @@ class CrashReportActivity : AppCompatActivity() {
             includeLogs: Boolean,
             isFeedback: Boolean = false
         ): String {
+            val deviceInfo = getDiagnosticMetadata(context)
             return StringBuilder().apply {
                 if (isFeedback) {
                     append("## Feedback\n\n")
@@ -44,9 +62,8 @@ class CrashReportActivity : AppCompatActivity() {
                     append("\n\n")
 
                     append("### Device Info\n")
-                    append("- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
-                    append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
-                    append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
+                    append(deviceInfo)
+                    append("\n")
                 } else {
                     append("## Crash Report\n\n")
                     append("### User Comment\n")
@@ -59,9 +76,8 @@ class CrashReportActivity : AppCompatActivity() {
                     append("\n\n")
 
                     append("### Device Info\n")
-                    append("- App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
-                    append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
-                    append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
+                    append(deviceInfo)
+                    append("\n")
 
                     append("### Stack Trace\n")
                     append("```\n")
