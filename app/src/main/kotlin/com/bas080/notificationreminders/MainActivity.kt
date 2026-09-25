@@ -194,6 +194,11 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnClearSearch.setOnClickListener {
             currentSearchQuery = ""
+            currentFilter = ReminderFilter.ALL
+            getSharedPreferences(PREFS_REMINDERS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_REMINDER_FILTER, currentFilter.name)
+                .apply()
             recentlyDoneReminders.clear()
             binding.searchReminderInput.setText("")
             updateSummaryAndAdapter()
@@ -907,32 +912,44 @@ class MainActivity : AppCompatActivity() {
 
         val searchContainsDone = currentSearchQuery.contains("#done", ignoreCase = true)
 
-        val filteredByStatus = when (currentFilter) {
-            ReminderFilter.ALL -> activeReminders.filter { reminder ->
-                val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) searchContainsDone || recentlyDoneReminders.contains(reminder) else true
-            }
-            ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
-                val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
-                val trimmed = reminder.trim().lowercase()
-                val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                    if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+        val filterByFilterType = { filterType: ReminderFilter ->
+            val statusFiltered = when (filterType) {
+                ReminderFilter.ALL -> activeReminders.filter { reminder ->
+                    val isDone = reminder.contains("#done", ignoreCase = true)
+                    if (isDone) searchContainsDone || recentlyDoneReminders.contains(reminder) else true
                 }
-                snoozeUntil <= now
-            }
-            ReminderFilter.SNOOZED -> activeReminders.filter { reminder ->
-                val isDone = reminder.contains("#done", ignoreCase = true)
-                if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
-                val trimmed = reminder.trim().lowercase()
-                val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
-                    if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+                ReminderFilter.ACTIVE -> activeReminders.filter { reminder ->
+                    val isDone = reminder.contains("#done", ignoreCase = true)
+                    if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
+                    val trimmed = reminder.trim().lowercase()
+                    val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                        if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+                    }
+                    snoozeUntil <= now
                 }
-                snoozeUntil > now
+                ReminderFilter.SNOOZED -> activeReminders.filter { reminder ->
+                    val isDone = reminder.contains("#done", ignoreCase = true)
+                    if (isDone) return@filter searchContainsDone || recentlyDoneReminders.contains(reminder)
+                    val trimmed = reminder.trim().lowercase()
+                    val snoozeUntil = prefs.getLong("snooze_$trimmed", 0L).let {
+                        if (it > 0L) it else (ReminderNotificationListenerService.lastTriggeredMap["snooze_$trimmed"] ?: 0L)
+                    }
+                    snoozeUntil > now
+                }
             }
+            com.bas080.notificationreminders.utils.ReminderMatcher.filterSearchQueryTiered(statusFiltered, currentSearchQuery)
         }
 
-        val filtered = com.bas080.notificationreminders.utils.ReminderMatcher.filterSearchQueryTiered(filteredByStatus, currentSearchQuery)
+        var filtered = filterByFilterType(currentFilter)
+
+        if (filtered.isEmpty() && currentFilter != ReminderFilter.ALL) {
+            val allFiltered = filterByFilterType(ReminderFilter.ALL)
+            if (allFiltered.isNotEmpty()) {
+                currentFilter = ReminderFilter.ALL
+                prefs.edit().putString(KEY_REMINDER_FILTER, currentFilter.name).apply()
+                filtered = allFiltered
+            }
+        }
 
         val activeItems = mutableListOf<String>()
         val snoozedItems = mutableListOf<Pair<String, Long>>()
@@ -988,11 +1005,11 @@ class MainActivity : AppCompatActivity() {
             binding.txtSelectedTags.text = "$stateText • ${selectedTags.joinToString(" ")}"
         }
 
-        val hasSearchText = currentSearchQuery.isNotBlank()
-        binding.btnClearSearch.isEnabled = hasSearchText
-        binding.btnClearSearch.isClickable = hasSearchText
-        binding.btnClearSearch.isFocusable = hasSearchText
-        if (hasSearchText) {
+        val hasFilterOrSearch = currentSearchQuery.isNotBlank() || currentFilter != ReminderFilter.ALL
+        binding.btnClearSearch.isEnabled = hasFilterOrSearch
+        binding.btnClearSearch.isClickable = hasFilterOrSearch
+        binding.btnClearSearch.isFocusable = hasFilterOrSearch
+        if (hasFilterOrSearch) {
             binding.btnClearSearch.setColorFilter(ContextCompat.getColor(this, R.color.accent))
             binding.btnClearSearch.alpha = 1.0f
         } else {
