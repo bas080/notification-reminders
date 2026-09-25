@@ -715,6 +715,25 @@ class MainActivityTest {
     }
 
     @Test
+    fun testSwipeLeftOnMarkedDoneItemUndosMarkDone() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().putStringSet("key_reminders_list", setOf("Done Task #done")).commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val undoMethod = MainActivity::class.java.getDeclaredMethod("undoMarkDone", String::class.java)
+        undoMethod.isAccessible = true
+        undoMethod.invoke(activity, "Done Task #done")
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val savedSet = prefs.getStringSet("key_reminders_list", emptySet()) ?: emptySet()
+        assertTrue("Saved set should contain restored 'Done Task'", savedSet.contains("Done Task"))
+        assertEquals("Mark done undone", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
     fun testSwipeRightReplacesTileWithGrayedOutTileAndUndoRestoresReminder() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
