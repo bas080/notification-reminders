@@ -91,7 +91,7 @@
 - **POST_NOTIFICATIONS Permission**: Prompted on first app launch for Android 13+ (API 33+).
 - **Notification Listener Service (`NotificationListenerService`)**: Check and prompt user to grant permission via `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS`.
 - **Ongoing Status Notification**: Opened automatically via `ReminderNotificationListenerService` as soon as permissions are granted or when service connects.
-- **Process-Level Crash Handling**: `NotificationRemindersApplication` registers a global `Thread.setDefaultUncaughtExceptionHandler` at process initialization. Uncaught exceptions from any thread or component are logged to `SharedPreferences`. On next app startup, `MainActivity` prompts the user to send a crash report email to `bas080@hotmail.com`.
+- **Process-Level Crash Handling**: `NotificationRemindersApplication` registers a global `Thread.setDefaultUncaughtExceptionHandler` at process initialization. Uncaught JVM exceptions, non-fatal errors, and ANR events are intercepted by a global error handler at runtime and logged to `SharedPreferences`. On next app startup, `MainActivity` prompts the user to send a crash report email to `bas080@hotmail.com`.
 
 ---
 
