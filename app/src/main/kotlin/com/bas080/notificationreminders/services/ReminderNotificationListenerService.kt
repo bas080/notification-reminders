@@ -103,13 +103,14 @@ class ReminderNotificationListenerService : NotificationListenerService() {
                 }
             }
             for (defaultChoice in defaultChoices) {
-                if (!combined.contains(defaultChoice) && combined.size < 5) {
+                if (!combined.contains(defaultChoice)) {
                     combined.add(defaultChoice)
                 }
             }
 
+            val now = System.currentTimeMillis()
             combined.sortBy { choice ->
-                CreateReminderReceiver.parseSnoozeDuration(choice)?.first ?: Long.MAX_VALUE
+                CreateReminderReceiver.parseSnoozeDuration(choice, now)?.first ?: Long.MAX_VALUE
             }
 
             return Array(combined.size) { combined[it] }
