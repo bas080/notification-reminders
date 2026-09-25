@@ -103,7 +103,8 @@ class CrashReportActivityTest {
         val targetIntent = startedIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         assertNotNull("Target chooser intent should exist", targetIntent)
         assertEquals(Intent.ACTION_SENDTO, targetIntent!!.action)
-        assertEquals("mailto:bas080@hotmail.com", targetIntent.data.toString())
+        assertTrue(targetIntent.data.toString().startsWith("mailto:bas080@hotmail.com?subject="))
+        assertTrue(targetIntent.data.toString().contains("body="))
         assertEquals("Punt Crash Report", targetIntent.getStringExtra(Intent.EXTRA_SUBJECT))
 
         val body = targetIntent.getStringExtra(Intent.EXTRA_TEXT) ?: ""

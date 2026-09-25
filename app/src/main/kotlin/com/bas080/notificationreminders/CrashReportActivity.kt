@@ -163,8 +163,9 @@ class CrashReportActivity : AppCompatActivity() {
     }
 
     private fun sendEmail(reportText: String, subject: String = "Punt Crash Report") {
+        val mailtoUri = "mailto:$REPORT_EMAIL?subject=${Uri.encode(subject)}&body=${Uri.encode(reportText)}"
         val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("mailto:$REPORT_EMAIL")
+            data = Uri.parse(mailtoUri)
             putExtra(Intent.EXTRA_SUBJECT, subject)
             putExtra(Intent.EXTRA_TEXT, reportText)
         }
