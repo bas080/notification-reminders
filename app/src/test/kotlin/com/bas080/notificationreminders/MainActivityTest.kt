@@ -383,6 +383,54 @@ class MainActivityTest {
     }
 
     @Test
+    fun testClearSearchButtonEnabledAndResetsStateFilterWhenFilterActive() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit().clear()
+            .putStringSet("key_reminders_list", setOf("Active Task", "Snoozed Task"))
+            .putLong("snooze_snoozed task", snoozeTime)
+            .putString("key_reminder_filter", ReminderFilter.SNOOZED.name)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val btnClearSearch = activity.findViewById<ImageView>(R.id.btn_clear_search)
+        assertTrue("Clear search button should be enabled when filter is not ALL", btnClearSearch.isEnabled)
+
+        btnClearSearch.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val currentFilterName = prefs.getString("key_reminder_filter", null)
+        assertEquals(ReminderFilter.ALL.name, currentFilterName)
+        val txtSelectedTags = activity.findViewById<TextView>(R.id.txt_selected_tags)
+        assertEquals("All", txtSelectedTags.text.toString())
+    }
+
+    @Test
+    fun testNoResultsInActiveOrPuntedFilterAutomaticallySwitchesToAll() {
+        val context = RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
+        val snoozeTime = System.currentTimeMillis() + 3600000L
+        prefs.edit().clear()
+            .putStringSet("key_reminders_list", setOf("Only Punted Task"))
+            .putLong("snooze_only punted task", snoozeTime)
+            .putString("key_reminder_filter", ReminderFilter.ACTIVE.name)
+            .commit()
+
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+
+        val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
+        // Since no active items existed, filter should auto-switch to ALL and display the punted item + header + footer
+        assertEquals(3, recyclerView.adapter!!.itemCount)
+
+        val currentFilterName = prefs.getString("key_reminder_filter", null)
+        assertEquals(ReminderFilter.ALL.name, currentFilterName)
+    }
+
+    @Test
     fun testTagFilterSelectionDialogSortsMoreCommonTagsFirst() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
