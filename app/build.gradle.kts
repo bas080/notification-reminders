@@ -73,6 +73,12 @@ android {
             }
         }
     }
+
+    lint {
+        abortOnError = true
+        checkAllWarnings = true
+        disable += "ProtectedPermissions"
+    }
 }
 
 val fileFilter = listOf(
