@@ -67,7 +67,7 @@
   ```
 
 ### Build & Test Commands
-- **Run all unit tests**:
+- **Run all unit tests** (includes JaCoCo code coverage analysis and threshold verification):
   ```bash
   ./gradlew test
   ```
