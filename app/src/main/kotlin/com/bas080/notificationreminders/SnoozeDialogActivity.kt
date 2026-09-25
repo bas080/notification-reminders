@@ -98,7 +98,11 @@ class SnoozeDialogActivity : AppCompatActivity() {
         val canonicalChoice = CreateReminderReceiver.canonicalizeSnoozeChoice(durationChoice)
         if (canonicalChoice != null) {
             val freqPrefs = getSharedPreferences(PREFS_SNOOZE_FREQ, Context.MODE_PRIVATE)
-            freqPrefs.edit().putLong(canonicalChoice, System.currentTimeMillis()).apply()
+            val currentCount = freqPrefs.getLong("count_$canonicalChoice", 0L)
+            freqPrefs.edit()
+                .putLong(canonicalChoice, System.currentTimeMillis())
+                .putLong("count_$canonicalChoice", currentCount + 1L)
+                .apply()
         }
 
         val (snoozeMs, durationLabel) = parseResult
