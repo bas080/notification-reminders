@@ -42,9 +42,24 @@ class PickNotificationActivity : AppCompatActivity() {
                 .show()
         } else {
             val itemsArray = notificationsList.toTypedArray()
+            val textPrimaryColor = androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+            val adapter = object : android.widget.ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                itemsArray
+            ) {
+                override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
+                    val view = super.getView(position, convertView, parent)
+                    if (view is android.widget.TextView) {
+                        view.setTextColor(textPrimaryColor)
+                    }
+                    return view
+                }
+            }
+
             AlertDialog.Builder(this, R.style.Theme_NotificationReminders_Dialog)
                 .setTitle(getString(R.string.select_notification))
-                .setItems(itemsArray) { _, which ->
+                .setAdapter(adapter) { _, which ->
                     val selectedText = itemsArray[which]
                     saveReminder(selectedText)
                     finish()
