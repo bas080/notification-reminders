@@ -204,6 +204,8 @@ class CrashReportActivityTest {
         assertTrue(report.contains("Some comment"))
         assertTrue(report.contains("SampleTraceException"))
         assertTrue(report.contains("### Device Info"))
+        assertTrue(report.contains("Free Memory:"))
+        assertTrue(report.contains("Available Storage:"))
     }
 
     @Test

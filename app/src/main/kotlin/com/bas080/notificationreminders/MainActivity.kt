@@ -257,20 +257,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendFeedbackEmail() {
-        val versionName = try {
-            packageManager.getPackageInfo(packageName, 0).versionName
-        } catch (_: Exception) {
-            "1.0"
-        }
-
         val feedbackBody = StringBuilder().apply {
             append("## Feedback\n\n")
             append("[ Please type your feedback here ]\n\n")
 
             append("### Device Info\n")
-            append("- App Version: $versionName (${BuildConfig.VERSION_CODE})\n")
-            append("- Android Version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n")
-            append("- Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
+            append(CrashReportActivity.getDiagnosticMetadata(this@MainActivity))
+            append("\n")
 
             val logs = AppLogger.getLogs(this@MainActivity)
             if (logs.isNotBlank()) {
