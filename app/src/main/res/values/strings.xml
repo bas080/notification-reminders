@@ -72,4 +72,6 @@
     <string name="btn_send_report">SEND REPORT</string>
     <string name="btn_restart_app">RESTART APP</string>
     <string name="toast_report_copied">Report copied to clipboard</string>
+    <string name="toast_no_email_app">No email app found to send report</string>
+    <string name="toast_copy_failed">Unable to copy to clipboard</string>
 </resources>

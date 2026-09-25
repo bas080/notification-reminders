@@ -152,11 +152,14 @@ class CrashReportActivity : AppCompatActivity() {
             val includeLogs = cbIncludeLogs.isChecked
             val report = buildFormattedReport(this, crashTrace, comment, includeLogs, isFeedback)
 
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText(if (isFeedback) "Feedback" else "Crash Report", report)
-            clipboard.setPrimaryClip(clip)
-
-            Toast.makeText(this, R.string.toast_report_copied, Toast.LENGTH_SHORT).show()
+            try {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText(if (isFeedback) "Feedback" else "Crash Report", report)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, R.string.toast_report_copied, Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(this, R.string.toast_copy_failed, Toast.LENGTH_SHORT).show()
+            }
         }
 
         val btnSendReport = findViewById<TextView>(R.id.btn_send_report)
@@ -196,6 +199,7 @@ class CrashReportActivity : AppCompatActivity() {
         try {
             startActivity(Intent.createChooser(intent, subject))
         } catch (_: Exception) {
+            Toast.makeText(this, R.string.toast_no_email_app, Toast.LENGTH_SHORT).show()
         }
     }
 
