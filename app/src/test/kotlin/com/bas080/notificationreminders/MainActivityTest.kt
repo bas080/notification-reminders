@@ -409,7 +409,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun testNoResultsInActiveOrPuntedFilterAutomaticallySwitchesToAll() {
+    fun testNoResultsInActiveOrPuntedFilterPersistsFilterAndShowsEmptyStateClearButton() {
         val context = RuntimeEnvironment.getApplication()
         val prefs = context.getSharedPreferences("reminders_prefs", Context.MODE_PRIVATE)
         val snoozeTime = System.currentTimeMillis() + 3600000L
@@ -423,11 +423,23 @@ class MainActivityTest {
         val activity = controller.get()
 
         val recyclerView = activity.findViewById<RecyclerView>(R.id.reminders_list)
-        // Since no active items existed, filter should auto-switch to ALL and display the punted item + header + footer
-        assertEquals(3, recyclerView.adapter!!.itemCount)
+        // Since no active items exist and filter is ACTIVE, 0 items matched (+ 0 footer = 0 items)
+        assertEquals(0, recyclerView.adapter!!.itemCount)
 
+        val btnEmptyClearFilter = activity.findViewById<TextView>(R.id.btn_empty_clear_filter)
+        assertNotNull(btnEmptyClearFilter)
+        assertEquals(View.VISIBLE, btnEmptyClearFilter.visibility)
+
+        // Filter choice should remain persisted in prefs
         val currentFilterName = prefs.getString("key_reminder_filter", null)
-        assertEquals(ReminderFilter.ALL.name, currentFilterName)
+        assertEquals(ReminderFilter.ACTIVE.name, currentFilterName)
+
+        // Clicking clear filter button switches filter to ALL and resets search
+        btnEmptyClearFilter.performClick()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertEquals(3, recyclerView.adapter!!.itemCount)
+        assertEquals(ReminderFilter.ALL.name, prefs.getString("key_reminder_filter", null))
     }
 
     @Test

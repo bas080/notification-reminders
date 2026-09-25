@@ -170,6 +170,7 @@ class ScreenshotGeneratorTest {
         renderAndSaveView(decorView, File(tabletScreenshotsDir, "5.png"), 1024, 768)
     }
 
+
     private fun createMockSbn(packageName: String, title: String, text: String): StatusBarNotification {
         val context = RuntimeEnvironment.getApplication()
         val extras = Bundle().apply {
