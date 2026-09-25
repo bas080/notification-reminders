@@ -63,7 +63,7 @@ class SnoozeDialogActivity : AppCompatActivity() {
     }
 
     private fun showCustomSnoozeInputDialog(targets: List<String>) {
-        val padding = (16 * resources.displayMetrics.density).toInt()
+        val padding = (24 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             id = R.id.import_input
             hint = CreateReminderReceiver.getSnoozeCustomHint(this@SnoozeDialogActivity)
