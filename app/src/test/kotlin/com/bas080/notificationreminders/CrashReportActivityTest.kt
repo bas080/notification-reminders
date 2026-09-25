@@ -148,6 +148,48 @@ class CrashReportActivityTest {
     }
 
     @Test
+    fun testFeedbackModeUIAndReportFormatting() {
+        val intent = Intent(RuntimeEnvironment.getApplication(), CrashReportActivity::class.java).apply {
+            putExtra(CrashReportActivity.EXTRA_IS_FEEDBACK, true)
+        }
+
+        val controller = Robolectric.buildActivity(CrashReportActivity::class.java, intent).setup()
+        val activity = controller.get()
+
+        val txtTitle = activity.findViewById<TextView>(R.id.crash_title)
+        val scrollStackTrace = activity.findViewById<android.view.View>(R.id.scroll_stack_trace)
+        val btnDontSend = activity.findViewById<TextView>(R.id.btn_dont_send)
+        val btnRestartApp = activity.findViewById<TextView>(R.id.btn_restart_app)
+
+        assertEquals("FEEDBACK", txtTitle.text.toString())
+        assertEquals(android.view.View.GONE, scrollStackTrace.visibility)
+        assertEquals(android.view.View.GONE, btnDontSend.visibility)
+        assertEquals(android.view.View.GONE, btnRestartApp.visibility)
+
+        val report = CrashReportActivity.buildFormattedReport(
+            context = activity,
+            crashTrace = "Should not appear",
+            userComment = "Great app!",
+            includeLogs = false,
+            isFeedback = true
+        )
+
+        assertTrue(report.contains("## Feedback"))
+        assertTrue(report.contains("Great app!"))
+        org.junit.Assert.assertFalse(report.contains("Should not appear"))
+
+        val btnSendReport = activity.findViewById<TextView>(R.id.btn_send_report)
+        btnSendReport.performClick()
+
+        val startedIntent = shadowOf(activity).nextStartedActivity
+        assertNotNull(startedIntent)
+        @Suppress("DEPRECATION")
+        val targetIntent = startedIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+        assertNotNull(targetIntent)
+        assertEquals("Punt Feedback", targetIntent!!.getStringExtra(Intent.EXTRA_SUBJECT))
+    }
+
+    @Test
     fun testBuildFormattedReportHelper() {
         val context = RuntimeEnvironment.getApplication()
         val report = CrashReportActivity.buildFormattedReport(
