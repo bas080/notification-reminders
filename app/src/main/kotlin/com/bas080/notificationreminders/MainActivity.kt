@@ -1243,21 +1243,6 @@ class RemindersAdapter(
                     onUndoReminderRequested(currentPos)
                 }
             }
-        } else if (isSnoozed) {
-            holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-            holder.reminderInput.alpha = 1.0f
-            holder.reminderInput.paintFlags = holder.reminderInput.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
-            holder.btnShare.visibility = View.GONE
-            holder.btnAction.visibility = View.VISIBLE
-            holder.btnAction.setImageResource(R.drawable.ic_action_undo)
-            holder.btnAction.setColorFilter(ContextCompat.getColor(context, R.color.accent))
-            holder.btnAction.contentDescription = "Undo punt"
-            holder.btnAction.setOnClickListener {
-                val currentPos = holder.bindingAdapterPosition
-                if (currentPos != RecyclerView.NO_POSITION && currentPos in displayedReminders.indices) {
-                    onUnpuntReminderRequested(currentPos)
-                }
-            }
         } else {
             holder.reminderInput.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
             holder.reminderInput.alpha = 1.0f
